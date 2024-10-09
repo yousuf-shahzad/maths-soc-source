@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Manage Articles and Newsletters</h1>
+    <a href="{{ url_for('admin.create_article') }}">Create New Article/Newsletter</a>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Date Posted</th>
+            <th>Type</th>
+            <th>Actions</th>
+        </tr>
+        {% for article in articles %}
+        <tr>
+            <td><a href="{{ url_for('main.article', id=article.id) }}">{{ article.title }}</a></td>
+            <td>{{ article.named_creator }}</td>
+            <td>{{ article.date_posted.strftime('%Y-%m-%d') }}</td>
+            <td>{{ article.type.capitalize() if article.type else 'N/A' }}</td>
+            <td>
+                <a href="{{ url_for('admin.delete_article', article_id=article.id) }}" onclick="return confirm('Are you sure you want to delete this {{ article.type }}?');">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

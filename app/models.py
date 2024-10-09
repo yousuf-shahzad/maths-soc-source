@@ -22,15 +22,15 @@ class Challenge(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
+    
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    named_creator = db.Column(db.String(100), nullable=True)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    is_approved = db.Column(db.Boolean, default=False)
-    is_newsletter = db.Column(db.Boolean, default=False)
+    type = db.Column(db.String(20), default='article')  # 'article' or 'newsletter'
 
 class LeaderboardEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.admin import bp
 from app.models import Article, Challenge, User
-from app.admin.forms import ChallengeForm, ArticleReviewForm, NewsletterForm
+from app.admin.forms import ChallengeForm, ArticleForm
 
 @bp.route('/admin')
 @login_required
@@ -13,30 +13,57 @@ def admin_index():
         return redirect(url_for('main.index'))
     return render_template('admin/index.html', title='Admin Dashboard')
 
-@bp.route('/admin/create_newsletter', methods=['GET', 'POST'])
+# ! ARTICLE ROUTES
+
+@bp.route('/admin/articles/create', methods=['GET', 'POST'])
 @login_required
-def create_newsletter():
+def create_article():
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
     
-    form = NewsletterForm()
+    form = ArticleForm()
     if form.validate_on_submit():
-        newsletter = Article(title=form.title.data, 
-                             content=form.content.data, 
-                             user_id=current_user.id, 
-                             is_approved=True, 
-                             is_newsletter=True)
-        db.session.add(newsletter)
+        article = Article(title=form.title.data, 
+                          content=form.content.data, 
+                          named_creator=form.author.data,
+                          user_id=current_user.id, 
+                          type=form.type.data or 'article')
+        db.session.add(article)
         db.session.commit()
-        flash('Newsletter created successfully.')
+        flash(f'{form.type.data.capitalize()} created successfully.')
         return redirect(url_for('admin.manage_articles'))
     
-    return render_template('admin/create_newsletter.html', title='Create Newsletter', form=form)
+    return render_template('admin/create_article.html', title='Create Article/Newsletter', form=form)
 
-@bp.route('/admin/challenges', methods=['GET', 'POST'])
+@bp.route('/admin/articles')
 @login_required
-def manage_challenges():
+def manage_articles():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    articles = Article.query.order_by(Article.date_posted.desc()).all()
+    return render_template('admin/manage_articles.html', title='Manage Articles and Newsletters', articles=articles)
+
+@bp.route('/admin/articles/delete/<int:article_id>')
+@login_required
+def delete_article(article_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    article = Article.query.get_or_404(article_id)
+    db.session.delete(article)
+    db.session.commit()
+    
+    flash(f'{article.type.capitalize()} deleted successfully.')
+    return redirect(url_for('admin.manage_articles'))
+
+# ! CHALLENGE ROUTES
+
+@bp.route('/admin/challenges/create', methods=['GET', 'POST'])
+@login_required
+def create_challenge():
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
@@ -47,8 +74,16 @@ def manage_challenges():
         db.session.commit()
         flash('Challenge added successfully.')
         return redirect(url_for('admin.manage_challenges'))
+    return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
+
+@bp.route('/admin/challenges')
+@login_required
+def manage_challenges():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
     challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
-    return render_template('admin/manage_challenges.html', title='Manage Challenges', form=form, challenges=challenges)
+    return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges=challenges)
 
 @bp.route('/admin/challenges/edit/<int:challenge_id>', methods=['GET', 'POST'])
 @login_required
@@ -82,26 +117,7 @@ def delete_challenge(challenge_id):
     flash('Challenge deleted successfully.')
     return redirect(url_for('admin.manage_challenges'))
 
-@bp.route('/admin/articles')
-@login_required
-def manage_articles():
-    if not current_user.is_admin:
-        flash('You do not have permission to access this page.')
-        return redirect(url_for('main.index'))
-    articles = Article.query.filter_by(is_approved=False).order_by(Article.date_posted.desc()).all()
-    return render_template('admin/manage_articles.html', title='Manage Articles', articles=articles)
 
-@bp.route('/admin/approve_article/<int:id>')
-@login_required
-def approve_article(id):
-    if not current_user.is_admin:
-        flash('You do not have permission to access this page.')
-        return redirect(url_for('main.index'))
-    article = Article.query.get_or_404(id)
-    article.is_approved = True
-    db.session.commit()
-    flash('Article approved.')
-    return redirect(url_for('admin.manage_articles'))
 
 @bp.route('/admin/toggle_admin/<int:user_id>')
 @login_required

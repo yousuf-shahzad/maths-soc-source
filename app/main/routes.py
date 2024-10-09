@@ -21,8 +21,13 @@ def challenge(id):
 
 @bp.route('/articles')
 def articles():
-    articles = Article.query.filter_by(is_approved=True).order_by(Article.date_posted.desc()).all()
+    articles = Article.query.filter_by(type='article').order_by(Article.date_posted.desc()).all()
     return render_template('main/articles.html', title='Articles', articles=articles)
+
+@bp.route('/article/<int:id>')
+def article(id):
+    article = Article.query.get_or_404(id)
+    return render_template('main/article.html', title=article.title, article=article)
 
 @bp.route('/leaderboard')
 def leaderboard():

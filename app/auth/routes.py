@@ -24,19 +24,19 @@ def logout():
     logout_user()
     return redirect(url_for('main.index'))
 
-# @bp.route('/register_admin', methods=['GET', 'POST'])
-# def register_admin():
-#     if current_user.is_authenticated:
-#         return redirect(url_for('main.index'))
-#     form = RegistrationForm()
-#     if form.validate_on_submit():
-#         user = User(username=form.username.data, email=form.email.data, is_admin=True)
-#         user.set_password(form.password.data)
-#         db.session.add(user)
-#         db.session.commit()
-#         flash('Congratulations, you have registered an admin user!')
-#         return redirect(url_for('auth.login'))
-#     return render_template('auth/register.html', title='Register Admin', form=form)
+@bp.route('/register_admin', methods=['GET', 'POST'])
+def register_admin():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data, is_admin=True)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you have registered an admin user!')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/register.html', title='Register Admin', form=form)
 
 # @bp.route('/register', methods=['GET', 'POST'])
 # def register():
