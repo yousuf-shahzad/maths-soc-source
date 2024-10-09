@@ -5,16 +5,20 @@ from app.models import User
 from app.database import db
 from flask_migrate import Migrate
 from config import Config
+from flask_ckeditor import CKEditor, CKEditorField
 
 login_manager = LoginManager()
 migrate = Migrate()
+ckeditor = CKEditor()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    ckeditor.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
+    
     @login_manager.user_loader
     def load_user(user_id):
         # Return the user object for the given user_id

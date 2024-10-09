@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.admin import bp
 from app.models import Article, Challenge, User
-from app.admin.forms import ChallengeForm, ArticleReviewForm
+from app.admin.forms import ChallengeForm, ArticleReviewForm, NewsletterForm
 
 @bp.route('/admin')
 @login_required
@@ -12,6 +12,27 @@ def admin_index():
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
     return render_template('admin/index.html', title='Admin Dashboard')
+
+@bp.route('/admin/create_newsletter', methods=['GET', 'POST'])
+@login_required
+def create_newsletter():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    form = NewsletterForm()
+    if form.validate_on_submit():
+        newsletter = Article(title=form.title.data, 
+                             content=form.content.data, 
+                             user_id=current_user.id, 
+                             is_approved=True, 
+                             is_newsletter=True)
+        db.session.add(newsletter)
+        db.session.commit()
+        flash('Newsletter created successfully.')
+        return redirect(url_for('admin.manage_articles'))
+    
+    return render_template('admin/create_newsletter.html', title='Create Newsletter', form=form)
 
 @bp.route('/admin/challenges', methods=['GET', 'POST'])
 @login_required
