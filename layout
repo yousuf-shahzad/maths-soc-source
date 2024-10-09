@@ -1,0 +1,44 @@
+math_soc/
+│
+├── app/
+│   ├── __init__.py
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── main/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── admin/
+│   │   ├── __init__.py 
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── models.py
+│   ├── database.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── main.css
+│   │   └── js/
+│   │       └── main.js
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   ├── auth/
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   ├── main/
+│   │   │   ├── challenges.html
+│   │   │   ├── articles.html
+│   │   │   └── leaderboard.html
+│   │   └── admin/
+│   │       ├── index.html
+│   │       ├── manage_users.html
+│   │       ├── manage_challenges.html
+│   │       └── manage_articles.html
+│   └── migrations/
+
+├── config.py
+├── run.py
+├── requirements.txt
+└── .gitignore

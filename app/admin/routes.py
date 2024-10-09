@@ -1,0 +1,72 @@
+from flask import render_template, flash, redirect, url_for, request
+from flask_login import login_required, current_user
+from app import db
+from app.admin import bp
+from app.models import Article, Challenge, User
+from app.admin.forms import ChallengeForm, ArticleReviewForm
+
+@bp.route('/admin')
+@login_required
+def admin_index():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    return render_template('admin/index.html', title='Admin Dashboard')
+
+@bp.route('/admin/challenges', methods=['GET', 'POST'])
+@login_required
+def manage_challenges():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    form = ChallengeForm()
+    if form.validate_on_submit():
+        challenge = Challenge(title=form.title.data, content=form.content.data)
+        db.session.add(challenge)
+        db.session.commit()
+        flash('Challenge added successfully.')
+        return redirect(url_for('admin.manage_challenges'))
+    challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
+    return render_template('admin/manage_challenges.html', title='Manage Challenges', form=form, challenges=challenges)
+
+@bp.route('/admin/articles')
+@login_required
+def manage_articles():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    articles = Article.query.filter_by(is_approved=False).order_by(Article.date_posted.desc()).all()
+    return render_template('admin/manage_articles.html', title='Manage Articles', articles=articles)
+
+@bp.route('/admin/approve_article/<int:id>')
+@login_required
+def approve_article(id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    article = Article.query.get_or_404(id)
+    article.is_approved = True
+    db.session.commit()
+    flash('Article approved.')
+    return redirect(url_for('admin.manage_articles'))
+
+@bp.route('/admin/toggle_admin/<int:user_id>')
+@login_required
+def toggle_admin(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    flash(f'Admin status for {user.username} has been toggled.')
+    return redirect(url_for('admin.manage_users'))
+
+@bp.route('/admin/manage_users')
+@login_required
+def manage_users():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    users = User.query.all()
+    return render_template('admin/manage_users.html', title='Manage Users', users=users)
