@@ -29,6 +29,38 @@ def manage_challenges():
     challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
     return render_template('admin/manage_challenges.html', title='Manage Challenges', form=form, challenges=challenges)
 
+@bp.route('/admin/challenges/edit/<int:challenge_id>', methods=['GET', 'POST'])
+@login_required
+def edit_challenge(challenge_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    challenge = Challenge.query.get_or_404(challenge_id)
+    form = ChallengeForm(obj=challenge)
+
+    if form.validate_on_submit():
+        challenge.title = form.title.data
+        challenge.content = form.content.data
+        db.session.commit()
+        flash('Challenge updated successfully.')
+        return redirect(url_for('admin.manage_challenges'))
+    
+    return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
+    
+@bp.route('/admin/challenges/delete/<int:challenge_id>')
+@login_required
+def delete_challenge(challenge_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    challenge = Challenge.query.get_or_404(challenge_id)
+    db.session.delete(challenge)
+    db.session.commit()
+    flash('Challenge deleted successfully.')
+    return redirect(url_for('admin.manage_challenges'))
+
 @bp.route('/admin/articles')
 @login_required
 def manage_articles():
@@ -70,3 +102,16 @@ def manage_users():
         return redirect(url_for('main.index'))
     users = User.query.all()
     return render_template('admin/manage_users.html', title='Manage Users', users=users)
+
+@bp.route('/admin/manage_users/delete/<int:user_id>')
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('User deleted successfully.')
+    return redirect(url_for('admin.manage_users'))

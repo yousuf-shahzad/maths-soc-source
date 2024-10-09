@@ -14,6 +14,11 @@ def challenges():
     challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
     return render_template('main/challenges.html', title='Challenges', challenges=challenges)
 
+@bp.route('/challenge/<int:id>')
+def challenge(id):
+    challenge = Challenge.query.get_or_404(id)
+    return render_template('main/challenge.html', title=challenge.title, challenge=challenge)
+
 @bp.route('/articles')
 def articles():
     articles = Article.query.filter_by(is_approved=True).order_by(Article.date_posted.desc()).all()
