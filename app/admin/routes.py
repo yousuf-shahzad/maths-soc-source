@@ -1,9 +1,9 @@
-import os
+import os, datetime
 from werkzeug.utils import secure_filename
 from flask import render_template, flash, redirect, url_for, request, send_from_directory, current_app
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
-from app import db, Config
+from app import db
 from app.admin import bp
 from app.models import Article, Challenge, User
 from app.admin.forms import ChallengeForm, ArticleForm
@@ -64,11 +64,14 @@ def delete_article(article_id):
 
 # ! CHALLENGE ROUTES
 
-from flask import current_app, flash, redirect, url_for, render_template
-from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
-import os
-
+def create_challenge_folder(create_date):
+    create_date = create_date.strftime('%Y-%m-%d')
+    print(create_date)
+    challenge_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f'challenge_{create_date}')
+    challenge_responses = os.path.join(challenge_path, 'responses/')
+    os.makedirs(os.path.dirname(challenge_responses), exist_ok=True)
+    return challenge_path
+    
 @bp.route('/admin/challenges/create', methods=['GET', 'POST'])
 @login_required
 def create_challenge():
@@ -79,16 +82,16 @@ def create_challenge():
     form = ChallengeForm()
     if form.validate_on_submit():
         try:
-            challenge = Challenge(title=form.title.data, content=form.content.data)
-
+            challenge = Challenge(title=form.title.data, content=form.content.data, date_posted = datetime.datetime.now())
+            challenge_folder = create_challenge_folder(challenge.date_posted)
             if form.image.data:
                 try:
+
                     filename = secure_filename(form.image.data.filename)
-                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                    
-                    # Ensure the upload folder exists
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    
+                    file_path = os.path.join(challenge_folder, filename)
+                
+                    # os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
                     form.image.data.save(file_path)
                     challenge.file_url = filename
                 except IOError as e:
@@ -108,7 +111,9 @@ def create_challenge():
 
     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
 
-@bp.route('/static/uploads/<path:filename>')
+
+
+@bp.route('/static/uploads/challenges/<path:filename>')
 def uploaded_files(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
@@ -169,8 +174,18 @@ def delete_challenge(challenge_id):
     
     challenge = Challenge.query.get_or_404(challenge_id)
 
-    filename = challenge.file_url
-    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+    try:
+        filename = challenge.file_url
+        os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+    except:
+        pass
+
+    try:
+        date_posted = challenge.date_posted.strftime('%Y-%m-%d')
+        os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], f'challenge_{date_posted}/responses/'))
+    except:
+        pass
+
     db.session.delete(challenge)
     db.session.commit()
     flash('Challenge deleted successfully.')

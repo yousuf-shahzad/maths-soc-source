@@ -1,41 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Create New Challenge</h1>
-    
-    <form method="POST" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.title.label }}
-            {{ form.title }}
-            {% for error in form.title.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
+<h1>Create New Challenge</h1>
+   
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.title.label }}
+        {{ form.title }}
+        {% for error in form.title.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
+    </div>
+    <div>
+        {{ form.content.label }}
+        {{ form.content }}
+        {% for error in form.content.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
+    </div>
+    <div>
+        {{ form.image.label }}
+        {{ form.image }}
+        {% for error in form.image.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
+        <div id="imagePreviewContainer" style="display: none;">
+            <img id="imagePreview" src="" alt="Image preview" />
         </div>
-        <div>
-            {{ form.content.label }}
-            {{ form.content }}
-            {% for error in form.content.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.image.label }}
-            {{ form.image }}
-            {% for error in form.image.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        {{ form.submit }}
-    </form>
+    </div>
+    {{ form.submit }}
+</form>
+<a href="{{ url_for('admin.manage_challenges') }}">Back to Manage Challenges</a>
 
-    <a href="{{ url_for('admin.manage_challenges') }}">Back to Manage Challenges</a>
+<script>
+    CKEDITOR.replace('content', {
+        filebrowserUploadUrl: '{{ url_for("admin.upload") }}',
+        filebrowserImageUploadUrl: '{{ url_for("admin.upload") }}'
+    });
 
-    <script src="https://cdn.ckeditor.com/4.25.0-lts/standard/ckeditor.js"></script>
-    <script>
-        CKEDITOR.replace('content', {
-            filebrowserUploadUrl: '{{ url_for("admin.upload") }}',
-            filebrowserImageUploadUrl: '{{ url_for("admin.upload") }}'
-        });
-    </script>
+    document.getElementById('image').addEventListener('change', function(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+        
+        reader.onload = function(e) {
+            var img = document.getElementById('imagePreview');
+            img.src = e.target.result;
+            document.getElementById('imagePreviewContainer').style.display = 'block';
+        }
+        
+        reader.readAsDataURL(file);
+    });
+</script>
 {% endblock %}
