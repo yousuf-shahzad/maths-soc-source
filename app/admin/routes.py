@@ -113,9 +113,12 @@ def create_challenge():
 
 
 
-@bp.route('/static/uploads/challenges/<path:filename>')
-def uploaded_files(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+@bp.route('/static/uploads/<path:id>')
+def uploaded_files(id):
+    challenge = Challenge.query.get_or_404(id)
+    date_posted = challenge.date_posted.strftime('%Y-%m-%d')
+    filename = challenge.file_url
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], f'challenge_{date_posted}/{filename}')
 
 @bp.route('/admin/upload', methods=['POST', 'GET'])
 @login_required

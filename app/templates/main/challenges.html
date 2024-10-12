@@ -9,7 +9,7 @@
             <div>{{ challenge.content | safe | truncate(200)}}</div>
             {% if challenge.file_url %}
                 <div>
-                    <img src="{{ url_for('admin.uploaded_files', filename=challenge.file_url) }}" alt="Challenge Image" style="max-width: 100%; height: auto;">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="Challenge Image" style="max-width: 100%; height: auto;">
                 </div>
             {% endif %}
         </article>
