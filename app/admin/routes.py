@@ -168,6 +168,9 @@ def delete_challenge(challenge_id):
         return redirect(url_for('main.index'))
     
     challenge = Challenge.query.get_or_404(challenge_id)
+
+    filename = challenge.file_url
+    os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
     db.session.delete(challenge)
     db.session.commit()
     flash('Challenge deleted successfully.')
