@@ -109,12 +109,7 @@ def create_challenge():
     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
 
 @bp.route('/static/uploads/<path:filename>')
-@login_required
 def uploaded_files(filename):
-    if not current_user.is_admin:
-        flash('You do not have permission to access this page.')
-        return redirect(url_for('main.index'))
-    print("asdasd")
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @bp.route('/admin/upload', methods=['POST', 'GET'])
