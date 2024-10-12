@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
 
 class Challenge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    file_url = db.Column(db.String(255))
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -34,7 +35,6 @@ class Article(db.Model):
 
 class LeaderboardEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     score = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user = db.relationship('User', backref='leaderboard_entries')
