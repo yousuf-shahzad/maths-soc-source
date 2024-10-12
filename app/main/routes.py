@@ -24,6 +24,16 @@ def articles():
     articles = Article.query.filter_by(type='article').order_by(Article.date_posted.desc()).all()
     return render_template('main/articles.html', title='Articles', articles=articles)
 
+@bp.route('/newsletters')
+def newsletters():
+    newsletters = Article.query.filter_by(type='newsletter').order_by(Article.date_posted.desc()).all()
+    return render_template('main/newsletters.html', title='Newsletters', articles=newsletters)
+
+@bp.route('/newsletter/<int:id>')
+def newsletter(id):
+    article = Article.query.get_or_404(id)
+    return render_template('main/articles.html', title='Articles', articles=articles)
+
 @bp.route('/article/<int:id>')
 def article(id):
     article = Article.query.get_or_404(id)
