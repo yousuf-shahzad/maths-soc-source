@@ -7,9 +7,11 @@
             <h2><a href="{{ url_for('main.challenge', id=challenge.id) }}">{{ challenge.title }}</a></h2>
             <p>Posted on: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
             <div>{{ challenge.content | safe | truncate(200)}}</div>
-            <div>
-                <img src="{{ url_for('admin.uploaded_files', filename=challenge.file_url) }}" alt="Challenge Image" style="max-width: 100%; height: auto;">
-            </div>
+            {% if challenge.file_url %}
+                <div>
+                    <img src="{{ url_for('admin.uploaded_files', filename=challenge.file_url) }}" alt="Challenge Image" style="max-width: 100%; height: auto;">
+                </div>
+            {% endif %}
         </article>
     {% endfor %}
 {% endblock %}
