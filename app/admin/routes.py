@@ -111,8 +111,6 @@ def create_challenge():
 
     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
 
-
-
 @bp.route('/static/uploads/<path:id>')
 def uploaded_files(id):
     challenge = Challenge.query.get_or_404(id)

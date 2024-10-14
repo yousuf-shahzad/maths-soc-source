@@ -40,19 +40,19 @@ def register_admin():
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register Admin', form=form)
 
-# @bp.route('/register', methods=['GET', 'POST'])
-# def register():
-#     if current_user.is_authenticated:
-#         return redirect(url_for('main.index'))
-#     form = RegistrationForm()
-#     if form.validate_on_submit():
-#         user = User(username=form.username.data, email=form.email.data)
-#         user.set_password(form.password.data)
-#         db.session.add(user)
-#         db.session.commit()
-#         flash('Congratulations, you are now a registered user!')
-#         return redirect(url_for('auth.login'))
-#     return render_template('auth/register.html', title='Register', form=form)
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, year=form.year.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/register.html', title='Register', form=form)
 
 # WE DON'T SERVE THIS ROUTE ANYMORE BECAUSE WE HAVE ADMIN ROUTES NOW AND WE DON'T NEED USERS TO REGISTER, JUST ADMINS
 # LEAVING THIS HERE IN THE EVENTUALITY THAT WE WANT TO ALLOW USERS TO REGISTER AGAIN

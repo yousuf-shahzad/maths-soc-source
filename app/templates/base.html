@@ -18,6 +18,7 @@
                 <li><a href="{{ url_for('main.leaderboard') }}">Leaderboard</a></li>
                 {% if current_user.is_anonymous %}
                     <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    <li><a href="{{ url_for('auth.register') }}">Register</a></li>
                 {% else %}
                     {% if current_user.is_admin %}
                         <li><a href="{{ url_for('admin.admin_index') }}">Admin</a></li>
