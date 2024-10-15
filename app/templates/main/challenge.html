@@ -3,7 +3,7 @@
 {% block content %}
     <article>
         <h1>{{ challenge.title }}</h1>
-        <p>Posted on: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+        <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
         <div>{{ challenge.content | safe }}</div>
         {% if challenge.file_url %}
         <div>

@@ -160,10 +160,28 @@ def edit_challenge(challenge_id):
     if form.validate_on_submit():
         challenge.title = form.title.data
         challenge.content = form.content.data
+        
+        if form.image.data:
+            try:
+                challenge_folder = create_challenge_folder(challenge.date_posted)
+                filename = secure_filename(form.image.data.filename)
+                file_path = os.path.join(challenge_folder, filename)
+                form.image.data.save(file_path)
+                challenge.file_url = filename
+            except IOError as e:
+                current_app.logger.error(f"File save error: {str(e)}")
+                flash('Error saving the image file. Please try again.', 'error')
+                return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
+        
         db.session.commit()
         flash('Challenge updated successfully.')
         return redirect(url_for('admin.manage_challenges'))
     
+    # Pre-populate the form with existing data
+    form.title.data = challenge.title
+    form.content.data = challenge.content
+    post_date = challenge.date_posted.strftime('%Y-%m-%d')
+    form.file_url = f'challenge_{post_date}/{challenge.file_url}'  # Pass the existing image URL to the template
     return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
     
 @bp.route('/admin/challenges/delete/<int:challenge_id>')

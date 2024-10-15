@@ -7,12 +7,14 @@
             <th>User</th>
             <th>Score</th>
             <th>Last Updated</th>
+            <th>Year</th>
         </tr>
         {% for entry in entries %}
         <tr>
             <td>{{ entry.user.username }}</td>
             <td>{{ entry.score }}</td>
-            <td>{{ entry.last_updated.strftime('%Y-%m-%d') }}</td>
+            <td>{{ entry.last_updated.strftime('%d/%m/%Y') }}</td>
+            <td>{{ entry.user.year }}</td>
         </tr>
         {% endfor %}
     </table>

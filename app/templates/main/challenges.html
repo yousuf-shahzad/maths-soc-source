@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
     <h1>Math Challenges</h1>
     {% for challenge in challenges %}
         <article>
             <h2><a href="{{ url_for('main.challenge', id=challenge.id) }}">{{ challenge.title }}</a></h2>
-            <p>Posted on: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+            <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
             <div>{{ challenge.content | safe | truncate(200)}}</div>
             {% if challenge.file_url %}
                 <div>
