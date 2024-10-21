@@ -1,4 +1,5 @@
-from flask import render_template, flash, redirect, url_for, request
+import os
+from flask import abort, current_app, render_template, flash, redirect, send_from_directory, url_for, request
 from flask_login import login_required, current_user
 from app import db
 from app.main import bp
@@ -24,6 +25,13 @@ def articles():
     articles = Article.query.filter_by(type='article').order_by(Article.date_posted.desc()).all()
     return render_template('main/articles.html', title='Articles', articles=articles)
 
+@bp.route('/newsletters/<path:filename>')
+def serve_newsletter(filename):
+    return send_from_directory(
+        os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters'),
+        filename
+    )
+
 @bp.route('/newsletters')
 def newsletters():
     newsletters = Article.query.filter_by(type='newsletter').order_by(Article.date_posted.desc()).all()
@@ -32,7 +40,9 @@ def newsletters():
 @bp.route('/newsletter/<int:id>')
 def newsletter(id):
     article = Article.query.get_or_404(id)
-    return render_template('main/articles.html', title='Articles', articles=articles)
+    if article.type != 'newsletter':
+        abort(404)
+    return render_template('main/newsletter.html', article=article)
 
 @bp.route('/article/<int:id>')
 def article(id):

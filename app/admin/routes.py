@@ -33,16 +33,19 @@ def create_article():
             content=form.content.data,
             named_creator=form.author.data,
             user_id=current_user.id,
-            type=form.type.data
+            type=form.type.data,
+            date_posted = datetime.datetime.now()
         )
         
         if form.type.data == 'newsletter' and form.file.data:
             # Create newsletters directory if it doesn't exist
+            print(form.file.data)
             newsletter_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters')
             os.makedirs(newsletter_path, exist_ok=True)
             
             # Save PDF file
-            filename = secure_filename(f"newsletter_{article.date_posted.strftime('%Y_%m')}_{form.file.data.filename}")
+            checking_id = article.date_posted.strftime('%Y_%m')
+            filename = secure_filename(f"newsletter_{checking_id}_{form.file.data.filename}")
             file_path = os.path.join(newsletter_path, filename)
             form.file.data.save(file_path)
             article.file_url = filename
@@ -53,13 +56,6 @@ def create_article():
         return redirect(url_for('admin.manage_articles'))
     
     return render_template('admin/create_article.html', title='Create Article/Newsletter', form=form)
-
-@bp.route('/newsletters/<path:filename>')
-def serve_newsletter(filename):
-    return send_from_directory(
-        os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters'),
-        filename
-    )
 
 @bp.route('/admin/articles')
 @login_required

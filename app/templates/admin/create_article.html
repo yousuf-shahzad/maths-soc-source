@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Create New {{ form.type.data.capitalize() if form.type.data else 'Article/Newsletter' }}</h1>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <div>
             {{ form.title.label }}

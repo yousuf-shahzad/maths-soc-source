@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<article class="newsletter-detail">
+    <header>
+        <h1>{{ article.title }}</h1>
+        <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
+    </header>
+
+    <div class="newsletter-content">
+        {{ article.content | safe }}
+    </div>
+
+    {% if article.file_url %}
+    <section class="newsletter-pdf">
+        <h2>Newsletter PDF</h2>
+        <div class="pdf-viewer">
+            <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
+                    width="100%" height="600" frameborder="0"></iframe>
+        </div>
+        <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+           target="_blank" class="button">Download PDF</a>
+           <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+           target="_blank" class="button">View Full PDF</a>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}
