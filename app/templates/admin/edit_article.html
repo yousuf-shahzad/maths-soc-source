@@ -1,0 +1,82 @@
+{# templates/admin/edit_article.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Edit {{ article.type.capitalize() }}</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    
+    <div>
+        {{ form.title.label }}
+        {{ form.title }}
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <div>
+        {{ form.author.label }}
+        {{ form.author }}
+        {% for error in form.author.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <div>
+        {{ form.type.label }}
+        {{ form.type }}
+        {% for error in form.type.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <div>
+        {{ form.content.label }}
+        {{ form.content }}
+        {% for error in form.content.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+
+    <div id="fileUploadDiv">
+        {{ form.file.label }}
+        {{ form.file }}
+        {% for error in form.file.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+        {% if article.file_url %}
+            <div>
+                <p>Current file: {{ article.file_url }}</p>
+                <div class="pdf-preview">
+                    <iframe src="{{ url_for('admin.serve_newsletter', filename=article.file_url) }}"
+                            width="100%" height="300" frameborder="0"></iframe>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        {{ form.submit }}
+        <a href="{{ url_for('admin.manage_articles') }}" class="button">Cancel</a>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const fileDiv = document.getElementById('fileUploadDiv');
+        
+        function toggleFileUpload() {
+            if (typeSelect.value === 'newsletter') {
+                fileDiv.style.display = 'block';
+            } else {
+                fileDiv.style.display = 'none';
+            }
+        }
+        
+        typeSelect.addEventListener('change', toggleFileUpload);
+        toggleFileUpload(); // Initial state
+    });
+</script>
+{% endblock %}

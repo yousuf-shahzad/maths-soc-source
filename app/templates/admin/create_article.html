@@ -33,6 +33,13 @@
             {% endfor %}
         </div>
         <div>
+            {{ form.file.label }}
+            {{ form.file }}
+            {% for error in form.file.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div>
             {{ form.submit }}
         </div>
     </form>

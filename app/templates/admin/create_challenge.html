@@ -32,24 +32,4 @@
     {{ form.submit }}
 </form>
 <a href="{{ url_for('admin.manage_challenges') }}">Back to Manage Challenges</a>
-
-<script>
-    CKEDITOR.replace('content', {
-        filebrowserUploadUrl: '{{ url_for("admin.upload") }}',
-        filebrowserImageUploadUrl: '{{ url_for("admin.upload") }}'
-    });
-
-    document.getElementById('image').addEventListener('change', function(event) {
-        var file = event.target.files[0];
-        var reader = new FileReader();
-        
-        reader.onload = function(e) {
-            var img = document.getElementById('imagePreview');
-            img.src = e.target.result;
-            document.getElementById('imagePreviewContainer').style.display = 'block';
-        }
-        
-        reader.readAsDataURL(file);
-    });
-</script>
 {% endblock %}
