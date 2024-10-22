@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Create New {{ form.type.data.capitalize() if form.type.data else 'Article/Newsletter' }}</h1>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <div>
             {{ form.title.label }}
@@ -29,6 +29,13 @@
             {{ form.content.label }}
             {{ form.content }}
             {% for error in form.content.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.file.label }}
+            {{ form.file }}
+            {% for error in form.file.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </div>

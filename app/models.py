@@ -2,6 +2,8 @@ from app.database import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
+from flask import current_app
+import os
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,11 +29,18 @@ class Challenge(db.Model):
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
+    file_url = db.Column(db.String(255))  # This will store the PDF file path
     content = db.Column(db.Text, nullable=False)
     named_creator = db.Column(db.String(100), nullable=True)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     type = db.Column(db.String(20), default='article')  # 'article' or 'newsletter'
+
+    @property
+    def pdf_path(self):
+        if self.file_url and self.type == 'newsletter':
+            return os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters', self.file_url)
+        return None
 
 class LeaderboardEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)

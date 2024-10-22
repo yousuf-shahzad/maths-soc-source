@@ -1,6 +1,7 @@
 import os, datetime
 from werkzeug.utils import secure_filename
-from flask import render_template, flash, redirect, url_for, request, send_from_directory, current_app
+from io import BytesIO
+from flask import render_template, flash, redirect, url_for, request, send_from_directory, current_app, send_file
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
 from app import db
@@ -27,11 +28,28 @@ def create_article():
     
     form = ArticleForm()
     if form.validate_on_submit():
-        article = Article(title=form.title.data, 
-                          content=form.content.data, 
-                          named_creator=form.author.data,
-                          user_id=current_user.id, 
-                          type=form.type.data or 'article')
+        article = Article(
+            title=form.title.data,
+            content=form.content.data,
+            named_creator=form.author.data,
+            user_id=current_user.id,
+            type=form.type.data,
+            date_posted = datetime.datetime.now()
+        )
+        
+        if form.type.data == 'newsletter' and form.file.data:
+            # Create newsletters directory if it doesn't exist
+            print(form.file.data)
+            newsletter_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters')
+            os.makedirs(newsletter_path, exist_ok=True)
+            
+            # Save PDF file
+            checking_id = article.date_posted.strftime('%Y_%m')
+            filename = secure_filename(f"newsletter_{checking_id}_{form.file.data.filename}")
+            file_path = os.path.join(newsletter_path, filename)
+            form.file.data.save(file_path)
+            article.file_url = filename
+
         db.session.add(article)
         db.session.commit()
         flash(f'{form.type.data.capitalize()} created successfully.')
@@ -48,6 +66,58 @@ def manage_articles():
     articles = Article.query.order_by(Article.date_posted.desc()).all()
     return render_template('admin/manage_articles.html', title='Manage Articles and Newsletters', articles=articles)
 
+# In admin/routes.py
+
+@bp.route('/admin/articles/edit/<int:article_id>', methods=['GET', 'POST'])
+@login_required
+def edit_article(article_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    article = Article.query.get_or_404(article_id)
+    form = ArticleForm(obj=article)
+
+    if form.validate_on_submit():
+        article.title = form.title.data
+        article.content = form.content.data
+        article.named_creator = form.author.data
+        article.type = form.type.data
+        
+        if form.type.data == 'newsletter' and form.file.data:
+            # Create newsletters directory if it doesn't exist
+            newsletter_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters')
+            os.makedirs(newsletter_path, exist_ok=True)
+            
+            # Delete old file if it exists
+            if article.file_url:
+                old_file_path = os.path.join(newsletter_path, article.file_url)
+                try:
+                    os.remove(old_file_path)
+                except OSError:
+                    pass
+            
+            # Save new PDF file
+            filename = secure_filename(f"newsletter_{article.date_posted.strftime('%Y_%m')}_{form.file.data.filename}")
+            file_path = os.path.join(newsletter_path, filename)
+            form.file.data.save(file_path)
+            article.file_url = filename
+        
+        db.session.commit()
+        flash(f'{article.type.capitalize()} updated successfully.')
+        return redirect(url_for('admin.manage_articles'))
+    
+    # Pre-populate the form
+    form.title.data = article.title
+    form.content.data = article.content
+    form.author.data = article.named_creator
+    form.type.data = article.type
+    
+    return render_template('admin/edit_article.html', 
+                         title=f'Edit {article.type.capitalize()}', 
+                         form=form, 
+                         article=article)
+
 @bp.route('/admin/articles/delete/<int:article_id>')
 @login_required
 def delete_article(article_id):
@@ -56,6 +126,17 @@ def delete_article(article_id):
         return redirect(url_for('main.index'))
     
     article = Article.query.get_or_404(article_id)
+    
+    # Delete associated PDF file if it exists
+    if article.type == 'newsletter' and article.file_url:
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 
+                                'newsletters', 
+                                article.file_url)
+        try:
+            os.remove(file_path)
+        except OSError:
+            current_app.logger.warning(f"Could not delete file: {file_path}")
+    
     db.session.delete(article)
     db.session.commit()
     

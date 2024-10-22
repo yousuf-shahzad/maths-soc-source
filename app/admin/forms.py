@@ -15,5 +15,8 @@ class ArticleForm(FlaskForm):
     author = StringField('Author', validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField('Content', validators=[DataRequired()])
     type = SelectField('Type', choices=[('article', 'Article'), ('newsletter', 'Newsletter')], validators=[DataRequired()])
-    submit = SubmitField('Create')
+    file = FileField('PDF File', validators=[
+        FileAllowed(['pdf'], 'PDF files only!')
+    ])
+    submit = SubmitField('Submit')
 

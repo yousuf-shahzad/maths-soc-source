@@ -1,26 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="admin-dashboard">
     <h1>Manage Challenges</h1>
-    
-    <a href="{{ url_for('admin.create_challenge') }}">Create New Challenge</a>
+    <a href="{{ url_for('admin.create_challenge') }}" class="button">Create New Challenge</a>
 
-    <h2>Existing Challenges</h2>
-    <table>
-        <tr>
-            <th>Title</th>
-            <th>Date Posted</th>
-            <th>Actions</th>
-        </tr>
+    <div class="challenge-grid">
         {% for challenge in challenges %}
-        <tr>
-            <td><a href="{{ url_for('main.challenge', id=challenge.id) }}">{{ challenge.title }}</a></td>
-            <td>{{ challenge.date_posted.strftime('%Y-%m-%d') }}</td>
-            <td>
-                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">Edit</a>
-                <a href="{{ url_for('admin.delete_challenge', challenge_id=challenge.id) }}" onclick="return confirm('Are you sure you want to delete this challenge?');">Delete</a>
-            </td>
-        </tr>
+        <div class="challenge-card">
+            <h2>{{ challenge.title }}</h2>
+            <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+            
+            {% if challenge.file_url %}
+            <div class="image-preview">
+                <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+            </div>
+            {% endif %}
+            
+            <div class="challenge-actions">
+                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                   class="button">Edit</a>
+                <button class="button delete-button" 
+                        onclick="confirmDelete({{ challenge.id }})">
+                    Delete
+                </button>
+            </div>
+        </div>
         {% endfor %}
-    </table>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(challengeId) {
+        if (confirm("Are you sure you want to delete this challenge?")) {
+            window.location.href = `{{ url_for('admin.delete_challenge', challenge_id=0) }}`.replace('0', challengeId);
+        }
+    }
+</script>
 {% endblock %}
