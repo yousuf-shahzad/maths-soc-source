@@ -8,7 +8,17 @@ class ChallengeForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField('Content', validators=[DataRequired()])
     image = FileField('Image', validators=[FileAllowed(['jpg', 'png', 'gif'])])
+    key_stage = SelectField('Key Stage', 
+                          choices=[('ks3', 'Key Stage 3'), 
+                                 ('ks4', 'Key Stage 4'), 
+                                 ('ks5', 'Key Stage 5')],
+                          validators=[DataRequired()])
+    correct_answer = StringField('Correct Answer', validators=[DataRequired()])
     submit = SubmitField('Create Challenge')
+    
+class AnswerSubmissionForm(FlaskForm):
+    answer = StringField('Your Answer', validators=[DataRequired()])
+    submit = SubmitField('Submit Answer')
 
 class ArticleForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=1, max=100)])

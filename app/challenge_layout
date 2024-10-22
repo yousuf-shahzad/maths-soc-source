@@ -1,0 +1,5 @@
+# Maths Challenge Submission System
+
+- When creating challenge, they input correct answer to check against
+- Answer box for question - if answer correct, give 3 points and if first give extra 2 points
+- If first answer wrong, then allow 1 retry that would give only 2 points and 2 extra points if first

@@ -3,7 +3,7 @@
 {% block content %}
     <article>
         <h1>{{ article.title }}</h1>
-        <p>Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }}</p>
+        <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }}</p>
         <p>Author: {{ article.named_creator }}</p>
         <div>{{ article.content | safe }}</div>
     </article>

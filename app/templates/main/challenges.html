@@ -9,9 +9,9 @@
     <h1>Math Challenges</h1>
     {% for challenge in challenges %}
         <article>
-            <h2><a href="{{ url_for('main.challenge', id=challenge.id) }}">{{ challenge.title }}</a></h2>
-            <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
-            <div>{{ challenge.content | safe | truncate(200)}}</div>
+            <h2><a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}">{{ challenge.title }}</a></h2>
+            <p class="meta">Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
+            <div class="challenge-content"> {{challenge.content | safe | truncate(200)}}</div>
             {% if challenge.file_url %}
                 <div>
                     <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="Challenge Image" style="max-width: 100%; height: auto;">

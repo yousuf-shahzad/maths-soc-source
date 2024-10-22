@@ -20,11 +20,22 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 class Challenge(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    file_url = db.Column(db.String(255))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    file_url = db.Column(db.String(100))
+    key_stage = db.Column(db.String(3), nullable=False)  # 'ks3', 'ks4', or 'ks5'
+    correct_answer = db.Column(db.String(100), nullable=False)
+    submissions = db.relationship('AnswerSubmission', backref='challenge', lazy=True)
+
+class AnswerSubmission(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    answer = db.Column(db.String(100), nullable=False)
+    is_correct = db.Column(db.Boolean, nullable=True)
+    submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)

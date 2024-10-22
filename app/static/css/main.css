@@ -271,6 +271,18 @@ footer {
     margin-top: 15px;
 }
 
+.challenge-content {
+    white-space: pre-wrap;     
+    word-wrap: break-word;   
+    overflow-wrap: break-word; 
+}
+
+.meta {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+
 /*****************************************
  * Articles & Newsletters
  *****************************************/

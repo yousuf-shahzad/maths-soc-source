@@ -6,8 +6,8 @@ from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
 from app import db
 from app.admin import bp
-from app.models import Article, Challenge, User
-from app.admin.forms import ChallengeForm, ArticleForm
+from app.models import Article, Challenge, User, AnswerSubmission
+from app.admin.forms import ChallengeForm, ArticleForm, AnswerSubmissionForm
 
 @bp.route('/admin')
 @login_required
@@ -34,7 +34,7 @@ def create_article():
             named_creator=form.author.data,
             user_id=current_user.id,
             type=form.type.data,
-            date_posted = datetime.datetime.now()
+            date_posted = datetime.datetime.now(),
         )
         
         if form.type.data == 'newsletter' and form.file.data:
@@ -152,7 +152,50 @@ def create_challenge_folder(create_date):
     challenge_responses = os.path.join(challenge_path, 'responses/')
     os.makedirs(os.path.dirname(challenge_responses), exist_ok=True)
     return challenge_path
+
+# Modified route handler
+@bp.route('/challenges/<int:challenge_id>', methods=['GET', 'POST'])
+@login_required
+def view_challenge(challenge_id):
+    challenge = Challenge.query.get_or_404(challenge_id)
+    form = AnswerSubmissionForm()
     
+    if form.validate_on_submit():
+        submission = AnswerSubmission(
+            user_id=current_user.id,
+            challenge_id=challenge.id,
+            answer=form.answer.data
+        )
+        
+        try:
+            db.session.add(submission)
+            db.session.commit()
+            
+            is_correct = form.answer.data.lower().strip() == challenge.correct_answer.lower().strip()
+            flash(f'Your answer is {"correct" if is_correct else "incorrect"}!',
+                  'success' if is_correct else 'error')
+                  
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error: {str(e)}")
+            flash('Error submitting answer. Please try again.', 'error')
+        
+        return redirect(url_for('admin.view_challenge', challenge_id=challenge_id))
+    
+    # Get previous submissions for this user and challenge
+    previous_submission = AnswerSubmission.query.filter_by(
+        user_id=current_user.id,
+        challenge_id=challenge_id
+    ).first()
+    
+    if previous_submission:
+        form.answer.data = previous_submission.answer
+    
+    return render_template('admin/challenge.html', 
+                         title=challenge.title,
+                         challenge=challenge,
+                         form=form)
+
 @bp.route('/admin/challenges/create', methods=['GET', 'POST'])
 @login_required
 def create_challenge():
@@ -163,16 +206,19 @@ def create_challenge():
     form = ChallengeForm()
     if form.validate_on_submit():
         try:
-            challenge = Challenge(title=form.title.data, content=form.content.data, date_posted = datetime.datetime.now())
+            challenge = Challenge(
+                title=form.title.data,
+                content=form.content.data,
+                date_posted=datetime.datetime.now(),
+                key_stage=form.key_stage.data,
+                correct_answer=form.correct_answer.data
+            )
+            
             challenge_folder = create_challenge_folder(challenge.date_posted)
             if form.image.data:
                 try:
-
                     filename = secure_filename(form.image.data.filename)
                     file_path = os.path.join(challenge_folder, filename)
-                
-                    # os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
                     form.image.data.save(file_path)
                     challenge.file_url = filename
                 except IOError as e:
@@ -191,6 +237,49 @@ def create_challenge():
             flash('An error occurred while creating the challenge. Please try again.', 'error')
 
     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
+
+@bp.route('/admin/challenges/edit/<int:challenge_id>', methods=['GET', 'POST'])
+@login_required
+def edit_challenge(challenge_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    challenge = Challenge.query.get_or_404(challenge_id)
+    form = ChallengeForm(obj=challenge)
+
+    if form.validate_on_submit():
+        challenge.title = form.title.data
+        challenge.content = form.content.data
+        challenge.key_stage = form.key_stage.data
+        challenge.correct_answer = form.correct_answer.data
+        
+        if form.image.data:
+            try:
+                challenge_folder = create_challenge_folder(challenge.date_posted)
+                filename = secure_filename(form.image.data.filename)
+                file_path = os.path.join(challenge_folder, filename)
+                form.image.data.save(file_path)
+                challenge.file_url = filename
+            except IOError as e:
+                current_app.logger.error(f"File save error: {str(e)}")
+                flash('Error saving the image file. Please try again.', 'error')
+                return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
+        
+        db.session.commit()
+        flash('Challenge updated successfully.')
+        return redirect(url_for('admin.manage_challenges'))
+    
+    # Pre-populate the form
+    form.title.data = challenge.title
+    form.content.data = challenge.content
+    form.key_stage.data = challenge.key_stage
+    form.correct_answer.data = challenge.correct_answer
+    if challenge.file_url:
+        post_date = challenge.date_posted.strftime('%Y-%m-%d')
+        form.file_url = f'challenge_{post_date}/{challenge.file_url}'
+        
+    return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
 
 @bp.route('/static/uploads/<path:id>')
 def uploaded_files(id):
@@ -227,43 +316,6 @@ def manage_challenges():
         return redirect(url_for('main.index'))
     challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
     return render_template('admin/manage_challenges.html', title='Manage Challenges', challenges=challenges)
-
-@bp.route('/admin/challenges/edit/<int:challenge_id>', methods=['GET', 'POST'])
-@login_required
-def edit_challenge(challenge_id):
-    if not current_user.is_admin:
-        flash('You do not have permission to access this page.')
-        return redirect(url_for('main.index'))
-    
-    challenge = Challenge.query.get_or_404(challenge_id)
-    form = ChallengeForm(obj=challenge)
-
-    if form.validate_on_submit():
-        challenge.title = form.title.data
-        challenge.content = form.content.data
-        
-        if form.image.data:
-            try:
-                challenge_folder = create_challenge_folder(challenge.date_posted)
-                filename = secure_filename(form.image.data.filename)
-                file_path = os.path.join(challenge_folder, filename)
-                form.image.data.save(file_path)
-                challenge.file_url = filename
-            except IOError as e:
-                current_app.logger.error(f"File save error: {str(e)}")
-                flash('Error saving the image file. Please try again.', 'error')
-                return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
-        
-        db.session.commit()
-        flash('Challenge updated successfully.')
-        return redirect(url_for('admin.manage_challenges'))
-    
-    # Pre-populate the form with existing data
-    form.title.data = challenge.title
-    form.content.data = challenge.content
-    post_date = challenge.date_posted.strftime('%Y-%m-%d')
-    form.file_url = f'challenge_{post_date}/{challenge.file_url}'  # Pass the existing image URL to the template
-    return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
     
 @bp.route('/admin/challenges/delete/<int:challenge_id>')
 @login_required
@@ -285,6 +337,10 @@ def delete_challenge(challenge_id):
         os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], f'challenge_{date_posted}/responses/'))
     except:
         pass
+
+    submissions = AnswerSubmission.query.filter_by(challenge_id=challenge_id).all()
+    for submission in submissions:
+        db.session.delete(submission)
 
     db.session.delete(challenge)
     db.session.commit()

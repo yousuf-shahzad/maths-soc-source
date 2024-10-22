@@ -5,7 +5,7 @@
     {% for article in articles %}
         <article>
             <h2><a href="{{ url_for('main.article', id=article.id) }}">{{ article.title }}</a></h2>
-            <p>Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
+            <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
             <div>{{ article.content | truncate(200) | safe }}</div>
         </article>
     {% endfor %}

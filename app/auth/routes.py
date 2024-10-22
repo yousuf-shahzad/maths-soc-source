@@ -32,11 +32,11 @@ def register_admin():
         return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data, is_admin=True)
+        user = User(username=form.username.data, year=form.year.data, is_admin=True)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Congratulations, you have registered an admin user!')
+        flash('Congratulations, you are now a registered user!')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register Admin', form=form)
 
