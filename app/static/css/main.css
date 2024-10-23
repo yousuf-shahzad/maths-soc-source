@@ -282,6 +282,82 @@ footer {
     font-style: italic;
 }
 
+.challenge-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.challenge-title {
+    margin-bottom: 1rem;
+}
+
+.challenge-meta {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.challenge-content {
+    margin-bottom: 2rem;
+}
+
+.responsive-image {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+}
+
+.answer-submission {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+}
+
+.alert {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.mathquill-editor-container {
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.5rem;
+    background: white;
+}
 
 /*****************************************
  * Articles & Newsletters

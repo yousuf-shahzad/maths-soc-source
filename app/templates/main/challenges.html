@@ -11,6 +11,7 @@
         <article>
             <h2><a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}">{{ challenge.title }}</a></h2>
             <p class="meta">Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
+            <p class="meta">Key Stage: {{ challenge.key_stage.upper() }}</p>
             <div class="challenge-content"> {{challenge.content | safe | truncate(200)}}</div>
             {% if challenge.file_url %}
                 <div>

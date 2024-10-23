@@ -38,11 +38,36 @@
     </div>
     <div>
         {{ form.correct_answer.label }}
-        {{ form.correct_answer }}
+        <div class="mathquill-editor-container">
+            <p><span id="correct_answer"></span></p>
+        </div>
+        <input type="hidden" id="correct_answer_input" name="correct_answer">
         {% for error in form.correct_answer.errors %}
             <span style="color: red;">{{ error }}</span>
         {% endfor %}
-    {{ form.submit }}
+    </div>
+    
+    <div>
+        {{ form.submit }}
+    </div>
 </form>
+
 <a href="{{ url_for('admin.manage_challenges') }}">Back to Manage Challenges</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+<script>
+    var mathFieldSpan = document.getElementById('correct_answer');
+    var hiddenInput = document.getElementById('correct_answer_input');  // Get hidden input field
+ 
+    var MQ = MathQuill.getInterface(2); // Get MathQuill interface
+    var mathField = MQ.MathField(mathFieldSpan, {
+        spaceBehavesLikeTab: true, // configurable
+        handlers: {
+            edit: function() { // Event handler for when the MathQuill field is edited
+                hiddenInput.value = mathField.latex(); // Update hidden input with LaTeX value
+            }
+        }
+    });
+</script>
 {% endblock %}
