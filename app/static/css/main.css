@@ -232,6 +232,14 @@ footer {
  * Challenges
  *****************************************/
  
+ .success {
+    background-color: green;
+ }
+
+ .error {
+    background-color: red;
+ }
+
  .challenge-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -349,14 +357,6 @@ footer {
 .alert-error {
     background-color: #f8d7da;
     color: #721c24;
-}
-
-.mathquill-editor-container {
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 0.5rem;
-    background: white;
 }
 
 /*****************************************

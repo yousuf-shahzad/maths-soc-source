@@ -1,93 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
-    <style>
-        .mathquill-editor-container {
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 0.5rem;
-            background: white;
-        }
-    </style>
-
-    <article class="challenge-container">
-        <h1 class="challenge-title">{{ challenge.title }}</h1>
-        <div class="meta">
-            <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
-            <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
-        </div>
-        
-        <div class="challenge-content">
-            {{ challenge.content | safe }}
-        </div>
-        
-        {% if challenge.file_url %}
-        <div class="challenge-image">
-            <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" 
-                 alt="Challenge Image" 
-                 class="responsive-image">
-        </div>
-        {% endif %}
-        
-        <div class="answer-submission">
-            <h2>Submit Your Answer</h2>
-            <form method="POST" class="answer-form">
-                {{ form.hidden_tag() }}
+    <main>
+        <div class="challenge-container">
+            <article>
+                <h1 class="challenge-title">{{ challenge.title }}</h1>
                 
-                <div class="form-group">
-                    {{ form.answer.label(class="form-label") }}
-                    <div class="mathquill-editor-container">
-                        <span id="math-input"></span>
-                    </div>
-                    {{ form.answer(class="form-control", id='answer', style="display: none;") }}
-                    {% for error in form.answer.errors %}
-                        <span class="error-message">{{ error }}</span>
-                    {% endfor %}
+                <div class="challenge-meta">
+                    <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
+                    <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
                 </div>
-                {{ form.submit(class="btn btn-primary") }}
-            </form>
+                
+                <div class="challenge-content">
+                    {{ challenge.content | safe }}
+                </div>
+                
+                {% if challenge.file_url %}
+                <div class="challenge-image">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" 
+                         alt="Challenge Image" 
+                         class="responsive-image">
+                </div>
+                {% endif %}
+                
+                <div class="answer-submission">
+                    <h2>Submit Your Answer</h2>
+                    <form method="POST" class="answer-form">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.answer.label(class="form-label") }}
+                            <div class="pdf-viewer">
+                                <math-field 
+                                    id="formula"
+                                    class="form-control"
+                                    style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                            </div>
+                            {{ form.answer(id='hidden-answer', style="display: none;") }}
+                            {% for error in form.answer.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="challenge-actions">
+                            {{ form.submit(class="button") }}
+                        </div>
+                    </form>
+                </div>
+            </article>
         </div>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </article>
+    </main>
 
+    <script defer src="//unpkg.com/mathlive"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Get MathQuill interface
-            var MQ = MathQuill.getInterface(2);
-            
-            // Get the elements
-            var mathInput = document.getElementById('math-input');
-            var hiddenInput = document.getElementById('answer');
-            
-            // Create MathQuill instance
-            var mathField = MQ.MathField(mathInput, {
-                spaceBehavesLikeTab: true,
-                handlers: {
-                    edit: function() {
-                        // Update hidden input with LaTeX value
-                        hiddenInput.value = mathField.latex();
-                    }
-                }
-            });
+            const formulaField = document.getElementById('formula');
+            const hiddenInput = document.getElementById('hidden-answer');
 
-            // If there's an existing value in the hidden input, set it in MathQuill
+            // Initialize MathLive field with any existing value
             if (hiddenInput.value) {
-                mathField.latex(hiddenInput.value);
+                formulaField.value = hiddenInput.value;
             }
 
-            // Handle form submission
+            // Update hidden input whenever math field changes
+            formulaField.addEventListener('input', (evt) => {
+                hiddenInput.value = formulaField.value;
+            });
+
+            // Ensure hidden input is updated before form submission
             document.querySelector('.answer-form').addEventListener('submit', function(e) {
-                // Ensure the hidden input is updated with the latest latex before submission
-                hiddenInput.value = mathField.latex();
+                hiddenInput.value = formulaField.value;
             });
         });
     </script>

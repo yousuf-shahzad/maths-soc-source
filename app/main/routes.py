@@ -44,12 +44,12 @@ def challenge(challenge_id):
         )
         
         try:
-            db.session.add(submission)
-            db.session.commit()
-            
             is_correct = form.answer.data.lower().strip() == challenge.correct_answer.lower().strip()
             print(submission.answer)
             submission.is_correct = is_correct
+            db.session.add(submission)
+            db.session.commit()
+            
             flash(f'Your answer is {"correct" if is_correct else "incorrect"}!',
                   'success' if is_correct else 'error')
                   

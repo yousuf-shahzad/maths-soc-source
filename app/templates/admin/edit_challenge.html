@@ -1,93 +1,117 @@
+{# edit_challenge.html #}
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Edit Challenge</h1>
-    
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.title.label }}
-            {{ form.title }}
-            {% for error in form.title.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.content.label }}
-            {{ form.content }}
-            {% for error in form.content.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.image.label }}
-            {{ form.image }}
-            {% for error in form.image.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-            <div id="imagePreviewContainer">
-                {% if form.file_url %}
-                    <img id="currentImage" src="{{ url_for('static', filename='uploads./' + form.file_url) }}" alt="Current image" />
-                    <p>Current image: {{ form.file_url.split("/")[1] }}</p>
-                {% else %}
-                    <p>No image currently uploaded.</p>
-                {% endif %}
+<main>
+    <div class="challenge-container">
+        <h1>Edit Challenge</h1>
+        
+        <form method="POST" enctype="multipart/form-data" class="form-group">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control") }}
+                {% for error in form.title.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
             </div>
-            <div id="newImagePreview" style="display: none;">
-                <img id="imagePreview" src="#" alt="New image preview" />
+            
+            <div class="form-group">
+                {{ form.content.label(class="form-label") }}
+                {{ form.content(class="form-control") }}
+                {% for error in form.content.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
             </div>
-        </div>
-        <div>
-            {{ form.key_stage.label }}
-            {{ form.key_stage }}
-            {% for error in form.key_stage.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            {{ form.correct_answer.label }}
-            <div class="mathquill-editor-container">
-                <p><span id="correct_answer"></span></p>
+            
+            <div class="form-group">
+                {{ form.key_stage.label(class="form-label") }}
+                {{ form.key_stage(class="form-control") }}
+                {% for error in form.key_stage.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
             </div>
-            <input type="hidden" id="correct_answer_input" name="correct_answer">
-            {% for error in form.correct_answer.errors %}
-                <span style="color: red;">{{ error }}</span>
-            {% endfor %}
-        </div>
-        {{ form.submit }}
-    </form>
+            
+            <div class="form-group">
+                {{ form.image.label(class="form-label") }}
+                {{ form.image(class="form-control") }}
+                {% for error in form.image.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+                
+                <div id="currentImageContainer" class="pdf-preview">
+                    {% if form.file_url %}
+                        <img src="{{ url_for('static', filename='uploads/' + form.file_url) }}" 
+                             alt="Current image"
+                             class="responsive-image" />
+                        <h3>Current image: {{ form.file_url.split("/")[1] }}</h3>
+                    {% else %}
+                        <h3>No image currently uploaded.</h3>
+                    {% endif %}
+                </div>
+                
+                <div id="newImagePreview" class="pdf-preview" style="display: none;">
+                    <img id="imagePreview" class="responsive-image" src="#" alt="New image preview" />
+                    <h3>New image preview</h3>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                {{ form.correct_answer.label(class="form-label") }}
+                <div class="pdf-viewer">
+                    <math-field 
+                        id="correct_answer"
+                        class="form-control"
+                        style="font-size: 1.5rem; padding: 1rem;">{{ form.correct_answer.data or '' }}</math-field>
+                </div>
+                {{ form.correct_answer(id='correct_answer_input', style="display: none;") }}
+                {% for error in form.correct_answer.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="challenge-actions">
+                {{ form.submit(class="button") }}
+                <a href="{{ url_for('admin.manage_challenges') }}" class="button">Back to Manage Challenges</a>
+            </div>
+        </form>
+    </div>
+</main>
 
-    <a href="{{ url_for('admin.manage_challenges') }}">Back to Manage Challenges</a>
-
-    <script>
-        document.getElementById('image').addEventListener('change', function(event) {
-            var file = event.target.files[0];
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = document.getElementById('imagePreview');
-                img.src = e.target.result;
-                document.getElementById('newImagePreview').style.display = 'block';
-                document.getElementById('imagePreviewContainer').style.display = 'none';
-            }
+<script defer src="//unpkg.com/mathlive"></script>
+<script>
+    // Image preview handling
+    document.getElementById('image').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        const currentContainer = document.getElementById('currentImageContainer');
+        const newPreview = document.getElementById('newImagePreview');
+        const preview = document.getElementById('imagePreview');
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            currentContainer.style.display = 'none';
+            newPreview.style.display = 'block';
+        }
+        
+        if (file) {
             reader.readAsDataURL(file);
-        });
-    </script>
+        }
+    });
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script>
-        var mathFieldSpan = document.getElementById('correct_answer');
-        var hiddenInput = document.getElementById('correct_answer_input');  // Get hidden input field
-    
-        var MQ = MathQuill.getInterface(2); // Get MathQuill interface
-        var mathField = MQ.MathField(mathFieldSpan, {
-            spaceBehavesLikeTab: true, // configurable
-            handlers: {
-                edit: function() { // Event handler for when the MathQuill field is edited
-                    hiddenInput.value = mathField.latex(); // Update hidden input with LaTeX value
-                }
-            }
-        });
-    </script>
-    
+    // MathLive field handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const formulaField = document.getElementById('correct_answer');
+        const hiddenInput = document.getElementById('correct_answer_input');
 
+        if (hiddenInput.value) {
+            formulaField.value = hiddenInput.value;
+        }
+
+        formulaField.addEventListener('input', (evt) => {
+            hiddenInput.value = formulaField.value;
+        });
+    });
+</script>
 {% endblock %}

@@ -8,5 +8,5 @@ class Config:
     CKEDITOR_SERVE_LOCAL = True
     CKEDITOR_HEIGHT = 400
     
-    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app', 'static', 'uploads')
+    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app', 'static', 'uploads', "challenges")
     CKEDITOR_FILE_UPLOADER = 'upload'
