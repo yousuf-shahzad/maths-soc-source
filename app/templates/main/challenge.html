@@ -5,6 +5,13 @@
             <article>
                 <h1 class="challenge-title">{{ challenge.title }}</h1>
                 
+                {% if already_solved %}
+                    <div class="alert alert-success">
+                        <h4>🎉 Challenge Completed! 🎉</h4>
+                        <p>You have successfully solved this challenge!</p>
+                    </div>
+                {% endif %}
+                
                 <div class="challenge-meta">
                     <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
                     <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
@@ -22,30 +29,70 @@
                 </div>
                 {% endif %}
                 
-                <div class="answer-submission">
-                    <h2>Submit Your Answer</h2>
-                    <form method="POST" class="answer-form">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="form-group">
-                            {{ form.answer.label(class="form-label") }}
-                            <div class="pdf-viewer">
-                                <math-field 
-                                    id="formula"
-                                    class="form-control"
-                                    style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                {% if not already_solved and attempts_remaining > 0 %}
+                    <div class="meta">
+                        <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
+                    </div>
+                    
+                    <div class="answer-submission">
+                        <h2>Submit Your Answer</h2>
+                        <form method="POST" class="answer-form">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="form-group">
+                                {{ form.answer.label(class="form-label") }}
+                                <div class="pdf-viewer">
+                                    <math-field 
+                                        id="formula"
+                                        class="form-control"
+                                        style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                </div>
+                                {{ form.answer(id='hidden-answer', style="display: none;") }}
+                                {% for error in form.answer.errors %}
+                                    <span class="error-message">{{ error }}</span>
+                                {% endfor %}
                             </div>
-                            {{ form.answer(id='hidden-answer', style="display: none;") }}
-                            {% for error in form.answer.errors %}
-                                <span class="error-message">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="challenge-actions">
-                            {{ form.submit(class="button") }}
-                        </div>
-                    </form>
-                </div>
+                            
+                            <div class="challenge-actions">
+                                {{ form.submit(class="button") }}
+                            </div>
+                        </form>
+                    </div>
+                {% elif not already_solved %}
+                    <div class="alert alert-error">
+                        <p>You have used all your attempts for this challenge.</p>
+                    </div>
+                {% endif %}
+                
+                {% if submissions %}
+                    <div class="submissions-history">
+                        <h3>Your Submission History</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Attempt</th>
+                                    <th>Answer</th>
+                                    <th>Result</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for submission in submissions %}
+                                <tr class="{{ 'success' if submission.is_correct else 'error' }}">
+                                    <td>{{ loop.revindex }}</td>
+                                    <td>
+                                        <math-field 
+                                            readonly 
+                                            class="form-control submission-math">{{ submission.answer }}</math-field>
+                                    </td>
+                                    <td>{{ "✓ Correct" if submission.is_correct else "✗ Incorrect" }}</td>
+                                    <td>{{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
             </article>
         </div>
     </main>
@@ -67,9 +114,38 @@
             });
 
             // Ensure hidden input is updated before form submission
-            document.querySelector('.answer-form').addEventListener('submit', function(e) {
+            document.querySelector('.answer-form')?.addEventListener('submit', function(e) {
                 hiddenInput.value = formulaField.value;
             });
         });
     </script>
+
+    <style>
+        /* Only adding styles that don't exist in the base CSS */
+        .submissions-history {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #ddd;
+        }
+        
+        .submission-math {
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+        }
+        
+        /* Override table styles for submission history */
+        .submissions-history table td {
+            vertical-align: middle;
+        }
+        
+        .submissions-history .success {
+            background-color: #d4edda;
+        }
+        
+        .submissions-history .error {
+            background-color: #f8d7da;
+        }
+    </style>
 {% endblock %}

@@ -482,6 +482,59 @@ footer {
 }
 
 /*****************************************
+ * Pagination
+ *****************************************/
+ .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    list-style-type: none;
+}
+
+.pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.5rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.pagination-link:hover {
+    background-color: #f4f4f4;
+    text-decoration: none;
+}
+
+.pagination-link.active {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: #fff;
+}
+
+.pagination-link.disabled {
+    color: #999;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    color: #666;
+}
+
+/*****************************************
  * Responsive Design
  *****************************************/
 @media (max-width: 768px) {
