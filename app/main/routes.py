@@ -31,6 +31,16 @@ def serve_newsletter(filename):
         filename
     )
 
+def update_leaderboard(user_id, score):
+    entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
+    if entry is None:
+        entry = LeaderboardEntry(user_id=user_id, score=score)
+        db.session.add(entry)
+    else:
+        entry.score += score
+    entry.last_updated = datetime.datetime.utcnow()
+    db.session.commit()
+
 def check_user_submission_count(user_id, challenge_id):
     return AnswerSubmission.query.filter_by(user_id=user_id, challenge_id=challenge_id).count()
 
@@ -105,6 +115,13 @@ def challenge(challenge_id):
                 flash(f'Correct answer for {answer_box.box_label}!', 'success')
                 if all_correct:
                     flash('Congratulations! You have completed all parts of this challenge! 🎉', 'success')
+                    if challenge.first_correct_submission is None:
+                        challenge.first_correct_submission = datetime.datetime.utcnow()
+                        update_leaderboard(current_user.id, 3)
+                        db.session.commit()
+                    else:
+                        update_leaderboard(current_user.id, 1)
+
             else:
                 remaining = 2 - submission_count
                 flash(f'Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.', 'error')

@@ -1,0 +1,35 @@
+{# admin/leaderboard.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Leaderboard</h1>
+    <div class="challenge-actions">
+        <a href="{{ url_for('admin.create_leaderboard_entry') }}" class="button">Add Entry</a>
+        <a href="{{ url_for('admin.reset_leaderboard') }}" class="button button-danger" 
+           onclick="return confirm('Are you sure you want to reset the entire leaderboard?');">Reset Leaderboard</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Points</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in leaderboard %}
+            <tr>
+                <td>{{ entry.user.username }}</td>
+                <td>{{ entry.points }}</td>
+                <td>
+                    <a href="{{ url_for('admin.edit_leaderboard_entry', entry_id=entry.id) }}" class="button">Edit</a>
+                    <a href="{{ url_for('admin.delete_leaderboard_entry', entry_id=entry.id) }}" 
+                       class="button delete-button"
+                       onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

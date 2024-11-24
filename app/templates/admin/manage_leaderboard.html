@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Manage Leaderboard</h1>
+    
+    <div class="admin-dashboard">
+        <ul>
+            <li>
+                <a href="{{ url_for('admin.leaderboard') }}">
+                    <h3>View Leaderboard</h3>
+                    <p>See current rankings and points</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.create_leaderboard_entry') }}">
+                    <h3>Add New Entry</h3>
+                    <p>Create a new leaderboard entry</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.manage_users') }}">
+                    <h3>Manage Users</h3>
+                    <p>Edit user details and points</p>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="leaderboard-sections">
+        <section class="recent-entries">
+            <h2>Recent Entries</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Points</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in leaderboard[:5] %}
+                    <tr>
+                        <td>{{ entry.user.username }}</td>
+                        <td>{{ entry.points }}</td>
+                        <td>{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="challenge-actions">
+                            <a href="{{ url_for('admin.edit_leaderboard_entry', entry_id=entry.id) }}" 
+                               class="button">Edit</a>
+                            <a href="{{ url_for('admin.delete_leaderboard_entry', entry_id=entry.id) }}" 
+                               class="button delete-button"
+                               onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="challenge-actions">
+                <a href="{{ url_for('admin.reset_leaderboard') }}" 
+                   class="button button-danger"
+                   onclick="return confirm('Are you sure you want to reset the entire leaderboard? This action cannot be undone.');">
+                    Reset Leaderboard
+                </a>
+                {% if export_enabled %}
+                <a href="{{ url_for('admin.export_leaderboard') }}" class="button button-secondary">
+                    Export Leaderboard
+                </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="leaderboard-stats">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>Total Participants</h3>
+                    <p>{{ total_participants }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Highest Score</h3>
+                    <p>{{ highest_score }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Average Score</h3>
+                    <p>{{ average_score|round(1) }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

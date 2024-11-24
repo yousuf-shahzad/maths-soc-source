@@ -4,7 +4,10 @@ from wtforms import StringField, SubmitField, BooleanField, SelectField, FileFie
 from wtforms.validators import DataRequired, Length
 from flask_ckeditor import CKEditorField
 
-
+class LeaderboardEntryForm(FlaskForm):
+    user_id = StringField('User ID', validators=[DataRequired()])
+    score = StringField('Score', validators=[DataRequired()])
+    submit = SubmitField('Submit')
 class AnswerBoxForm(FlaskForm):
     class Meta:
         # Disable CSRF for nested form

@@ -1,9 +1,11 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user
 from app import db
+import string, random
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
+from better_profanity import profanity
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -32,13 +34,20 @@ def register_admin():
         return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, year=form.year.data, is_admin=True)
+        if form.year.data == '7' or form.year.data == '8' or form.year.data == '9':
+            key_stage = 'KS3'
+        elif form.year.data == '10' or form.year.data == '11':
+            key_stage = 'KS4'
+        elif form.year.data == '12' or form.year.data == '13':
+            key_stage = 'KS5'
+        print(key_stage)
+        user = User(username=form.username.data, year=form.year.data, key_stage=key_stage, is_admin=True)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('auth.login'))
-    return render_template('auth/register.html', title='Register Admin', form=form)
+    return render_template('auth/register.html', title='Register', form=form)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -46,7 +55,17 @@ def register():
         return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, year=form.year.data)
+        if form.year.data == '7' or form.year.data == '8':
+            key_stage = 'KS3'
+        elif form.year.data == '10' or form.year.data == '11' or form.year.data == '9':
+            key_stage = 'KS4'
+        elif form.year.data == '12' or form.year.data == '13':
+            key_stage = 'KS5'
+        print(key_stage)
+        if profanity.contains_profanity(form.username.data):
+            flash('Please use a different username.')
+            return redirect(url_for('auth.register'))
+        user = User(username=form.username.data, year=form.year.data, key_stage=key_stage)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()

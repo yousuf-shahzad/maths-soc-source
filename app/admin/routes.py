@@ -4,10 +4,12 @@ from io import BytesIO
 from flask import render_template, flash, redirect, url_for, request, send_from_directory, current_app, send_file
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
+import string, random
 from app import db
 from app.admin import bp
-from app.models import Article, Challenge, User, AnswerSubmission, ChallengeAnswerBox
-from app.admin.forms import ChallengeForm, ArticleForm, AnswerSubmissionForm
+from app.models import Article, Challenge, User, AnswerSubmission, ChallengeAnswerBox, LeaderboardEntry
+from app.admin.forms import ChallengeForm, ArticleForm, AnswerSubmissionForm, LeaderboardEntryForm
+from app.auth.forms import RegistrationForm
 
 @bp.route('/admin')
 @login_required
@@ -435,15 +437,189 @@ def manage_users():
     users = User.query.all()
     return render_template('admin/manage_users.html', title='Manage Users', users=users)
 
+def generate_random_password():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+
+@bp.route('/admin/manage_users/reset_password/<int:user_id>')
+@login_required
+def reset_password(user_id: int):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get(user_id)
+    random_password = generate_random_password()
+    user.set_password(random_password)
+    db.session.commit()
+    flash(f'Password for {user.username} has been reset to: {random_password}')
+    return redirect(url_for('admin.manage_users'))
+
 @bp.route('/admin/manage_users/delete/<int:user_id>')
 @login_required
 def delete_user(user_id):
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
-    
+    if current_user.id == user_id:
+        flash('You cannot delete your own account.')
+        return redirect(url_for('admin.manage_users'))
     user = User.query.get_or_404(user_id)
+    LeaderboardEntry.query.filter_by(user_id=user.id).delete()
+    Article.query.filter_by(user_id=user.id).delete()
     db.session.delete(user)
-    db.session.commit()
-    flash('User deleted successfully.')
+    try:
+        db.session.commit()
+        flash('User and associated data deleted successfully.')
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while deleting the user.')
+        current_app.logger.error(f'Error deleting user: {str(e)}')
+    
     return redirect(url_for('admin.manage_users'))
+
+@bp.route('/admin/manage_users/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    form = RegistrationForm(obj=user)
+    if form.validate_on_submit():
+        if form.year.data == '7' or form.year.data == '8' or form.year.data == '9':
+            key_stage = 'KS3'
+        elif form.year.data == '10' or form.year.data == '11':
+            key_stage = 'KS4'
+        elif form.year.data == '12' or form.year.data == '13':
+            key_stage = 'KS5'
+        user.username = form.username.data
+        user.year = form.year.data
+        user.key_stage = key_stage
+        db.session.commit()
+        flash('User updated successfully.')
+        return redirect(url_for('admin.manage_users'))
+    return render_template('admin/edit_user.html', title='Edit User', form=form, user=user)
+
+@bp.route('/admin/manage_users/create', methods=['GET', 'POST'])
+@login_required
+def create_user():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        if form.year.data == '7' or form.year.data == '8' or form.year.data == '9':
+            key_stage = 'KS3'
+        elif form.year.data == '10' or form.year.data == '11':
+            key_stage = 'KS4'
+        elif form.year.data == '12' or form.year.data == '13':
+            key_stage = 'KS5'
+        user = User(username=form.username.data, year=form.year.data, key_stage=key_stage, is_admin=form.is_admin.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('User created successfully.')
+        return redirect(url_for('admin.manage_users'))
+    return render_template('admin/create_user.html', title='Create User', form=form)
+
+# ! LEADERBOARD ROUTES
+
+@bp.route('/admin/manage_leaderboard')
+@login_required
+def manage_leaderboard():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    # Get all leaderboard entries ordered by points
+    leaderboard = LeaderboardEntry.query.join(User).order_by(LeaderboardEntry.score.desc()).all()
+    
+    # Calculate statistics
+    total_participants = LeaderboardEntry.query.count()
+    highest_score = db.session.query(db.func.max(LeaderboardEntry.score)).scalar() or 0
+    average_score = db.session.query(db.func.avg(LeaderboardEntry.score)).scalar() or 0
+    
+    # Get settings from app config
+    export_enabled = current_app.config.get('ENABLE_LEADERBOARD_EXPORT', False)
+    
+    return render_template('admin/manage_leaderboard.html',
+                         title='Manage Leaderboard',
+                         leaderboard=leaderboard,
+                         total_participants=total_participants,
+                         highest_score=highest_score,
+                         average_score=average_score,
+                         export_enabled=export_enabled)
+
+@bp.route('/admin/leaderboard')
+@login_required
+def leaderboard():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    leaderboard = LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).all()
+    return render_template('admin/leaderboard.html', title='Leaderboard', leaderboard=leaderboard)
+
+@bp.route('/admin/leaderboard/reset')
+@login_required
+def reset_leaderboard():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    LeaderboardEntry.query.delete()
+    db.session.commit()
+    flash('Leaderboard reset successfully.')
+    return redirect(url_for('admin.leaderboard'))
+
+@bp.route('/admin/leaderboard/delete/<int:entry_id>')
+@login_required
+def delete_leaderboard_entry(entry_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    entry = LeaderboardEntry.query.get_or_404(entry_id)
+    db.session.delete(entry)
+    db.session.commit()
+    flash('Leaderboard entry deleted successfully.')
+    return redirect(url_for('admin.leaderboard'))
+
+@bp.route('/admin/leaderboard/edit/<int:entry_id>', methods
+=['GET', 'POST'])
+@login_required
+def edit_leaderboard_entry(entry_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    entry = LeaderboardEntry.query.get_or_404(entry_id)
+    form = LeaderboardEntryForm(obj=entry)
+    if form.validate_on_submit():
+        entry.user_id = form.user_id.data
+        entry.score = form.score.data
+        db.session.commit()
+        flash('Leaderboard entry updated successfully.')
+        return redirect(url_for('admin.leaderboard'))
+    return render_template('admin/edit_leaderboard_entry.html', title='Edit Leaderboard Entry', form=form, entry=entry)
+
+@bp.route('/admin/leaderboard/create', methods=['GET', 'POST'])
+@login_required
+def create_leaderboard_entry():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    form = LeaderboardEntryForm()
+    if form.validate_on_submit():
+        entry = LeaderboardEntry(user_id=form.user_id.data, score=form.score.data)
+        db.session.add(entry)
+        db.session.commit()
+        flash('Leaderboard entry created successfully.')
+        return redirect(url_for('admin.leaderboard'))
+    return render_template('admin/create_leaderboard_entry.html', title='Create Leaderboard Entry', form=form)
+
+# ! ERROR HANDLERS
+
+@bp.errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
+
+@bp.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('errors/500.html'), 500
