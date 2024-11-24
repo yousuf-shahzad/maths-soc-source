@@ -5,7 +5,7 @@
             <article>
                 <h1 class="challenge-title">{{ challenge.title }}</h1>
                 
-                {% if already_solved %}
+                {% if all_correct %}
                     <div class="alert alert-success">
                         <h4>🎉 Challenge Completed! 🎉</h4>
                         <p>You have successfully solved this challenge!</p>
@@ -29,70 +29,82 @@
                 </div>
                 {% endif %}
                 
-                {% if not already_solved and attempts_remaining > 0 %}
-                    <div class="meta">
-                        <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
-                    </div>
+                {% for answer_box in challenge.answer_boxes %}
+                    {% set form = forms[answer_box.id] %}
+                    {% set box_submissions = submissions[answer_box.id] %}
+                    {% set has_correct = box_submissions and box_submissions[0].is_correct %}
+                    {% set submission_count = box_submissions|length %}
+                    {% set attempts_remaining = 3 - submission_count %}
                     
-                    <div class="answer-submission">
-                        <h2>Submit Your Answer</h2>
-                        <form method="POST" class="answer-form">
-                            {{ form.hidden_tag() }}
-                            
-                            <div class="form-group">
-                                {{ form.answer.label(class="form-label") }}
-                                <div class="pdf-viewer">
-                                    <math-field 
-                                        id="formula"
-                                        class="form-control"
-                                        style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
-                                </div>
-                                {{ form.answer(id='hidden-answer', style="display: none;") }}
-                                {% for error in form.answer.errors %}
-                                    <span class="error-message">{{ error }}</span>
-                                {% endfor %}
+                    <div class="answer-box" id="answer-box-{{ answer_box.id }}">
+                        <h3>{{ answer_box.box_label }}</h3>
+                        
+                        {% if not has_correct and attempts_remaining > 0 %}
+                            <div class="meta">
+                                <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
                             </div>
                             
-                            <div class="challenge-actions">
-                                {{ form.submit(class="button") }}
+                            <div class="answer-submission">
+                                <form method="POST" class="answer-form">
+                                    {{ form.hidden_tag() }}
+                                    <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
+                                    
+                                    <div class="form-group">
+                                        {{ form.answer.label(class="form-label") }}
+                                        <div class="pdf-viewer">
+                                            <math-field 
+                                                id="formula-{{ answer_box.id }}"
+                                                class="form-control"
+                                                style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                        </div>
+                                        {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
+                                        {% for error in form.answer.errors %}
+                                            <span class="error-message">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="challenge-actions">
+                                        {{ form.submit(class="button") }}
+                                    </div>
+                                </form>
                             </div>
-                        </form>
+                        {% elif not has_correct %}
+                            <div class="alert alert-error">
+                                <p>You have used all your attempts for this part.</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if box_submissions %}
+                            <div class="submissions-history">
+                                <h4>Your Submission History for {{ answer_box.box_label }}</h4>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Attempt</th>
+                                            <th>Answer</th>
+                                            <th>Result</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for submission in box_submissions %}
+                                        <tr class="{{ 'success' if submission.is_correct else 'error' }}">
+                                            <td>{{ loop.revindex }}</td>
+                                            <td>
+                                                <math-field 
+                                                    readonly 
+                                                    class="form-control submission-math">{{ submission.answer }}</math-field>
+                                            </td>
+                                            <td>{{ "✓ Correct" if submission.is_correct else "✗ Incorrect" }}</td>
+                                            <td>{{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
                     </div>
-                {% elif not already_solved %}
-                    <div class="alert alert-error">
-                        <p>You have used all your attempts for this challenge.</p>
-                    </div>
-                {% endif %}
-                
-                {% if submissions %}
-                    <div class="submissions-history">
-                        <h3>Your Submission History</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Attempt</th>
-                                    <th>Answer</th>
-                                    <th>Result</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for submission in submissions %}
-                                <tr class="{{ 'success' if submission.is_correct else 'error' }}">
-                                    <td>{{ loop.revindex }}</td>
-                                    <td>
-                                        <math-field 
-                                            readonly 
-                                            class="form-control submission-math">{{ submission.answer }}</math-field>
-                                    </td>
-                                    <td>{{ "✓ Correct" if submission.is_correct else "✗ Incorrect" }}</td>
-                                    <td>{{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
+                {% endfor %}
             </article>
         </div>
     </main>
@@ -100,28 +112,44 @@
     <script defer src="//unpkg.com/mathlive"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const formulaField = document.getElementById('formula');
-            const hiddenInput = document.getElementById('hidden-answer');
+            // Handle all math fields in the document
+            document.querySelectorAll('math-field').forEach(formulaField => {
+                if (!formulaField.id.startsWith('formula-')) return;
+                
+                const boxId = formulaField.id.replace('formula-', '');
+                const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
 
-            // Initialize MathLive field with any existing value
-            if (hiddenInput.value) {
-                formulaField.value = hiddenInput.value;
-            }
+                // Initialize MathLive field with any existing value
+                if (hiddenInput.value) {
+                    formulaField.value = hiddenInput.value;
+                }
 
-            // Update hidden input whenever math field changes
-            formulaField.addEventListener('input', (evt) => {
-                hiddenInput.value = formulaField.value;
+                // Update hidden input whenever math field changes
+                formulaField.addEventListener('input', (evt) => {
+                    hiddenInput.value = formulaField.value;
+                });
             });
 
-            // Ensure hidden input is updated before form submission
-            document.querySelector('.answer-form')?.addEventListener('submit', function(e) {
-                hiddenInput.value = formulaField.value;
+            // Update hidden inputs before form submission
+            document.querySelectorAll('.answer-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const boxId = this.querySelector('[name="answer_box_id"]').value;
+                    const formulaField = document.getElementById(`formula-${boxId}`);
+                    const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+                    hiddenInput.value = formulaField.value;
+                });
             });
         });
     </script>
 
     <style>
-        /* Only adding styles that don't exist in the base CSS */
+        .answer-box {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
         .submissions-history {
             margin-top: 2rem;
             padding-top: 2rem;
@@ -135,7 +163,6 @@
             border: none;
         }
         
-        /* Override table styles for submission history */
         .submissions-history table td {
             vertical-align: middle;
         }
