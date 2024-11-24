@@ -1,0 +1,8 @@
+{# errors/500.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Internal Server Error</h1>
+    <p>An unexpected error has occurred. Please try again later.</p>
+    <a href="{{ url_for('main.index') }}" class="button">Return to Home</a>
+</div>

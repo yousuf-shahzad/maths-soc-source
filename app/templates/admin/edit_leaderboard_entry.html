@@ -1,0 +1,27 @@
+
+{# admin/edit_leaderboard_entry.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Edit Leaderboard Entry</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="user_id">User ID</label>
+            {{ form.user_id(class="form-control") }}
+            {% for error in form.user_id.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="score">score</label>
+            {{ form.score(class="form-control") }}
+            {% for error in form.score.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <input type="submit" value="Update Entry" class="button">
+        <a href="{{ url_for('admin.leaderboard') }}" class="button button-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

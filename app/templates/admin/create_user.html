@@ -1,0 +1,34 @@
+
+{# admin/create_user.html #}
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Create New User</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="username">Username</label>
+            {{ form.username(class="form-control") }}
+            {% for error in form.username.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            {{ form.password(class="form-control") }}
+            {% for error in form.password.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="year">Year</label>
+            {{ form.year(class="form-control") }}
+            {% for error in form.year.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <input type="submit" value="Create User" class="button">
+        <a href="{{ url_for('admin.manage_users') }}" class="button button-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Manage Leaderboard</h1>
+    
+    <div class="admin-dashboard">
+        <ul>
+            <li>
+                <a href="{{ url_for('admin.leaderboard') }}">
+                    <h3>View Leaderboard</h3>
+                    <p>See current rankings and points</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.create_leaderboard_entry') }}">
+                    <h3>Add New Entry</h3>
+                    <p>Create a new leaderboard entry</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.manage_users') }}">
+                    <h3>Manage Users</h3>
+                    <p>Edit user details and points</p>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="leaderboard-sections">
+        <section class="recent-entries">
+            <h2>Recent Entries</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Points</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in leaderboard[:5] %}
+                    <tr>
+                        <td>{{ entry.user.username }}</td>
+                        <td>{{ entry.points }}</td>
+                        <td>{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="challenge-actions">
+                            <a href="{{ url_for('admin.edit_leaderboard_entry', entry_id=entry.id) }}" 
+                               class="button">Edit</a>
+                            <a href="{{ url_for('admin.delete_leaderboard_entry', entry_id=entry.id) }}" 
+                               class="button delete-button"
+                               onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="challenge-actions">
+                <a href="{{ url_for('admin.reset_leaderboard') }}" 
+                   class="button button-danger"
+                   onclick="return confirm('Are you sure you want to reset the entire leaderboard? This action cannot be undone.');">
+                    Reset Leaderboard
+                </a>
+                {% if export_enabled %}
+                <a href="{{ url_for('admin.export_leaderboard') }}" class="button button-secondary">
+                    Export Leaderboard
+                </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="leaderboard-stats">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>Total Participants</h3>
+                    <p>{{ total_participants }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Highest Score</h3>
+                    <p>{{ highest_score }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Average Score</h3>
+                    <p>{{ average_score|round(1) }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stats-card {
+        background-color: #fff;
+        padding: 1rem;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .stats-card h3 {
+        color: #2c3e50;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-card p {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #3498db;
+    }
+
+    .leaderboard-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .leaderboard-sections section {
+        background-color: #fff;
+        padding: 1.5rem;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .leaderboard-sections h2 {
+        color: #2c3e50;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #3498db;
+    }
+
+    .recent-entries {
+        margin-top: 2rem;
+    }
+
+    .quick-actions {
+        margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

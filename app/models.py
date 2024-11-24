@@ -11,7 +11,11 @@ class User(UserMixin, db.Model):
     year = db.Column(db.Integer)
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
-    articles = db.relationship('Article', backref='author', lazy='dynamic')
+    key_stage = db.Column(db.String(3), nullable=False)
+    submissions = db.relationship('AnswerSubmission', backref='user', lazy=True,
+                                cascade='all, delete-orphan')
+    articles = db.relationship('Article', backref='author', lazy='dynamic',
+                             cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -28,6 +32,7 @@ class Challenge(db.Model):
     key_stage = db.Column(db.String(3), nullable=False)
     answer_boxes = db.relationship('ChallengeAnswerBox', backref='challenge', lazy=True, cascade='all, delete-orphan')
     submissions = db.relationship('AnswerSubmission', backref='challenge', lazy=True)
+    first_correct_submission = db.Column(db.DateTime)
 
 class ChallengeAnswerBox(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -68,3 +73,4 @@ class LeaderboardEntry(db.Model):
     score = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user = db.relationship('User', backref='leaderboard_entries')
+    # position = db.Column(db.Integer, nullable=True)
