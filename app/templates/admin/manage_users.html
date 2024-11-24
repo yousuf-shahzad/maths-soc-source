@@ -11,6 +11,7 @@
         <thead>
             <tr>
                 <th>Username</th>
+                <th>ID</th>
                 <th>Year</th>
                 <th>Key Stage</th>
                 <th>Status</th>
@@ -21,6 +22,7 @@
             {% for user in users %}
             <tr>
                 <td>{{ user.username }}</td>
+                <td>{{ user.id }}</td>
                 <td>{{ user.year }}</td>
                 <td>{{ user.key_stage }}</td>
                 <td>
