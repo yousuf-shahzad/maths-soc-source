@@ -595,14 +595,14 @@ def delete_challenge(challenge_id):
         challenge_id: int ID of challenge to delete
     """
     challenge = Challenge.query.get_or_404(challenge_id)
+    chall_posted = challenge.date_posted.strftime('%Y-%m-%d')
 
     try:
         # Delete challenge file if exists
         if challenge.file_url:
-            date_posted = challenge.date_posted.strftime('%Y-%m-%d')
             file_path = os.path.join(
                 current_app.config['UPLOAD_FOLDER'],
-                f'challenge_{date_posted}',
+                f'challenge_{chall_posted}',
                 challenge.file_url
             )
             try:
@@ -613,12 +613,16 @@ def delete_challenge(challenge_id):
         # Delete challenge folder if exists
         folder_path = os.path.join(
             current_app.config['UPLOAD_FOLDER'],
-            f'challenge_{date_posted}'
+            f'challenge_{chall_posted}'
         )
         try:
-            os.rmdir(folder_path)
-        except OSError:
-            pass
+            if os.path.exists(folder_path):
+                if not os.listdir(folder_path):  # Only remove if empty
+                    os.rmdir(folder_path)
+                else:
+                    current_app.logger.warning(f"Folder not empty, skipping deletion: {folder_path}")
+        except OSError as e:
+            current_app.logger.warning(f"Could not delete folder: {folder_path} - {str(e)}")
 
         # Delete all submissions
         AnswerSubmission.query.filter_by(challenge_id=challenge_id).delete()
@@ -830,13 +834,15 @@ def manage_leaderboard():
             ).scalar() or 0
         }
         
-        export_enabled = current_app.config.get('ENABLE_LEADERBOARD_EXPORT', False)
+        export_enabled = current_app.config.get('ENABLE_LEADERBOARD_EXPORT', True)
         
         return render_template(
             'admin/manage_leaderboard.html',
             title='Manage Leaderboard',
             leaderboard=leaderboard,
-            stats=stats,
+            total_participants=stats['total_participants'],
+            highest_score=stats['highest_score'],
+            average_score=stats['average_score'],
             export_enabled=export_enabled
         )
         
@@ -844,6 +850,41 @@ def manage_leaderboard():
         current_app.logger.error(f"Error loading leaderboard: {str(e)}")
         flash('Error loading leaderboard data.')
         return redirect(url_for('admin.admin_index'))
+
+@bp.route('/admin/leaderboard/export')
+@login_required
+@admin_required
+def export_leaderboard():
+    """
+    Exports leaderboard data to CSV file
+    """
+    try:
+        # Get sorted leaderboard entries
+        leaderboard = LeaderboardEntry.query.join(User).order_by(
+            LeaderboardEntry.score.desc()
+        ).all()
+        
+        # Create CSV data
+        csv_data = 'User ID,Username,Score,Last Updated\n'
+        for entry in leaderboard:
+            csv_data += f'{entry.user_id},{entry.user.username},{entry.score},{entry.last_updated}\n'
+        
+        # Create file
+        file = BytesIO()
+        file.write(csv_data.encode())
+        file.seek(0)
+        
+        return send_file(
+            file,
+            as_attachment=True,
+            attachment_filename='leaderboard_export.csv',
+            mimetype='text/csv'
+        )
+        
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error exporting leaderboard: {str(e)}")
+        flash('Error exporting leaderboard data.')
+        return redirect(url_for('admin.manage_leaderboard'))
 
 @bp.route('/admin/leaderboard/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
@@ -893,6 +934,48 @@ def create_leaderboard_entry():
         flash('Leaderboard entry created successfully.')
         return redirect(url_for('admin.leaderboard'))
     return render_template('admin/create_leaderboard_entry.html', title='Create Leaderboard Entry', form=form)
+
+@bp.route('/admin/leaderboard/delete/<int:entry_id>')
+@login_required
+@admin_required
+def delete_leaderboard_entry(entry_id):
+    """
+    Deletes a leaderboard entry
+    
+    Args:
+        entry_id: int ID of entry to delete
+    """
+    entry = LeaderboardEntry.query.get_or_404(entry_id)
+    try:
+        db.session.delete(entry)
+        db.session.commit()
+        flash('Leaderboard entry deleted successfully.')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting entry: {str(e)}")
+        flash('Error deleting leaderboard entry.')
+    return redirect(url_for('admin.manage_leaderboard'))
+
+@bp.route('/admin/leaderboard/reset')
+@login_required
+@admin_required
+def reset_leaderboard():
+    """
+    Resets the leaderboard to empty
+    
+    Notes:
+    - Does not delete user accounts
+    - Does not delete challenge submissions
+    """
+    try:
+        LeaderboardEntry.query.delete()
+        db.session.commit()
+        flash('Leaderboard reset successfully.')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error resetting leaderboard: {str(e)}")
+        flash('Error resetting leaderboard.')
+    return redirect(url_for('admin.manage_leaderboard'))
 
 # ! ERROR HANDLERS
 

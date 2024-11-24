@@ -21,12 +21,12 @@
         <tbody>
             {% for user in users %}
             <tr>
-                <td>{{ user.username }}</td>
-                <td>{{ user.id }}</td>
-                <td>{{ user.year }}</td>
-                <td>{{ user.key_stage }}</td>
-                <td>
-                    <span class="{% if user.is_admin %}success{% endif %}">
+                <td data-label="Username">{{ user.username }}</td>
+                <td data-label="ID">{{ user.id }}</td>
+                <td data-label="Year">{{ user.year }}</td>
+                <td data-label="Key Stage">{{ user.key_stage }}</td>
+                <td data-label="Status">
+                    <span class="status-indicator {% if user.is_admin %}success{% endif %}">
                         {{ 'Admin' if user.is_admin else 'User' }}
                     </span>
                 </td>
