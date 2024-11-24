@@ -1,6 +1,5 @@
 {# create_challenge.html #}
 {% extends "base.html" %}
-
 {% block content %}
 <main>
     <div class="challenge-container">
@@ -39,23 +38,41 @@
                 {% for error in form.image.errors %}
                     <span class="error-message">{{ error }}</span>
                 {% endfor %}
-                <div id="imagePreviewContainer" class="pdf-preview">
-                    <img id="imagePreview" class="responsive-image" src="" alt="Image preview" />
+                <div id="imagePreviewContainer" class="pdf-preview" style="display: none;">
+                    <img id="imagePreview" class="responsive-image" src="#" alt="Image preview" />
                 </div>
             </div>
             
-            <div class="form-group">
-                {{ form.correct_answer.label(class="form-label") }}
-                <div class="pdf-viewer">
-                    <math-field 
-                        id="correct_answer"
-                        class="form-control"
-                        style="font-size: 1.5rem; padding: 1rem;">{{ form.correct_answer.data or '' }}</math-field>
+            <div class="answer-boxes-container">
+                <h2>Answer Boxes</h2>
+                <div id="answer-boxes">
+                    {% for box in form.answer_boxes %}
+                    <div class="answer-box form-group">
+                        <h3>Answer Box {{ loop.index }}</h3>
+                        {{ box.box_label.label(class="form-label") }}
+                        {{ box.box_label(class="form-control") }}
+                        
+                        <div class="math-field-container">
+                            {{ box.correct_answer.label(class="form-label") }}
+                            <div class="pdf-viewer">
+                                <math-field 
+                                    id="math_field_{{ loop.index0 }}"
+                                    class="form-control"
+                                    style="font-size: 1.5rem; padding: 1rem;">{{ box.correct_answer.data or '' }}</math-field>
+                            </div>
+                            {{ box.correct_answer(id='answer_input_' ~ loop.index0, style="display: none;") }}
+                        </div>
+                        
+                        {{ box.order.label(class="form-label") }}
+                        {{ box.order(class="form-control") }}
+                        
+                        {% if loop.index > 1 %}
+                        <button type="button" class="remove-box button button-danger">Remove Box</button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                 </div>
-                {{ form.correct_answer(id='correct_answer_input', style="display: none;") }}
-                {% for error in form.correct_answer.errors %}
-                    <span class="error-message">{{ error }}</span>
-                {% endfor %}
+                <button type="button" id="add-box" class="button">Add Answer Box</button>
             </div>
             
             <div class="challenge-actions">
@@ -85,18 +102,117 @@
         }
     });
 
-    // MathLive field handling
     document.addEventListener('DOMContentLoaded', function() {
-        const formulaField = document.getElementById('correct_answer');
-        const hiddenInput = document.getElementById('correct_answer_input');
+    const container = document.getElementById('answer-boxes');
+    const addButton = document.getElementById('add-box');
+    let boxCount = container.children.length;
 
-        if (hiddenInput.value) {
-            formulaField.value = hiddenInput.value;
+    // Create template for new answer boxes
+    function createAnswerBoxTemplate(index) {
+        return `
+            <div class="answer-box form-group">
+                <h3>Answer Box ${index}</h3>
+                <label class="form-label" for="answer_boxes-${index-1}-box_label">Box Label</label>
+                <input class="form-control" id="answer_boxes-${index-1}-box_label" name="answer_boxes-${index-1}-box_label" type="text">
+                
+                <div class="math-field-container">
+                    <label class="form-label" for="answer_boxes-${index-1}-correct_answer">Correct Answer</label>
+                    <div class="pdf-viewer">
+                        <math-field 
+                            id="math_field_${index-1}"
+                            class="form-control"
+                            style="font-size: 1.5rem; padding: 1rem;"></math-field>
+                    </div>
+                    <input type="text" id="answer_input_${index-1}" name="answer_boxes-${index-1}-correct_answer" style="display: none;">
+                </div>
+                
+                <label class="form-label" for="answer_boxes-${index-1}-order">Order</label>
+                <input class="form-control" id="answer_boxes-${index-1}-order" name="answer_boxes-${index-1}-order" type="text">
+                
+                ${index > 1 ? '<button type="button" class="remove-box button button-danger">Remove Box</button>' : ''}
+            </div>
+        `;
+    }
+
+    // Initialize MathLive field
+    function initMathField(element) {
+        const mathField = element.querySelector('math-field');
+        const hiddenInput = element.querySelector('input[type="text"][style*="display: none"]');
+        
+        if (mathField && hiddenInput) {
+            mathField.addEventListener('input', (evt) => {
+                hiddenInput.value = mathField.value;
+            });
+            
+            if (hiddenInput.value) {
+                mathField.value = hiddenInput.value;
+            }
         }
+    }
 
-        formulaField.addEventListener('input', (evt) => {
-            hiddenInput.value = formulaField.value;
-        });
+    // Initialize existing math fields
+    document.querySelectorAll('.answer-box').forEach(initMathField);
+
+    // Add new answer box
+    addButton.addEventListener('click', function() {
+        boxCount++;
+        const newBoxHTML = createAnswerBoxTemplate(boxCount);
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newBoxHTML;
+        const newBox = tempContainer.firstElementChild;
+        
+        container.appendChild(newBox);
+        initMathField(newBox);
     });
+
+    // Remove answer box
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-box')) {
+            e.target.closest('.answer-box').remove();
+            // Update box numbers
+            container.querySelectorAll('.answer-box h3').forEach((header, index) => {
+                header.textContent = `Answer Box ${index + 1}`;
+            });
+            boxCount--;
+            
+            // Update IDs and names for remaining boxes
+            container.querySelectorAll('.answer-box').forEach((box, index) => {
+                box.querySelector('h3').textContent = `Answer Box ${index + 1}`;
+                
+                // Update input fields
+                box.querySelectorAll('[id]').forEach(element => {
+                    element.id = element.id.replace(/\d+/, index);
+                });
+                box.querySelectorAll('[name]').forEach(element => {
+                    element.name = element.name.replace(/\d+/, index);
+                });
+            });
+        }
+    });
+});
 </script>
+
+<style>
+    .answer-boxes-container {
+        margin-top: 2rem;
+        border-top: 1px solid #ddd;
+        padding-top: 2rem;
+    }
+    
+    .answer-box {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+    
+    .button-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .button-danger:hover {
+        background-color: #c82333;
+    }
+</style>
 {% endblock %}

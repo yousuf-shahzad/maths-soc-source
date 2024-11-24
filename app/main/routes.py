@@ -4,8 +4,8 @@ from flask_login import login_required, current_user
 import datetime
 from app import db
 from app.main import bp
-from app.models import Challenge, Article, LeaderboardEntry, AnswerSubmission
-from app.admin.forms import AnswerSubmissionForm
+from app.models import Challenge, Article, LeaderboardEntry, AnswerSubmission, ChallengeAnswerBox
+from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
 
 @bp.route('/')
 @bp.route('/index')
@@ -45,74 +45,78 @@ def has_correct_submission(user_id, challenge_id):
 @login_required
 def challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
-    form = AnswerSubmissionForm()
+    forms = {}
+    submissions = {}
+    all_correct = False
     
-    # Check if user has already solved this challenge
-    already_solved = has_correct_submission(current_user.id, challenge_id)
-    
-    # Check submission count before processing form
-    submission_count = check_user_submission_count(current_user.id, challenge_id)
-    if submission_count >= 3 and not already_solved:
-        flash('You have reached the maximum number of attempts (3) for this challenge.', 'error')
-        return render_template('main/challenge.html',
-                             title=challenge.title,
-                             challenge=challenge,
-                             form=form,
-                             attempts_remaining=0,
-                             already_solved=already_solved)
-    
-    if form.validate_on_submit():
-        submission = AnswerSubmission(
-            user_id=current_user.id,
-            challenge_id=challenge.id,
-            answer=form.answer.data,
-            submitted_at=datetime.datetime.utcnow()
-        )
+    # Create a form for each answer box
+    for answer_box in challenge.answer_boxes:
+        form = AnswerSubmissionForm()
+        forms[answer_box.id] = form
         
-        try:
-            is_correct = form.answer.data.lower().strip() == challenge.correct_answer.lower().strip()
-            submission.is_correct = is_correct
+        # Get existing submissions for this box
+        box_submissions = AnswerSubmission.query.filter_by(
+            user_id=current_user.id,
+            challenge_id=challenge_id,
+            answer_box_id=answer_box.id
+        ).order_by(AnswerSubmission.submitted_at.desc()).all()
+        
+        submissions[answer_box.id] = box_submissions
+    
+    if request.method == 'POST':
+        box_id = int(request.form.get('answer_box_id'))
+        form = forms[box_id]
+        
+        if form.validate_on_submit():
+            submission_count = AnswerSubmission.query.filter_by(
+                user_id=current_user.id,
+                challenge_id=challenge_id,
+                answer_box_id=box_id
+            ).count()
+            
+            if submission_count >= 3:
+                flash(f'You have reached the maximum attempts for this part.', 'error')
+                return redirect(url_for('main.challenge', challenge_id=challenge_id))
+            
+            answer_box = ChallengeAnswerBox.query.get(box_id)
+            submission = AnswerSubmission(
+                user_id=current_user.id,
+                challenge_id=challenge_id,
+                answer_box_id=box_id,
+                answer=form.answer.data,
+                is_correct=form.answer.data.lower().strip() == answer_box.correct_answer.lower().strip()
+            )
+            
             db.session.add(submission)
             db.session.commit()
             
-            # Update submission count after successful submission
-            new_submission_count = check_user_submission_count(current_user.id, challenge_id)
-            attempts_remaining = 3 - new_submission_count
+            # Check if all boxes have correct answers
+            all_correct = all(
+                AnswerSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge_id,
+                    answer_box_id=box.id,
+                    is_correct=True
+                ).first() is not None
+                for box in challenge.answer_boxes
+            )
             
-            if is_correct:
-                message = 'Congratulations! Your answer is correct! You have completed this challenge! 🎉'
+            if submission.is_correct:
+                flash(f'Correct answer for {answer_box.box_label}!', 'success')
+                if all_correct:
+                    flash('Congratulations! You have completed all parts of this challenge! 🎉', 'success')
             else:
-                message = 'Your answer is incorrect.'
-                if attempts_remaining > 0:
-                    message += f' You have {attempts_remaining} attempts remaining.'
-                else:
-                    message += ' This was your last attempt.'
-                
-            flash(message, 'success' if is_correct else 'error')
-                  
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            current_app.logger.error(f"Database error: {str(e)}")
-            flash('Error submitting answer. Please try again.', 'error')
-        
-        return redirect(url_for('main.challenge', challenge_id=challenge_id))
+                remaining = 2 - submission_count
+                flash(f'Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.', 'error')
+            
+            return redirect(url_for('main.challenge', challenge_id=challenge_id))
     
-    # Calculate attempts remaining for display
-    attempts_remaining = 3 - submission_count
-    
-    # Get user's submissions for this challenge
-    submissions = AnswerSubmission.query.filter_by(
-        user_id=current_user.id,
-        challenge_id=challenge_id
-    ).order_by(AnswerSubmission.submitted_at.desc()).all()
-    
-    return render_template('main/challenge.html', 
-                         title=challenge.title,
+    return render_template('main/challenge.html',
                          challenge=challenge,
-                         form=form,
-                         attempts_remaining=attempts_remaining,
-                         already_solved=already_solved,
-                         submissions=submissions)
+                         forms=forms,
+                         submissions=submissions,
+                         attempts_remaining=3,
+                         all_correct=all_correct)
 
 @bp.route('/newsletters')
 def newsletters():

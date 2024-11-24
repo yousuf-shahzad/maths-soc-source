@@ -1,4 +1,4 @@
-{# edit_challenge.html #}
+{# admin/edit_challenge.html #}
 {% extends "base.html" %}
 
 {% block content %}
@@ -6,7 +6,8 @@
     <div class="challenge-container">
         <h1>Edit Challenge</h1>
         
-        <form method="POST" enctype="multipart/form-data" class="form-group">
+        <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=request.view_args.challenge_id) }}" 
+              enctype="multipart/form-data" class="form-group">
             {{ form.hidden_tag() }}
             
             <div class="form-group">
@@ -42,10 +43,10 @@
                 
                 <div id="currentImageContainer" class="pdf-preview">
                     {% if form.file_url %}
-                        <img src="{{ url_for('static', filename='uploads/' + form.file_url) }}" 
+                        <img src="{{ url_for('static', filename=form.file_url) }}" 
                              alt="Current image"
                              class="responsive-image" />
-                        <h3>Current image: {{ form.file_url.split("/")[1] }}</h3>
+                        <h3>Current image: {{ form.file_url.split('/')[-1] }}</h3>
                     {% else %}
                         <h3>No image currently uploaded.</h3>
                     {% endif %}
@@ -58,22 +59,53 @@
             </div>
             
             <div class="form-group">
-                {{ form.correct_answer.label(class="form-label") }}
-                <div class="pdf-viewer">
-                    <math-field 
-                        id="correct_answer"
-                        class="form-control"
-                        style="font-size: 1.5rem; padding: 1rem;">{{ form.correct_answer.data or '' }}</math-field>
+                <h2>Answer Boxes</h3>
+                <div id="answer-boxes-container">
+                    {% for box in form.answer_boxes %}
+                        <div class="answer-box-group">
+                            {{ box.hidden_tag() }}
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    {{ box.box_label.label(class="form-label") }}
+                                    {{ box.box_label(class="form-control") }}
+                                    {% for error in box.box_label.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ box.correct_answer.label(class="form-label") }}
+                                    <div class="math-field-container">
+                                        <math-field 
+                                            class="form-control math-field"
+                                            style="font-size: 1.5rem; padding: 1rem;">{{ box.correct_answer.data or '' }}</math-field>
+                                        {{ box.correct_answer(class="hidden-math-input", style="display: none;") }}
+                                    </div>
+                                    {% for error in box.correct_answer.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ box.order.label(class="form-label") }}
+                                    {{ box.order(class="form-control") }}
+                                    {% for error in box.order.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <button type="button" class="remove-box-btn button-danger">Remove</button>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-                {{ form.correct_answer(id='correct_answer_input', style="display: none;") }}
-                {% for error in form.correct_answer.errors %}
-                    <span class="error-message">{{ error }}</span>
-                {% endfor %}
+                <button type="button" id="add-answer-box" class="button-secondary">Add Answer Box</button>
             </div>
             
             <div class="challenge-actions">
                 {{ form.submit(class="button") }}
-                <a href="{{ url_for('admin.manage_challenges') }}" class="button">Back to Manage Challenges</a>
+                <a href="{{ url_for('admin.manage_challenges') }}" class="button button-secondary">Back to Manage Challenges</a>
             </div>
         </form>
     </div>
@@ -100,18 +132,100 @@
         }
     });
 
-    // MathLive field handling
+    // MathLive fields handling
     document.addEventListener('DOMContentLoaded', function() {
-        const formulaField = document.getElementById('correct_answer');
-        const hiddenInput = document.getElementById('correct_answer_input');
-
-        if (hiddenInput.value) {
-            formulaField.value = hiddenInput.value;
-        }
-
-        formulaField.addEventListener('input', (evt) => {
-            hiddenInput.value = formulaField.value;
+        initializeMathFields();
+        
+        // Add answer box button handling
+        document.getElementById('add-answer-box').addEventListener('click', function() {
+            const container = document.getElementById('answer-boxes-container');
+            const boxCount = container.children.length;
+            
+            // Clone the first answer box
+            const newBox = container.children[0].cloneNode(true);
+            
+            // Clear the values
+            newBox.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+            newBox.querySelector('math-field').value = '';
+            
+            // Update the indices
+            updateFormIndices(newBox, boxCount);
+            
+            container.appendChild(newBox);
+            initializeMathFields();
+            
+            // Add remove button handler
+            addRemoveButtonHandler(newBox.querySelector('.remove-box-btn'));
         });
+        
+        // Add remove button handlers to existing boxes
+        document.querySelectorAll('.remove-box-btn').forEach(addRemoveButtonHandler);
     });
+    
+    function initializeMathFields() {
+        document.querySelectorAll('math-field').forEach(function(mathField) {
+            const hiddenInput = mathField.nextElementSibling;
+            
+            if (hiddenInput.value) {
+                mathField.value = hiddenInput.value;
+            }
+            
+            mathField.addEventListener('input', (evt) => {
+                hiddenInput.value = mathField.value;
+            });
+        });
+    }
+    
+    function addRemoveButtonHandler(button) {
+        button.addEventListener('click', function() {
+            const container = document.getElementById('answer-boxes-container');
+            if (container.children.length > 1) {
+                const boxGroup = this.closest('.answer-box-group');
+                boxGroup.remove();
+                updateAllFormIndices();
+            }
+        });
+    }
+    
+    function updateAllFormIndices() {
+        const container = document.getElementById('answer-boxes-container');
+        Array.from(container.children).forEach((box, index) => {
+            updateFormIndices(box, index);
+        });
+    }
+    
+    function updateFormIndices(boxElement, newIndex) {
+        boxElement.querySelectorAll('input, select, label').forEach(element => {
+            ['name', 'id', 'for'].forEach(attr => {
+                if (element[attr]) {
+                    element[attr] = element[attr].replace(/answer_boxes-\d+/, `answer_boxes-${newIndex}`);
+                }
+            });
+        });
+    }
 </script>
+
+<style>
+    .answer-boxes-container {
+        margin-top: 2rem;
+        border-top: 1px solid #ddd;
+        padding-top: 2rem;
+    }
+    
+    .answer-box {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+    
+    .button-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .button-danger:hover {
+        background-color: #c82333;
+    }
+</style>
 {% endblock %}

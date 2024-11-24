@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
 from app import db
 from app.admin import bp
-from app.models import Article, Challenge, User, AnswerSubmission
+from app.models import Article, Challenge, User, AnswerSubmission, ChallengeAnswerBox
 from app.admin.forms import ChallengeForm, ArticleForm, AnswerSubmissionForm
 
 @bp.route('/admin')
@@ -210,8 +210,7 @@ def create_challenge():
                 title=form.title.data,
                 content=form.content.data,
                 date_posted=datetime.datetime.now(),
-                key_stage=form.key_stage.data,
-                correct_answer=form.correct_answer.data
+                key_stage=form.key_stage.data
             )
             
             challenge_folder = create_challenge_folder(challenge.date_posted)
@@ -226,7 +225,20 @@ def create_challenge():
                     flash('Error saving the image file. Please try again.', 'error')
                     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
 
+            # Add challenge first to get the ID
             db.session.add(challenge)
+            db.session.flush()
+
+            # Create answer boxes
+            for box_form in form.answer_boxes:
+                answer_box = ChallengeAnswerBox(
+                    challenge_id=challenge.id,
+                    box_label=box_form.box_label.data,
+                    correct_answer=box_form.correct_answer.data,
+                    order=int(box_form.order.data) if box_form.order.data else None
+                )
+                db.session.add(answer_box)
+
             db.session.commit()
             flash('Challenge added successfully.', 'success')
             return redirect(url_for('admin.manage_challenges'))
@@ -235,6 +247,10 @@ def create_challenge():
             db.session.rollback()
             current_app.logger.error(f"Error creating challenge: {str(e)}")
             flash('An error occurred while creating the challenge. Please try again.', 'error')
+    else:
+        if form.errors:
+            print(form.errors)
+            flash('Error creating challenge. Please check the form for errors.', 'error')
 
     return render_template('admin/create_challenge.html', title='Create Challenge', form=form)
 
@@ -252,8 +268,8 @@ def edit_challenge(challenge_id):
         challenge.title = form.title.data
         challenge.content = form.content.data
         challenge.key_stage = form.key_stage.data
-        challenge.correct_answer = form.correct_answer.data
         
+        # Handle image upload
         if form.image.data:
             try:
                 challenge_folder = create_challenge_folder(challenge.date_posted)
@@ -265,19 +281,68 @@ def edit_challenge(challenge_id):
                 current_app.logger.error(f"File save error: {str(e)}")
                 flash('Error saving the image file. Please try again.', 'error')
                 return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
+
+        # Get existing answer boxes
+        existing_boxes = {box.order: box for box in challenge.answer_boxes}
+        used_box_ids = set()
         
-        db.session.commit()
-        flash('Challenge updated successfully.')
-        return redirect(url_for('admin.manage_challenges'))
+        # Update or create answer boxes
+        for index, box_form in enumerate(form.answer_boxes):
+            if index in existing_boxes:
+                # Update existing box
+                box = existing_boxes[index]
+                box.box_label = box_form.box_label.data
+                box.correct_answer = box_form.correct_answer.data
+                box.order = int(box_form.order.data) if box_form.order.data else index
+                used_box_ids.add(box.id)
+            else:
+                # Create new box
+                new_box = ChallengeAnswerBox(
+                    challenge_id=challenge.id,
+                    box_label=box_form.box_label.data,
+                    correct_answer=box_form.correct_answer.data,
+                    order=int(box_form.order.data) if box_form.order.data else index
+                )
+                db.session.add(new_box)
+        
+        # Delete unused boxes (only those without submissions)
+        for box in challenge.answer_boxes:
+            if box.id not in used_box_ids:
+                # Check if box has submissions
+                if not box.submissions:
+                    db.session.delete(box)
+                else:
+                    # Archive the box instead of deleting it
+                    box.is_active = False
+        
+        try:
+            db.session.commit()
+            flash('Challenge updated successfully.')
+            return redirect(url_for('admin.manage_challenges'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error: {str(e)}")
+            flash('Error updating the challenge. Please try again.', 'error')
+            return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
     
     # Pre-populate the form
-    form.title.data = challenge.title
-    form.content.data = challenge.content
-    form.key_stage.data = challenge.key_stage
-    form.correct_answer.data = challenge.correct_answer
-    if challenge.file_url:
-        post_date = challenge.date_posted.strftime('%Y-%m-%d')
-        form.file_url = f'challenge_{post_date}/{challenge.file_url}'
+    if request.method == 'GET':
+        form.title.data = challenge.title
+        form.content.data = challenge.content
+        form.key_stage.data = challenge.key_stage
+        
+        # Clear existing answer boxes and add current ones
+        form.answer_boxes.entries = []
+        for box in sorted(challenge.answer_boxes, key=lambda x: x.order or 0):
+            form.answer_boxes.append_entry({
+                'box_label': box.box_label,
+                'correct_answer': box.correct_answer,
+                'order': str(box.order) if box.order is not None else ''
+            })
+        
+        if challenge.file_url:
+            post_date = challenge.date_posted.strftime('%Y-%m-%d')
+            form.file_url = f'challenge_{post_date}/{challenge.file_url}'
         
     return render_template('admin/edit_challenge.html', title='Edit Challenge', form=form)
 

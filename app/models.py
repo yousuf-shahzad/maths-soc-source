@@ -25,14 +25,23 @@ class Challenge(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     file_url = db.Column(db.String(100))
-    key_stage = db.Column(db.String(3), nullable=False)  # 'ks3', 'ks4', or 'ks5'
-    correct_answer = db.Column(db.String(100), nullable=False)
+    key_stage = db.Column(db.String(3), nullable=False)
+    answer_boxes = db.relationship('ChallengeAnswerBox', backref='challenge', lazy=True, cascade='all, delete-orphan')
     submissions = db.relationship('AnswerSubmission', backref='challenge', lazy=True)
+
+class ChallengeAnswerBox(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    box_label = db.Column(db.String(100), nullable=False)  # e.g., "Part A", "Step 1", etc.
+    correct_answer = db.Column(db.String(100), nullable=False)
+    order = db.Column(db.Integer, nullable=False)  # To maintain box order
+    submissions = db.relationship('AnswerSubmission', backref='answer_box', lazy=True)
 
 class AnswerSubmission(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
+    answer_box_id = db.Column(db.Integer, db.ForeignKey('challenge_answer_box.id'), nullable=False)
     answer = db.Column(db.String(100), nullable=False)
     is_correct = db.Column(db.Boolean, nullable=True)
     submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
