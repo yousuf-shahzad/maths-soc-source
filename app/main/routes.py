@@ -12,6 +12,10 @@ from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
 def index():
     return render_template('index.html', title='Home')
 
+@bp.route('/about')
+def about():
+    return render_template('main/about.html', title='About')
+
 @bp.route('/challenges')
 def challenges():
     page = request.args.get('page', 1, type=int)
