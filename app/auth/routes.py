@@ -5,6 +5,7 @@ import string, random
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
+from better_profanity import profanity
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -61,6 +62,9 @@ def register():
         elif form.year.data == '12' or form.year.data == '13':
             key_stage = 'KS5'
         print(key_stage)
+        if profanity.contains_profanity(form.username.data):
+            flash('Please use a different username.')
+            return redirect(url_for('auth.register'))
         user = User(username=form.username.data, year=form.year.data, key_stage=key_stage)
         user.set_password(form.password.data)
         db.session.add(user)
