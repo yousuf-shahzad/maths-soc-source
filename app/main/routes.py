@@ -10,7 +10,21 @@ from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
 @bp.route('/')
 @bp.route('/index')
 def index():
-    return render_template('index.html', title='Home')
+    challenges = Challenge.query
+    articles = Article.query
+    leaderboard_entries = LeaderboardEntry.query
+    recent_challenges = Challenge.query.order_by(Challenge.date_posted.desc()).limit(3).all()
+    recent_articles = Article.query.filter_by(type='article').order_by(Article.date_posted.desc()).limit(3).all()
+    top_performers = LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).limit(5).all()
+    latest_newsletter = Article.query.filter_by(type='newsletter').order_by(Article.date_posted.desc()).first()
+    return render_template('index.html',
+                         challenges=challenges,
+                         articles=articles,
+                         leaderboard_entries=leaderboard_entries,
+                         recent_challenges=recent_challenges,
+                         recent_articles=recent_articles,
+                         top_performers=top_performers,
+                         latest_newsletter=latest_newsletter)
 
 @bp.route('/about')
 def about():

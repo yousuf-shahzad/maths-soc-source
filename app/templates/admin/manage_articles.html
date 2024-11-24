@@ -19,7 +19,7 @@
             <p>{{ article.type.capitalize() }} by {{ article.named_creator }}</p>
             <p>Posted: {{ article.date_posted.strftime('%Y-%m-%d') }}</p>
             
-            {% if article.type == 'newsletter' and article.file_url %}
+            {% if article.file_url %}
             <div class="pdf-preview">
                 <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
                         width="100%" height="300" frameborder="0"></iframe>

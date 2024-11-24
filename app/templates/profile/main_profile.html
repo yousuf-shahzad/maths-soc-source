@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="profile-container challenge-container">
+<main>
     <h1 class="challenge-title">Profile</h1>
     
     <div class="challenge-card">
@@ -43,43 +43,4 @@
     </div>
 </main>
 
-<style>
-    .profile-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .profile-container table {
-        margin: 1rem 0;
-    }
-
-    .profile-container th {
-        width: 200px;
-        background-color: #f8f9fa;
-        font-weight: bold;
-    }
-
-    .profile-container td {
-        padding: 0.75rem;
-    }
-
-    .challenge-actions {
-        margin-top: 2rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-start;
-    }
-
-    @media (max-width: 768px) {
-        .challenge-actions {
-            flex-direction: column;
-        }
-        
-        .challenge-actions a {
-            width: 100%;
-            text-align: center;
-        }
-    }
-</style>
 {% endblock %}

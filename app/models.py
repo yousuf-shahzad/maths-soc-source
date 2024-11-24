@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     year = db.Column(db.Integer)
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
-    key_stage = db.Column(db.String(3), nullable=False)
+    key_stage = db.Column(db.String(3), nullable=False, index=True)
     submissions = db.relationship('AnswerSubmission', backref='user', lazy=True,
                                 cascade='all, delete-orphan')
     articles = db.relationship('Article', backref='author', lazy='dynamic',
@@ -59,7 +59,7 @@ class Article(db.Model):
     named_creator = db.Column(db.String(100), nullable=True)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    type = db.Column(db.String(20), default='article')  # 'article' or 'newsletter'
+    type = db.Column(db.String(20), default='article', nullable=False)
 
     @property
     def pdf_path(self):
@@ -72,5 +72,5 @@ class LeaderboardEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     score = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user = db.relationship('User', backref='leaderboard_entries')
+    user = db.relationship('User', backref=db.backref('leaderboard_entries', cascade='all, delete-orphan'))
     # position = db.Column(db.Integer, nullable=True)

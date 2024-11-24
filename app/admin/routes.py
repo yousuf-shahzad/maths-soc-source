@@ -39,7 +39,7 @@ def create_article():
             date_posted = datetime.datetime.now(),
         )
         
-        if form.type.data == 'newsletter' and form.file.data:
+        if form.file.data:
             # Create newsletters directory if it doesn't exist
             print(form.file.data)
             newsletter_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters')
@@ -86,7 +86,7 @@ def edit_article(article_id):
         article.named_creator = form.author.data
         article.type = form.type.data
         
-        if form.type.data == 'newsletter' and form.file.data:
+        if form.file.data:
             # Create newsletters directory if it doesn't exist
             newsletter_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters')
             os.makedirs(newsletter_path, exist_ok=True)

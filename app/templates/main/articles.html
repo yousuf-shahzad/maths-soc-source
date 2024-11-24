@@ -3,10 +3,20 @@
 {% block content %}
     <h1>Articles</h1>
     {% for article in articles %}
-        <article>
-            <h2><a href="{{ url_for('main.article', id=article.id) }}">{{ article.title }}</a></h2>
+        <article class="newsletter-article">
+            <h2><a href="{{ url_for('main.newsletter', id=article.id) }}">{{ article.title }}</a></h2>
             <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
-            <div>{{ article.content | truncate(200) | safe }}</div>
+            <div class="">{{ article.content | truncate(200) | safe }}</div>
+            
+            {% if article.type == 'article' and article.file_url %}
+                <div class="pdf-preview">
+                    <h3>Newsletter Preview</h3>
+                    <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
+                            width="100%" height="500" frameborder="0"></iframe>
+                </div>
+                <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+                   target="_blank" class="button">View Full PDF</a>
+            {% endif %}
         </article>
     {% endfor %}
 {% endblock %}
