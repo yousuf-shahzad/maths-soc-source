@@ -1,17 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}UCGS Mathematics Society{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script>
-        var MQ = MathQuill.getInterface(2);
-    </script>
-    {{ ckeditor.load() }}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <!-- Primary Meta Tags -->
+        <title>{% block title %}UCGS Mathematics Society{% endblock %}</title>
+        <meta name="description" content="UCGS Mathematics Society - Explore mathematical challenges, read insightful articles, and compete with your peers!">
+        <meta name="keywords" content="mathematics, challenges, articles, competition, society, university, college, school, math olympiad, problem solving">
+        
+        <!-- Robots Meta Tags -->
+        <meta name="robots" content="index, follow">
+        <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+        
+        <!-- Canonical URL -->
+        <link rel="canonical" href="{{ request.url }}">
+        
+        <!-- Open Graph / Facebook Meta Tags -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ request.base_url }}">
+        <meta property="og:title" content="UCGS Mathematics Society">
+        <meta property="og:description" content="Explore mathematical challenges, read insightful articles, and compete with your peers!">
+        <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png') }}">
+        
+        <!-- Twitter Card Meta Tags -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ request.base_url }}">
+        <meta name="twitter:title" content="UCGS Mathematics Society">
+        <meta name="twitter:description" content="Explore mathematical challenges, read insightful articles, and compete with your peers!">
+        <meta name="twitter:image" content="{{ url_for('static', filename='images/twitter-image.png') }}">
+        
+        <!-- Favicons -->
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon-16x16.png') }}" sizes="16x16">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon-32x32.png') }}" sizes="32x32">
+        <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+        
+        <!-- Geo Tags -->
+        <meta name="geo.region" content="GB">
+        <meta name="geo.placename" content="United Kingdom">
+        
+        <!-- Author and Copyright -->
+        <meta name="author" content="UCGS Mathematics Society">
+        <meta name="copyright" content="© 2024 UCGS Mathematics Society">
+        
+        <!-- Language and Content-Type -->
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="content-language" content="en-GB">
+        
+        <!-- Web App and Mobile Specific -->
+        <meta name="application-name" content="UCGS Maths Society">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        
+        <!-- Stylesheet and Script Links -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+        
+        <!-- External Scripts -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+        
+        <!-- Structured Data (JSON-LD) -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "UCGS Mathematics Society",
+            "description": "A society dedicated to exploring mathematical challenges and fostering mathematical excellence",
+            "url": "{{ request.base_url }}",
+            "logo": "{{ url_for('static', filename='images/logo.png') }}"
+        }
+        </script>
+        
+        {{ ckeditor.load() }}
 </head>
 <body>
     <header>
