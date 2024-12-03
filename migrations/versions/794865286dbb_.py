@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: d2f96d7bdb11
+Revision ID: 794865286dbb
 Revises: 
-Create Date: 2024-11-24 13:15:21.700071
+Create Date: 2024-12-03 13:59:04.116555
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd2f96d7bdb11'
+revision = '794865286dbb'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,18 +25,20 @@ def upgrade():
     sa.Column('date_posted', sa.DateTime(), nullable=False),
     sa.Column('file_url', sa.String(length=100), nullable=True),
     sa.Column('key_stage', sa.String(length=3), nullable=False),
+    sa.Column('first_correct_submission', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_challenge'))
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(length=64), nullable=True),
+    sa.Column('full_name', sa.String(length=100), nullable=False),
     sa.Column('year', sa.Integer(), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
+    sa.Column('key_stage', sa.String(length=3), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_user'))
     )
     with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_user_username'), ['username'], unique=True)
+        batch_op.create_index(batch_op.f('ix_user_key_stage'), ['key_stage'], unique=False)
 
     op.create_table('article',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -46,7 +48,7 @@ def upgrade():
     sa.Column('named_creator', sa.String(length=100), nullable=True),
     sa.Column('date_posted', sa.DateTime(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.String(length=20), nullable=True),
+    sa.Column('type', sa.String(length=20), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_article_user_id_user')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_article'))
     )
@@ -90,7 +92,7 @@ def downgrade():
     op.drop_table('challenge_answer_box')
     op.drop_table('article')
     with op.batch_alter_table('user', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_user_username'))
+        batch_op.drop_index(batch_op.f('ix_user_key_stage'))
 
     op.drop_table('user')
     op.drop_table('challenge')

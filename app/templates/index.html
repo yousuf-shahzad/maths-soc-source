@@ -1,150 +1,114 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <div class="container">
-        <!-- Hero Section -->
-        <header class="text-center py-8">
-            <h1>Welcome to the UCGS Mathematics Society</h1>
-            <p class="text-xl">Explore mathematical challenges, read insightful articles, and compete with your peers!</p>
-        </header>
+<div class="container home-page">
+    <!-- Hero Section -->
+    <header class="hero-section">
+        <h1>Welcome to the UCGS Mathematics Society</h1>
+        <p class="hero-subtitle">Explore mathematical challenges, read insightful articles, and compete with your peers!</p>
+    </header>
+<!-- Newsletter Section -->
+<section class="newsletter-preview section-container">
+    <h2 class="section-title">Latest Newsletter</h2>
+    {% if latest_newsletter %}
+    <div class="newsletter-card">
+        <h3>{{ latest_newsletter.title }}</h3>
+        <p class="meta">
+            Published {{ latest_newsletter.date_posted.strftime('%B %d, %Y') }}
+            {% if latest_newsletter.named_creator %}
+            by {{ latest_newsletter.named_creator }}
+            {% endif %}
+        </p>
+        <p class="newsletter-excerpt">{{ latest_newsletter.content[:200] | safe }}...</p>
+        {% if latest_newsletter.file_url %}
+        <div class="pdf-preview">
+            <h3>Newsletter PDF Available</h3>
+        </div>
+        {% endif %}
+        <div class="challenge-actions">
+            <a href="{{ url_for('main.newsletter', id=latest_newsletter.id) }}" class="button">Read Newsletter</a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.edit_article', article_id=latest_newsletter.id) }}" class="button-secondary">Edit</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>No newsletters available at this time.</p>
+    {% endif %}
+</section>
 
-        <!-- Stats Overview -->
-        <div class="stats-grid">
-            <div class="stats-card">
-                <h3>Active Challenges</h3>
-                <p>{{ challenges.count() if challenges else 0 }}</p>
+<!-- Stats Overview -->
+<section class="stats-overview section-container">
+    <h2 class="section-title">Society Statistics</h2>
+    <div class="stats-grid">
+        <div class="stats-card">
+            <h3>Active Challenges</h3>
+            <p class="stats-number">{{ challenges.count() if challenges else 0 }}</p>
+        </div>
+        <div class="stats-card">
+            <h3>Total Articles</h3>
+            <p class="stats-number">{{ articles.count() if articles else 0 }}</p>
+        </div>
+        <div class="stats-card">
+            <h3>Active Members</h3>
+            <p class="stats-number">{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Challenges -->
+<section class="recent-challenges section-container">
+    <h2 class="section-title">Latest Challenges</h2>
+    <div class="challenge-grid">
+        {% for challenge in recent_challenges %}
+        <div class="challenge-card">
+            <h3>{{ challenge.title }}</h3>
+            <p class="meta">Posted {{ challenge.date_posted.strftime('%B %d, %Y') }}</p>
+            <p class="challenge-content">{{ challenge.content[:150] | safe  }}...</p>
+            {% if challenge.file_url %}
+            <div class="image-preview">
+                <img src="{{ challenge.file_url }}" alt="Challenge image" class="challenge-image">
             </div>
-            <div class="stats-card">
-                <h3>Total Articles</h3>
-                <p>{{ articles.count() if articles else 0 }}</p>
-            </div>
-            <div class="stats-card">
-                <h3>Active Members</h3>
-                <p>{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
+            {% endif %}
+            <div class="challenge-actions">
+                <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" class="button">Try Challenge</a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="button-secondary">Edit</a>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Recent Challenges -->
-        <section class="mb-12">
-            <h2>Latest Challenges</h2>
-            <div class="challenge-grid">
-                {% for challenge in recent_challenges %}
-                <div class="challenge-card">
-                    <h3>{{ challenge.title }}</h3>
-                    <p class="meta">Posted {{ challenge.date_posted.strftime('%B %d, %Y') }}</p>
-                    <p class="challenge-content">{{ challenge.content[:150] | safe  }}...</p>
-                    {% if challenge.file_url %}
-                    <div class="image-preview">
-                        <img src="{{ challenge.file_url }}" alt="Challenge image" class="challenge-image">
-                    </div>
-                    {% endif %}
-                    <div class="challenge-actions">
-                        <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" class="button">Try Challenge</a>
-                        {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="button-secondary">Edit</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="text-center">
-                <a href="{{ url_for('main.challenges') }}" class="button-secondary">View All Challenges</a>
-            </div>
-        </section>
-
-        <!-- Latest Articles -->
-        <section class="mb-12">
-            <h2>Recent Articles</h2>
-            <div class="article-grid">
-                {% for article in recent_articles %}
-                <div class="article-card">
-                    <h3>{{ article.title }}</h3>
-                    <p class="meta">
-                        Posted {{ article.date_posted.strftime('%B %d, %Y') }}
-                        {% if article.named_creator %}
-                        by {{ article.named_creator }}
-                        {% endif %}
-                    </p>
-                    <p>{{ article.content[:150] | safe  }}...</p>
-                    <div class="article-actions">
-                        <a href="{{ url_for('main.article', id=article.id) }}" class="button">Read More</a>
-                        {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" class="button-secondary">Edit</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="text-center">
-                <a href="{{ url_for('main.articles') }}" class="button-secondary">View All Articles</a>
-            </div>
-        </section>
-
-        <!-- Top Performers -->
-        <section class="mb-12">
-            <h2>Leaderboard Highlights</h2>
-            <div class="overflow-x-auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Member</th>
-                            <th>Score</th>
-                            <th>Last Active</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in top_performers %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ entry.user.username }}</td>
-                            <td>{{ entry.score }}</td>
-                            <td>{{ entry.last_updated.strftime('%B %d, %Y') }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="text-center">
-                <a href="{{ url_for('main.leaderboard') }}" class="button-secondary">View Full Leaderboard</a>
-            </div>
-        </section>
-
-        <!-- Newsletter Section -->
-        <section class="mb-12">
-            <h2>Latest Newsletter</h2>
-            {% if latest_newsletter %}
-            <div class="newsletter-article">
-                <h3>{{ latest_newsletter.title }}</h3>
-                <p class="meta">
-                    Published {{ latest_newsletter.date_posted.strftime('%B %d, %Y') }}
-                    {% if latest_newsletter.named_creator %}
-                    by {{ latest_newsletter.named_creator }}
-                    {% endif %}
-                </p>
-                <p>{{ latest_newsletter.content[:200] | safe }}...</p>
-                {% if latest_newsletter.file_url %}
-                <div class="pdf-preview">
-                    <h3>Newsletter PDF Available</h3>
-                </div>
-                {% endif %}
-                <div class="article-actions">
-                    <a href="{{ url_for('main.newsletter', id=latest_newsletter.id) }}" class="button">Read Newsletter</a>
-                    {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.edit_article', article_id=latest_newsletter.id) }}" class="button-secondary">Edit</a>
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            <p>No newsletters available at this time.</p>
-            {% endif %}
-        </section>
+        {% endfor %}
     </div>
+    <div class="view-all-container">
+        <a href="{{ url_for('main.challenges') }}" class="button-secondary">View All Challenges</a>
+    </div>
+</section>
 
-
-    <style>
-        .text-center {
-            padding-bottom: 1rem;
-        }
-    </style>
+<!-- Latest Articles -->
+<section class="recent-articles section-container">
+    <h2 class="section-title">Recent Articles</h2>
+    <div class="article-grid">
+        {% for article in recent_articles %}
+        <div class="article-card">
+            <h3>{{ article.title }}</h3>
+            <p class="meta">
+                Posted {{ article.date_posted.strftime('%B %d, %Y') }}
+                {% if article.named_creator %}
+                by {{ article.named_creator }}
+                {% endif %}
+            </p>
+            <p class="article-excerpt">{{ article.content[:150] | safe  }}...</p>
+            <div class="article-actions">
+                <a href="{{ url_for('main.article', id=article.id) }}" class="button">Read More</a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" class="button-secondary">Edit</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="view-all-container">
+        <a href="{{ url_for('main.articles') }}" class="button-secondary">View All Articles</a>
+    </div>
+</section>
+</div>
 {% endblock %}

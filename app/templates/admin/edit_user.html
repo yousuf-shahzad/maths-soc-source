@@ -6,9 +6,16 @@
     <form method="POST">
         {{ form.hidden_tag() }}
         <div class="form-group">
-            <label for="username">Username</label>
-            {{ form.username(class="form-control") }}
-            {% for error in form.username.errors %}
+            <label for="first_name">First Name</label>
+            {{ form.first_name(class="form-control") }}
+            {% for error in form.first_name.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            {{ form.last_name(class="form-control") }}
+            {% for error in form.last_name.errors %}
                 <span class="error-message">{{ error }}</span>
             {% endfor %}
         </div>
@@ -16,6 +23,13 @@
             <label for="year">Year</label>
             {{ form.year(class="form-control") }}
             {% for error in form.year.errors %}
+                <span class="error-message">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="maths_class">Maths Class</label>
+            {{ form.maths_class(class="form-control") }}
+            {% for error in form.maths_class.errors %}
                 <span class="error-message">{{ error }}</span>
             {% endfor %}
         </div>

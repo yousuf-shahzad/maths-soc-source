@@ -1,3 +1,4 @@
+```jinja2
 {% extends "base.html" %}
 {% block content %}
     <main>
@@ -45,28 +46,32 @@
                             </div>
                             
                             <div class="answer-submission">
-                                <form method="POST" class="answer-form">
-                                    {{ form.hidden_tag() }}
-                                    <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
-                                    
-                                    <div class="form-group">
-                                        {{ form.answer.label(class="form-label") }}
-                                        <div class="pdf-viewer">
-                                            <math-field 
-                                                id="formula-{{ answer_box.id }}"
-                                                class="form-control"
-                                                style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                {% if current_user.is_authenticated %}
+                                    <form method="POST" class="answer-form">
+                                        {{ form.hidden_tag() }}
+                                        <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
+                                        
+                                        <div class="form-group">
+                                            {{ form.answer.label(class="form-label") }}
+                                            <div class="pdf-viewer">
+                                                <math-field 
+                                                    id="formula-{{ answer_box.id }}"
+                                                    class="form-control"
+                                                    style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                            </div>
+                                            {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
+                                            {% for error in form.answer.errors %}
+                                                <span class="error-message">{{ error }}</span>
+                                            {% endfor %}
                                         </div>
-                                        {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
-                                        {% for error in form.answer.errors %}
-                                            <span class="error-message">{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                    
-                                    <div class="challenge-actions">
-                                        {{ form.submit(class="button") }}
-                                    </div>
-                                </form>
+                                        
+                                        <div class="challenge-actions">
+                                            {{ form.submit(class="button") }}
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <p class="alert alert-warning">You need to <a href="{{ url_for('auth.login') }}">log in</a> to submit answers.</p>
+                                {% endif %}
                             </div>
                         {% elif not has_correct %}
                             <div class="alert alert-error">
@@ -176,3 +181,4 @@
         }
     </style>
 {% endblock %}
+```

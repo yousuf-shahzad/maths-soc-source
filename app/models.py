@@ -7,8 +7,9 @@ import os
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
+    full_name = db.Column(db.String(100), nullable=False)
     year = db.Column(db.Integer)
+    maths_class = db.Column(db.String(100))
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     key_stage = db.Column(db.String(3), nullable=False, index=True)

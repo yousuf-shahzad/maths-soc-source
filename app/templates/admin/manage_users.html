@@ -10,9 +10,10 @@
     <table>
         <thead>
             <tr>
-                <th>Username</th>
+                <th>Name</th>
                 <th>ID</th>
                 <th>Year</th>
+                <th>Maths Class</th>
                 <th>Key Stage</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -21,9 +22,10 @@
         <tbody>
             {% for user in users %}
             <tr>
-                <td data-label="Username">{{ user.username }}</td>
+                <td data-label="Name">{{ user.full_name }}</td>
                 <td data-label="ID">{{ user.id }}</td>
                 <td data-label="Year">{{ user.year }}</td>
+                <td data-label="Maths Class">{{ user.maths_class }}</td>
                 <td data-label="Key Stage">{{ user.key_stage }}</td>
                 <td data-label="Status">
                     <span class="status-indicator {% if user.is_admin %}success{% endif %}">

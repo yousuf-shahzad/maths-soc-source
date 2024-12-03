@@ -55,7 +55,7 @@ from app.models import (
 )
 from app.admin.forms import (
     ChallengeForm, ArticleForm, AnswerSubmissionForm,
-    LeaderboardEntryForm
+    LeaderboardEntryForm, EditUserForm, CreateUserForm,
 )
 from app.auth.forms import RegistrationForm
 
@@ -660,15 +660,22 @@ def manage_users():
 @admin_required
 def create_user():
     """Creates a new user account"""
-    form = RegistrationForm()
+    form = CreateUserForm()
     
     if form.validate_on_submit():
         try:
             key_stage = get_key_stage(form.year.data)
+            first_name, last_name = form.first_name.data.strip(), form.last_name.data.strip()
+            if ' ' in first_name or ' ' in last_name:
+                flash('Please remove any whitespace from your name.')
+                return redirect(url_for('admin.create_user'))
+
+            full_name = f"{first_name} {last_name}"
             user = User(
-                username=form.username.data,
+                full_name=full_name,
                 year=form.year.data,
                 key_stage=key_stage,
+                maths_class=form.maths_class.data,
                 is_admin=form.is_admin.data
             )
             user.set_password(form.password.data)
@@ -681,8 +688,12 @@ def create_user():
         except SQLAlchemyError as e:
             db.session.rollback()
             current_app.logger.error(f"Error creating user: {str(e)}")
-            flash('Error creating user. Please try again.')
+            flash('Error creating user. Please try again. If the problem persists, contact admin.')
     
+    else:
+        if form.errors:
+            print(form.errors)
+
     return render_template(
         'admin/create_user.html',
         title='Create User',
@@ -700,14 +711,29 @@ def edit_user(user_id):
         user_id: int ID of user to edit
     """
     user = User.query.get_or_404(user_id)
-    form = RegistrationForm(obj=user)
+    
+    # Split full_name into first_name and last_name
+    first_name, last_name = user.full_name.split(' ', 1)
+    
+    # Populate the form with the split names
+    form = EditUserForm(
+        first_name=first_name.strip(), 
+        last_name=last_name.strip(), 
+        year=user.year
+    )
     
     if form.validate_on_submit():
         try:
             key_stage = get_key_stage(form.year.data)
-            user.username = form.username.data
+            first_name, last_name = form.first_name.data.strip(), form.last_name.data.strip()
+            if ' ' in first_name or ' ' in last_name:
+                flash('Please remove any whitespace from your name.')
+                return redirect(url_for('admin.edit_user', user_id=user_id))
+
+            user.full_name = f"{first_name} {last_name}"
             user.year = form.year.data
             user.key_stage = key_stage
+            user.maths_class = form.maths_class.data
             
             db.session.commit()
             flash('User updated successfully.')
@@ -717,13 +743,14 @@ def edit_user(user_id):
             db.session.rollback()
             current_app.logger.error(f"Error updating user: {str(e)}")
             flash('Error updating user. Please try again.')
-    
+
     return render_template(
         'admin/edit_user.html',
         title='Edit User',
         form=form,
         user=user
     )
+
 
 @bp.route('/admin/manage_users/delete/<int:user_id>')
 @login_required
@@ -773,7 +800,7 @@ def toggle_admin(user_id):
         user = User.query.get_or_404(user_id)
         user.is_admin = not user.is_admin
         db.session.commit()
-        flash(f'Admin status for {user.username} has been toggled.')
+        flash(f'Admin status for {user.full_name} has been toggled.')
         
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -797,7 +824,7 @@ def reset_password(user_id):
         password = generate_random_password()
         user.set_password(password)
         db.session.commit()
-        flash(f'Password for {user.username} has been reset to: {password}')
+        flash(f'Password for {user.full_name} has been reset to: {password}')
         
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -865,9 +892,9 @@ def export_leaderboard():
         ).all()
         
         # Create CSV data
-        csv_data = 'User ID,Username,Score,Last Updated\n'
+        csv_data = 'User ID,Name,Year,Class,Score,Last Updated\n'
         for entry in leaderboard:
-            csv_data += f'{entry.user_id},{entry.user.username},{entry.score},{entry.last_updated}\n'
+            csv_data += f'{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.maths_class},{entry.score},{entry.last_updated}\n'
         
         # Create file
         file = BytesIO()
@@ -932,7 +959,7 @@ def create_leaderboard_entry():
         db.session.add(entry)
         db.session.commit()
         flash('Leaderboard entry created successfully.')
-        return redirect(url_for('admin.leaderboard'))
+        return redirect(url_for('admin.manage_leaderboard'))
     return render_template('admin/create_leaderboard_entry.html', title='Create Leaderboard Entry', form=form)
 
 @bp.route('/admin/leaderboard/delete/<int:entry_id>')

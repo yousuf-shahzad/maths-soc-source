@@ -214,41 +214,39 @@ def handle_submission_result(submission: AnswerSubmission,
         flash(f'Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.', 'error')
 
 @bp.route('/challenges/<int:challenge_id>', methods=['GET', 'POST'])
-@login_required
 def challenge(challenge_id: int):
     """
-    Display and handle submissions for a specific challenge.
-    
-    Args:
-        challenge_id: The ID of the challenge to display
-        
-    Returns:
-        Rendered challenge template or redirect
+    Display a specific challenge. Allow submission only for authenticated users.
     """
     challenge = Challenge.query.get_or_404(challenge_id)
     forms = {}
     submissions = {}
-    
-    # Create forms and get submissions for each answer box
-    for answer_box in challenge.answer_boxes:
-        forms[answer_box.id] = AnswerSubmissionForm()
-        submissions[answer_box.id] = AnswerSubmission.query.filter_by(
-            user_id=current_user.id,
-            challenge_id=challenge_id,
-            answer_box_id=answer_box.id
-        ).order_by(AnswerSubmission.submitted_at.desc()).all()
-    
-    if request.method == 'POST':
-        return handle_challenge_submission(challenge, forms)
-    
-    all_correct = check_all_answers_correct(challenge, current_user.id)
-    
-    return render_template('main/challenge.html',
-                         challenge=challenge,
-                         forms=forms,
-                         submissions=submissions,
-                         attempts_remaining=3,
-                         all_correct=all_correct)
+
+    # Create forms and get submissions only if user is authenticated
+    if current_user.is_authenticated:
+        for answer_box in challenge.answer_boxes:
+            forms[answer_box.id] = AnswerSubmissionForm()
+            submissions[answer_box.id] = AnswerSubmission.query.filter_by(
+                user_id=current_user.id,
+                challenge_id=challenge_id,
+                answer_box_id=answer_box.id
+            ).order_by(AnswerSubmission.submitted_at.desc()).all()
+
+        # Handle submission if the form is submitted
+        if request.method == 'POST':
+            return handle_challenge_submission(challenge, forms)
+
+    all_correct = current_user.is_authenticated and check_all_answers_correct(challenge, current_user.id)
+
+    return render_template(
+        'main/challenge.html',
+        challenge=challenge,
+        forms=forms if current_user.is_authenticated else None,
+        submissions=submissions,
+        attempts_remaining=3,
+        all_correct=all_correct
+    )
+
 
 def handle_challenge_submission(challenge: Challenge, forms: Dict) -> redirect:
     """

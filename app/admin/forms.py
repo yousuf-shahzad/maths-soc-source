@@ -42,3 +42,18 @@ class ArticleForm(FlaskForm):
     ])
     submit = SubmitField('Submit')
 
+class EditUserForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+    year = SelectField('Year', choices=[(7), (8), (9), (10), (11), (12), (13)],validators=[DataRequired()])
+    maths_class = StringField('Maths Class', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+class CreateUserForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+    password = StringField('Password', validators=[DataRequired()])
+    year = SelectField('Year', choices=[(7), (8), (9), (10), (11), (12), (13)],validators=[DataRequired()])
+    is_admin = BooleanField('Admin')
+    maths_class = StringField('Maths Class', validators=[DataRequired()])
+    submit = SubmitField('Create User')
