@@ -7,8 +7,8 @@
         <div class="challenge-content">
             <table>
                 <tr>
-                    <th>Username</th>
-                    <td>{{ current_user.username }}</td>
+                    <th>Name</th>
+                    <td>{{ current_user.full_name }} </td>
                 </tr>
                 <tr>
                     <th>Year Group</th>
@@ -17,6 +17,10 @@
                 <tr>
                     <th>Key Stage</th>
                     <td>{{ current_user.key_stage }}</td>
+                </tr>
+                <tr>
+                    <th>Class</th>
+                    <td>{{ current_user.maths_class }}</td>
                 </tr>
                 <tr>
                     <th>Role</th>

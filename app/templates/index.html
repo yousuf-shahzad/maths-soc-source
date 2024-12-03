@@ -97,7 +97,7 @@
                         {% for entry in top_performers %}
                         <tr>
                             <td>{{ loop.index }}</td>
-                            <td>{{ entry.user.username }}</td>
+                            <td>{{ entry.user.full_name }}</td>
                             <td>{{ entry.score }}</td>
                             <td>{{ entry.last_updated.strftime('%B %d, %Y') }}</td>
                         </tr>
