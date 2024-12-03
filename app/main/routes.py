@@ -336,3 +336,7 @@ def article(id):
 def leaderboard():
     entries = LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).limit(10).all()
     return render_template('main/leaderboard.html', title='Leaderboard', entries=entries)
+
+@bp.route('/privacy_policy')
+def privacy_policy():
+    return render_template('main/privacy_policy.html', title='Privacy Policy', current_date=datetime.datetime.utcnow())
