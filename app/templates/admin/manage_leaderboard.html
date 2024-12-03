@@ -42,7 +42,7 @@
                     {% for entry in leaderboard[:5] %}
                     <tr>
                         <td>{{ entry.user.username }}</td>
-                        <td>{{ entry.points }}</td>
+                        <td>{{ entry.score }}</td>
                         <td>{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td class="challenge-actions">
                             <a href="{{ url_for('admin.edit_leaderboard_entry', entry_id=entry.id) }}" 
