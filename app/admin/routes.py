@@ -719,7 +719,8 @@ def edit_user(user_id):
     form = EditUserForm(
         first_name=first_name.strip(), 
         last_name=last_name.strip(), 
-        year=user.year
+        year=user.year,
+        maths_class=user.maths_class
     )
     
     if form.validate_on_submit():
