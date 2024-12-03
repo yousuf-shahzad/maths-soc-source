@@ -32,7 +32,8 @@
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
-        <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
+        <p>{{ form.remember_me.label }} </p>
+        <p>{{ form.remember_me(size=2) }}</p>
         <p>{{ form.submit() }}</p>
         <br>
         <p>If you forget your password, contact site admin to have it reset.</p>

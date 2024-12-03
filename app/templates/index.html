@@ -6,6 +6,26 @@
         <h1>Welcome to the UCGS Mathematics Society</h1>
         <p class="hero-subtitle">Explore mathematical challenges, read insightful articles, and compete with your peers!</p>
     </header>
+
+<!-- Stats Overview -->
+<section class="stats-overview section-container">
+    <h2 class="section-title">Society Statistics</h2>
+    <div class="stats-grid">
+        <div class="stats-card">
+            <h3>Active Challenges</h3>
+            <p class="stats-number">{{ challenges.count() if challenges else 0 }}</p>
+        </div>
+        <div class="stats-card">
+            <h3>Total Articles</h3>
+            <p class="stats-number">{{ articles.count() if articles else 0 }}</p>
+        </div>
+        <div class="stats-card">
+            <h3>Active Members</h3>
+            <p class="stats-number">{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
+        </div>
+    </div>
+</section>
+
 <!-- Newsletter Section -->
 <section class="newsletter-preview section-container">
     <h2 class="section-title">Latest Newsletter</h2>
@@ -34,25 +54,6 @@
     {% else %}
     <p>No newsletters available at this time.</p>
     {% endif %}
-</section>
-
-<!-- Stats Overview -->
-<section class="stats-overview section-container">
-    <h2 class="section-title">Society Statistics</h2>
-    <div class="stats-grid">
-        <div class="stats-card">
-            <h3>Active Challenges</h3>
-            <p class="stats-number">{{ challenges.count() if challenges else 0 }}</p>
-        </div>
-        <div class="stats-card">
-            <h3>Total Articles</h3>
-            <p class="stats-number">{{ articles.count() if articles else 0 }}</p>
-        </div>
-        <div class="stats-card">
-            <h3>Active Members</h3>
-            <p class="stats-number">{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
-        </div>
-    </div>
 </section>
 
 <!-- Latest Challenges -->

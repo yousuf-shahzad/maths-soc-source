@@ -295,6 +295,7 @@ def serve_newsletter(filename):
         filename
     )
 
+
 def update_leaderboard(user_id, score):
     entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
     if entry is None:
@@ -330,6 +331,8 @@ def newsletter(id):
 @bp.route('/article/<int:id>')
 def article(id):
     article = Article.query.get_or_404(id)
+    if article.type != 'article':
+        abort(404)
     return render_template('main/article.html', title=article.title, article=article)
 
 @bp.route('/leaderboard')

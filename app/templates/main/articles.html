@@ -4,7 +4,7 @@
     <h1>Articles</h1>
     {% for article in articles %}
         <article class="newsletter-article">
-            <h2><a href="{{ url_for('main.newsletter', id=article.id) }}">{{ article.title }}</a></h2>
+            <h2><a href="{{ url_for('main.article', id=article.id) }}">{{ article.title }}</a></h2>
             <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
             <div class="">{{ article.content | truncate(200) | safe }}</div>
             
