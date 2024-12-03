@@ -33,6 +33,7 @@
                     <li><a href="{{ url_for('profile.profile') }}">Profile - {{current_user.full_name }}</a></li>
                     <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
                 {% endif %}
+                <li><a href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a></li>
             </ul>
         </nav>
     </header>
@@ -51,5 +52,27 @@
     <footer>
         <p>&copy; 2024 UCGS Mathematics Society</p>
     </footer>
+    <!-- Cookie Consent Banner -->
+<div id="cookie-consent-banner" class="cookie-banner">
+    <p>
+        This website uses cookies to ensure you get the best experience. By continuing to use our site, you agree to our use of cookies. 
+        <a href="{{ url_for('main.privacy_policy') }}">Learn more</a>.
+    </p>
+    <button id="accept-cookies" class="cookie-button">Accept</button>
+</div>
+
+<script>
+    // Check if cookie consent has already been given
+    if (!document.cookie.split('; ').find(row => row.startsWith('cookie_consent='))) {
+        document.getElementById('cookie-consent-banner').style.display = 'block';
+    }
+
+    // Set cookie when user accepts
+    document.getElementById('accept-cookies').onclick = function() {
+        document.cookie = "cookie_consent=true; path=/; max-age=" + (60*60*24*365); // 1 year
+        document.getElementById('cookie-consent-banner').style.display = 'none';
+    };
+</script>
+
 </body>
 </html>
