@@ -1013,3 +1013,161 @@ tr:hover {
     padding-left: 1rem;
     line-height: 1.6;
 }
+
+/*****************************************
+    
+    School Crest and Logo
+    *****************************************/
+    
+    .school-crest {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        }
+        .school-crest img {
+        max-width: 150px;
+        height: auto;
+        margin-right: 1rem;
+        }
+        .school-crest h1 {
+        font-size: 2rem;
+        border-bottom: none;
+        padding-bottom: 0;
+        }
+        .society-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        }
+        .society-logo img {
+        max-width: 100px;
+        height: auto;
+        margin-right: 1rem;
+        }
+        .society-logo h1 {
+        font-size: 1.8rem;
+        border-bottom: none;
+        padding-bottom: 0;
+        }
+        @media (max-width: 768px) {
+        .school-crest {
+        flex-direction: column;
+        }
+        .school-crest img {
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .society-logo {
+            flex-direction: column;
+        }
+        
+        .society-logo img {
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+        }
+
+
+        /* Burger Menu Styles */
+.burger-menu {
+    display: none;
+    cursor: pointer;
+}
+
+.burger-icon {
+    width: 30px;
+    height: 20px;
+    position: relative;
+    transform: rotate(0deg);
+    transition: .5s ease-in-out;
+    cursor: pointer;
+}
+
+.burger-icon span {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background: #333;
+    border-radius: 9px;
+    opacity: 1;
+    left: 0;
+    transform: rotate(0deg);
+    transition: .25s ease-in-out;
+}
+
+.burger-icon span:nth-child(1) {
+    top: 0px;
+}
+
+.burger-icon span:nth-child(2) {
+    top: 10px;
+}
+
+.burger-icon span:nth-child(3) {
+    top: 20px;
+}
+
+.burger-icon.active span:nth-child(1) {
+    top: 10px;
+    transform: rotate(135deg);
+}
+
+.burger-icon.active span:nth-child(2) {
+    opacity: 0;
+    left: -60px;
+}
+
+.burger-icon.active span:nth-child(3) {
+    top: 10px;
+    transform: rotate(-135deg);
+}
+
+.mobile-crest {
+    display: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .burger-menu {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+    }
+
+    nav ul {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        background-color: #333;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        z-index: 999;
+    }
+
+    .nav-menu.active {
+        left: 0;
+    }
+
+    nav ul li {
+        margin: 1rem 0;
+    }
+
+    .mobile-crest {
+        display: flex;
+        margin-bottom: 2rem;
+    }
+
+    .school-crest {
+        display: none;
+    }
+}

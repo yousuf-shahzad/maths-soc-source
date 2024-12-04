@@ -78,7 +78,17 @@
 <body>
     <header>
         <nav>
-            <ul>
+            <div class="burger-menu">
+                <div class="burger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <!-- <div class="school-crest mobile-crest">
+                    <img src="{{ url_for('static', filename='images/crest.png') }}" alt="UCGS School Crest">
+                </div> -->
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
                 <li><a href="{{ url_for('main.about') }}">About</a></li>
                 <li><a href="{{ url_for('main.challenges') }}">Challenges</a></li>
@@ -133,6 +143,24 @@
         document.cookie = "cookie_consent=true; path=/; max-age=" + (60*60*24*365); // 1 year
         document.getElementById('cookie-consent-banner').style.display = 'none';
     };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const burgerIcon = document.querySelector('.burger-icon');
+        const navMenu = document.querySelector('.nav-menu');
+
+        burgerIcon.addEventListener('click', () => {
+            burgerIcon.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close menu when a nav link is clicked
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                burgerIcon.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+    });
 </script>
 
 </body>
