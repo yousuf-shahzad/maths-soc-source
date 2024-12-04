@@ -75,3 +75,9 @@ class LeaderboardEntry(db.Model):
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('leaderboard_entries', cascade='all, delete-orphan'))
     # position = db.Column(db.Integer, nullable=True)
+
+class Announcement(db.Model):
+    id = db.Column(db.Integer, db.ForeignKey, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.String, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
