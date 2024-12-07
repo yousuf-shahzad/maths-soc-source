@@ -54,6 +54,21 @@ math_soc/
 │   │   └── test_profile_routes.py
 │   ├── test_models.py
 │   └── test_database.py
+├── docs/
+│   ├── source/
+│   │   ├── modules.rst
+│   │   ├── installation.rst
+│   │   ├── development.rst
+│   │   ├── deployment.rst
+│   │   ├── api/
+│   │   │   ├── app.admin.rst
+│   │   │   ├── app.main.rst
+│   │   │   ├── app.profile.rst
+│   │   │   └── app.auth.rst
+│   │   └── index.rst
+│   ├── build/
+│   └── Makefile
+├── venv/
 ├── config.py
 ├── run.py
 ├── requirements.txt

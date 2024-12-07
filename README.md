@@ -82,6 +82,16 @@ math_soc/
 │   ├── admin/          # Admin routes tests
 │   └── profile/        # Profile routes tests
 │
+├── docs/
+│   ├── source/
+│   │   ├── modules.rst
+│   │   ├── installation.rst
+│   │   ├── development.rst
+│   │   ├── deployment.rst
+│   │   ├── api/
+│   │   └── index.rst
+│   ├── build/
+│   └── Makefile
 ├── config.py           # Configuration settings
 └── run.py              # Application entry point
 ```
