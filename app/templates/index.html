@@ -26,6 +26,28 @@
     </div>
 </section>
 
+
+<!-- Announcement Section -->
+<section class="newsletter-preview section-container">
+    <h2 class="section-title">Latest Announcement</h2>
+    {% if latest_announcement %}
+    <div class="newsletter-card">
+        <h3>{{ latest_announcement.title }}</h3>
+        <p class="meta">
+            Posted {{ latest_newsletter.date_posted.strftime('%B %d, %Y') }}
+        </p>
+        <p class="newsletter-excerpt">{{ latest_announcement.content| safe }}</p>
+        <div class="challenge-actions">
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.edit_announcement', announcement_id=latest_announcement.id) }}" class="button-secondary">Edit</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>No newsletters available at this time.</p>
+    {% endif %}
+</section>
+
 <!-- Newsletter Section -->
 <section class="newsletter-preview section-container">
     <h2 class="section-title">Latest Newsletter</h2>

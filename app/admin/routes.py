@@ -9,6 +9,7 @@ It is organized into logical sections based on functionality:
 - Challenge Management
 - User Management
 - Leaderboard Management
+- Announcement Management
 
 Dependencies:
 ------------
@@ -50,12 +51,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from app import db
 from app.admin import bp
 from app.models import (
-    Article, Challenge, User, AnswerSubmission,
+    Article, Challenge, User, AnswerSubmission, Announcement,
     ChallengeAnswerBox, LeaderboardEntry
 )
 from app.admin.forms import (
     ChallengeForm, ArticleForm, AnswerSubmissionForm,
     LeaderboardEntryForm, EditUserForm, CreateUserForm,
+    AnnouncementForm
 )
 from app.auth.forms import RegistrationForm
 
@@ -1004,6 +1006,124 @@ def reset_leaderboard():
         current_app.logger.error(f"Error resetting leaderboard: {str(e)}")
         flash('Error resetting leaderboard.')
     return redirect(url_for('admin.manage_leaderboard'))
+
+@bp.route('/admin/leaderboard/update')
+@login_required
+@admin_required
+def update_leaderboard():
+    """
+    Updates the leaderboard with new scores
+    
+    Notes:
+    - Calculates scores based on challenge submissions
+    - Updates existing entries or creates new ones
+    """
+    try:
+        # Get all users and their submissions
+        users = User.query.all()
+        for user in users:
+            user_score = 0
+            for submission in user.submissions:
+                if submission.is_correct:
+                    user_score += 1
+            entry = LeaderboardEntry.query.filter_by(user_id=user.id).first()
+            if entry:
+                entry.score = user_score
+            else:
+                entry = LeaderboardEntry(user_id=user.id, score=user_score)
+                db.session.add(entry)
+        db.session.commit()
+        flash('Leaderboard updated successfully.')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating leaderboard: {str(e)}")
+        flash('Error updating leaderboard.')
+    return redirect(url_for('admin.manage_leaderboard'))
+
+# ============================================================================
+# Announcement Management Routes
+# ============================================================================
+
+@bp.route('/admin/announcements')
+@login_required
+@admin_required
+def manage_announcements():
+    """
+    Displays announcement management interface
+    """
+    announcements = Announcement.query.order_by(Announcement.date_posted.desc()).all()
+    return render_template('admin/manage_announcements.html', title='Manage Announcements', announcements=announcements)
+
+@bp.route('/admin/announcements/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_announcement():
+    """
+    Creates a new announcement
+    """
+    form = AnnouncementForm()
+    if form.validate_on_submit():
+        try:
+            announcement = Announcement(
+                title=form.title.data,
+                content=form.content.data,
+                date_posted=datetime.datetime.now()
+            )
+            db.session.add(announcement)
+            db.session.commit()
+            flash('Announcement created successfully.')
+            return redirect(url_for('admin.manage_announcements'))
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating announcement: {str(e)}")
+            flash('Error creating announcement. Please try again.')
+    return render_template('admin/create_announcement.html', title='Create Announcement', form=form)
+
+@bp.route('/admin/announcements/edit/<int:announcement_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_announcement(announcement_id):
+    """
+    Edits an existing announcement
+    
+    Args:
+        announcement_id: int ID of announcement to edit
+    """
+    announcement = Announcement.query.get_or_404(announcement_id)
+    form = AnnouncementForm(obj=announcement)
+    if form.validate_on_submit():
+        try:
+            announcement.title = form.title.data
+            announcement.content = form.content.data
+            db.session.commit()
+            flash('Announcement updated successfully.')
+            return redirect(url_for('admin.manage_announcements'))
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating announcement: {str(e)}")
+            flash('Error updating announcement. Please try again.')
+    return render_template('admin/edit_announcement.html', title='Edit Announcement', form=form, announcement=announcement)
+
+@bp.route('/admin/announcements/delete/<int:announcement_id>')
+@login_required
+@admin_required
+def delete_announcement(announcement_id):
+    """
+    Deletes an announcement
+    
+    Args:
+        announcement_id: int ID of announcement to delete
+    """
+    announcement = Announcement.query.get_or_404(announcement_id)
+    try:
+        db.session.delete(announcement)
+        db.session.commit()
+        flash('Announcement deleted successfully.')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting announcement: {str(e)}")
+        flash('Error deleting announcement. Please try again.')
+    return redirect(url_for('admin.manage_announcements'))
 
 # ! ERROR HANDLERS
 

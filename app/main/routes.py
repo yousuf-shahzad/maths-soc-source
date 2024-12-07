@@ -26,7 +26,7 @@ from typing import Dict, List
 from app import db
 from sqlalchemy.exc import SQLAlchemyError
 from app.main import bp
-from app.models import Challenge, Article, LeaderboardEntry, AnswerSubmission, ChallengeAnswerBox
+from app.models import Challenge, Article, LeaderboardEntry, AnswerSubmission, ChallengeAnswerBox, Announcement
 from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
 
 
@@ -57,6 +57,11 @@ def index():
         latest_newsletter = Article.query.filter_by(
             type='newsletter'
         ).order_by(Article.date_posted.desc()).first()
+
+        latest_announcement = Announcement.query.order_by(
+            Announcement.date_posted.desc()
+        ).first()
+
         return render_template('index.html',
                             challenges=challenges,
                             articles=articles,
@@ -64,7 +69,9 @@ def index():
                             recent_challenges=recent_challenges,
                             recent_articles=recent_articles,
                             top_performers=top_performers,
-                            latest_newsletter=latest_newsletter)
+                            latest_newsletter=latest_newsletter,
+                            latest_announcement=latest_announcement
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in index route: {str(e)}")
         flash("An error occurred while loading the homepage.", "error")

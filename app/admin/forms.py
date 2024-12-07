@@ -57,3 +57,8 @@ class CreateUserForm(FlaskForm):
     is_admin = BooleanField('Admin')
     maths_class = StringField('Maths Class', validators=[DataRequired()])
     submit = SubmitField('Create User')
+
+class AnnouncementForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = CKEditorField('Content', validators=[DataRequired()])
+    submit = SubmitField('Submit')
