@@ -1,3 +1,30 @@
+"""
+Profile Routes Module
+==================
+
+This module contains routes for user profile management.
+
+Dependencies:
+------------
+- Flask and related extensions
+- SQLAlchemy for database operations
+- Custom models and forms using Flask-WTF
+
+Security:
+---------
+User profile management is handled securely:
+1. Password changes are validated before updating
+2. Account deletion requires user confirmation
+3. User authentication is required for profile access
+
+Maintenance Notes:
+-----------------
+1. Validate form data before processing it in routes.
+2. Ensure privacy policy remains on profile page.
+3. Deleting an account is irreversible and should be handled with caution, so ensure there is clear outlining of the consequences.
+4. Password changes should be confirmed with the user before updating.
+"""
+
 from flask import render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app import db
@@ -5,15 +32,37 @@ from app.models import LeaderboardEntry, User
 from app.profile import bp  # Import the blueprint
 from app.profile.forms import ChangePasswordForm
 
+# ====================
+# Profile Routes
+# ====================
+
 @bp.route('/')  # Changed from '/profile' to '/' since we're using url_prefix
 @login_required
 def profile():
+    """
+    Display the user's profile page.
+
+    Returns:
+        Rendered profile page with user data.
+    """
     leaderboard_data = LeaderboardEntry.query.filter_by(user_id=current_user.id).first()
     return render_template('profile/main_profile.html', title='Profile', leaderboard_data=leaderboard_data)
 
 @bp.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
+    """
+    Handle the user's password change process.
+
+    Returns:
+        Rendered change password page or redirects to profile upon successful password change.
+        
+    Notes:
+    --------
+        - Requires user authentication
+        - Handles password change form validation
+        - Flashes success message upon successful password change
+    """
     if not current_user.is_authenticated:
         flash('You must be logged in to access this page.')
         return redirect(url_for('auth.login'))
@@ -27,6 +76,21 @@ def change_password():
 @bp.route('/delete_account')
 @login_required
 def delete_account():
+    """
+    Handle the user account deletion process.
+
+    Returns:
+        Redirects to the home page upon successful account deletion.
+
+    Notes:
+    --------
+        - Requires user authentication
+        - Flashes success message upon successful account deletion
+
+    Warning:
+    --------
+        - This action is irreversible and permanently deletes the user's account.
+    """
     user = User.query.get(current_user.id)
     db.session.delete(user)
     db.session.commit()

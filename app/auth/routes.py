@@ -1,3 +1,39 @@
+"""
+Auth Routes Module
+==================
+
+This module contains routes for user authentication and registration.
+It is organized into logical sections based on functionality:
+- Login Routes
+- Registration Routes
+- Logout Route
+
+Dependencies:
+------------
+- Flask and related extensions
+- SQLAlchemy for database operations
+- Custom models and forms using Flask-WTF
+- Better Profanity for content filtering
+
+Security:
+---------
+User authentication and registration are handled securely:
+1. Passwords are hashed before storing in the database
+2. Profanity checks are performed on user names
+3. Duplicate registrations are prevented
+4. Admin registration is disabled in production
+
+Maintenance Notes:
+-----------------
+1. Ensure that the user model is up-to-date with the database schema.
+2. Validate form data before processing it in routes.
+3. Use secure practices for user authentication and registration.
+4. Keep the registration process simple and user-friendly.
+5. Disable admin registration in production environments.
+"""
+
+
+
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user
 from app import db
@@ -7,17 +43,24 @@ from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
 from better_profanity import profanity
 
+# ====================
+# Login Routes
+# ====================
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     """
-    Login route for users to authenticate themselves.
-
-    Note:
-    -----
-    - If the user is already authenticated, they are redirected to the main index.
-    - The user's login is dependent on the year they select to allow for users of different age with the same name.
-    """
+    Handle user login process.
     
+    Returns:
+        Rendered login page or redirects to index upon successful authentication.
+    
+    Notes:
+        - Redirects authenticated users to index
+        - Authenticates users by full name and year
+        - Handles login form validation
+        - Flashes error for invalid credentials
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = LoginForm()
@@ -36,17 +79,24 @@ def login():
         return redirect(url_for('main.index'))
     return render_template('auth/login.html', title='Sign In', form=form)
 
+# ====================
+# Registration Routes
+# ====================
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     """
-    Register route for users to create an account.
-
-    Note:
-    -----
-    - Key stage map mimics key stages used within the school as of 7/12/2024.
-    - Users are not allowed to have whitespace in their name to prevent issues with the leaderboard and other features.
-    - Profanity is checked in the user's name to prevent inappropriate content.
-    - Users with the same name and year are not allowed to register.
+    Handle user registration process.
+    
+    Returns:
+        Rendered registration page or redirects to login upon successful registration.
+    
+    Notes:
+        - Redirects authenticated users to index
+        - Maps school years to key stages
+        - Validates user input for name and registration
+        - Prevents duplicate registrations
+        - Checks for inappropriate content in names
     """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -99,12 +149,21 @@ def register():
 @bp.route('/register_admin', methods=['GET', 'POST'])
 def register_admin():
     """
-    Register route for admins to create an account.
-
-    Note:
-    -----
-    - Works exactly similar to the register route but with an additional indication for admin.
-    - Disable this route in production to prevent unauthorized admin registration.
+    Handle admin user registration process.
+    
+    Returns:
+        Rendered admin registration page or redirects to login upon successful registration.
+    
+    Notes:
+        - Similar to standard user registration
+        - Creates users with admin privileges
+        - Should be disabled in production environments
+        - Prevents duplicate registrations
+        - Validates user input
+    
+    Warnings:
+        - Use with caution in production
+        - Potential security risk if left enabled
     """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -150,10 +209,21 @@ def register_admin():
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register Admin', form=form)
 
+# ====================
+# Logout Route
+# ====================
+
 @bp.route('/logout')
 def logout():
     """
-    Logout route for users to end their session.
+    Handle user logout process.
+    
+    Returns:
+        Redirect to the main index page after logging out the current user.
+    
+    Notes:
+        - Terminates the current user's session
+        - Provides a clean logout experience
     """
     logout_user()
     return redirect(url_for('main.index'))

@@ -1,21 +1,34 @@
 """
 Main Routes Module
+==================
 
-This module handles all the main user-facing routes of the application including:
-- Homepage and navigation
-- Challenge viewing and submission
-- Article and newsletter management
-- Leaderboard functionality
-
-Security:
-- All sensitive routes require authentication
-- File access is properly sanitized
-- User permissions are checked appropriately
+This module handles all the main user-facing routes.
+It is organized into logical sections based on functionality:
+- View Routes
+- Challenge Routes
+- Article and Newsletter Routes
+- Leaderboard Routes
 
 Dependencies:
-- Flask-Login for user authentication
+------------
+- Flask and related extensions
 - SQLAlchemy for database operations
-- WTForms for form handling
+- Custom models and forms using Flask-WTF
+
+Security:
+---------
+User authentication and registration are handled securely:
+1. All sensitive routes require authentication
+2. File access is properly sanitized
+3. User permissions are checked appropriately
+4. Form data is validated before processing
+
+Maintenance Notes:
+-----------------
+1. Ensure that the database schema is up-to-date with the models.
+2. Validate form data before processing it in routes.
+3. Keep the user experience simple and user-friendly.
+4. Handle errors gracefully and provide helpful messages.
 """
 
 import os

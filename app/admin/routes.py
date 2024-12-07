@@ -16,7 +16,7 @@ Dependencies:
 - Flask and related extensions
 - SQLAlchemy for database operations
 - Werkzeug for file operations
-- Custom models and forms
+- Custom models and forms using Flask-WTF
 
 Security:
 ---------
