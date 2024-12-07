@@ -9,6 +9,8 @@ def app():
     Fixture to create a Flask app configured for testing
     """
     app = create_app('testing')
+    with app.app_context():
+        db.create_all()
     return app
 
 @pytest.fixture(scope='module')
