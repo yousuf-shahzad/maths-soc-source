@@ -14,30 +14,46 @@ math_soc/
 │   │   ├── __init__.py 
 │   │   ├── routes.py
 │   │   └── forms.py
+│   ├── profile/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   └── forms.py
 │   ├── models.py
 │   ├── database.py
 │   ├── static/
 │   │   ├── css/
 │   │   │   └── main.css
-│   │   └── js/
-│   │       └── main.js
+│   │   └── images/
+│   │       └── [images]
 │   ├── templates/
 │   │   ├── base.html
 │   │   ├── index.html
 │   │   ├── auth/
-│   │   │   ├── login.html
-│   │   │   └── register.html
+│   │   │   └── [auth templates]
 │   │   ├── main/
-│   │   │   ├── challenges.html
-│   │   │   ├── articles.html
-│   │   │   └── leaderboard.html
-│   │   └── admin/
-│   │       ├── index.html
-│   │       ├── manage_users.html
-│   │       ├── manage_challenges.html
-│   │       └── manage_articles.html
+│   │   │   └── [main templates]
+│   │   ├── admin/
+│   │   │   └── [admin templates]
+│   │   └── profile/
+│   │       └── [profile templates]
 │   └── migrations/
-
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── auth/
+│   │   ├── __init__.py
+│   │   └── test_auth_routes.py
+│   ├── main/
+│   │   ├── __init__.py
+│   │   └── test_main_routes.py
+│   ├── admin/
+│   │   ├── __init__.py
+│   │   └── test_admin_routes.py
+│   ├── profile/
+│   │   ├── __init__.py
+│   │   └── test_profile_routes.py
+│   ├── test_models.py
+│   └── test_database.py
 ├── config.py
 ├── run.py
 ├── requirements.txt
