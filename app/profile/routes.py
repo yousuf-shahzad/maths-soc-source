@@ -36,6 +36,7 @@ from app.profile.forms import ChangePasswordForm
 # Profile Routes
 # ====================
 
+
 @bp.route('/')  # Changed from '/profile' to '/' since we're using url_prefix
 @login_required
 def profile():
@@ -45,8 +46,10 @@ def profile():
     Returns:
         Rendered profile page with user data.
     """
-    leaderboard_data = LeaderboardEntry.query.filter_by(user_id=current_user.id).first()
+    leaderboard_data = LeaderboardEntry.query.filter_by(
+        user_id=current_user.id).first()
     return render_template('profile/main_profile.html', title='Profile', leaderboard_data=leaderboard_data)
+
 
 @bp.route('/change_password', methods=['GET', 'POST'])
 @login_required
@@ -56,7 +59,7 @@ def change_password():
 
     Returns:
         Rendered change password page or redirects to profile upon successful password change.
-        
+
     Notes:
     --------
         - Requires user authentication
@@ -82,6 +85,7 @@ def change_password():
         flash('Your password has been updated.', 'success')
         return redirect(url_for('profile.profile'))
     return render_template('profile/change_password.html', title='Change Password', form=form)
+
 
 @bp.route('/delete_account')
 @login_required

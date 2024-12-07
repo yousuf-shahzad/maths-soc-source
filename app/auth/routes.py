@@ -33,11 +33,11 @@ Maintenance Notes:
 """
 
 
-
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user
 from app import db
-import string, random
+import string
+import random
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
@@ -47,14 +47,15 @@ from better_profanity import profanity
 # Login Routes
 # ====================
 
+
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     """
     Handle user login process.
-    
+
     Returns:
-        Rendered login page or redirects to index upon successful authentication.
-    
+        Rendered login page or redirects to index upon successful authentication.  
+
     Notes:
         - Redirects authenticated users to index
         - Authenticates users by full name and year
@@ -71,7 +72,7 @@ def login():
             User.full_name == full_name,
             User.year == form.year.data
         ).first()
-        
+
         if user is None or not user.check_password(form.password.data):
             flash('Invalid name or password')
             return redirect(url_for('auth.login'))
@@ -83,14 +84,15 @@ def login():
 # Registration Routes
 # ====================
 
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     """
     Handle user registration process.
-    
+
     Returns:
         Rendered registration page or redirects to login upon successful registration.
-    
+
     Notes:
         - Redirects authenticated users to index
         - Maps school years to key stages
@@ -127,15 +129,16 @@ def register():
             User.full_name == full_name,
             User.year == form.year.data
         ).first()
-        
+
         if existing_user:
-            flash('A user with this name and year already exists. Please use a different name or contact admin.')
+            flash(
+                'A user with this name and year already exists. Please use a different name or contact admin.')
             return redirect(url_for('auth.register'))
-        
+
         # Create new user
         user = User(
             full_name=full_name,
-            year=form.year.data, 
+            year=form.year.data,
             key_stage=key_stage,
             maths_class=form.maths_class.data
         )
@@ -146,21 +149,22 @@ def register():
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register', form=form)
 
+
 @bp.route('/register_admin', methods=['GET', 'POST'])
 def register_admin():
     """
     Handle admin user registration process.
-    
+
     Returns:
         Rendered admin registration page or redirects to login upon successful registration.
-    
+
     Notes:
         - Similar to standard user registration
         - Creates users with admin privileges
         - Should be disabled in production environments
         - Prevents duplicate registrations
         - Validates user input
-    
+
     Warnings:
         - Use with caution in production
         - Potential security risk if left enabled
@@ -183,21 +187,22 @@ def register_admin():
         if profanity.contains_profanity(full_name):
             flash('Unauthorized content detected in your name. Please try again.')
             return redirect(url_for('auth.register_admin'))
-        
+
         # Check if a user with the same full name and year already exists
         existing_user = User.query.filter(
             User.full_name == full_name,
             User.year == form.year.data
         ).first()
-        
+
         if existing_user:
-            flash('A user with this name and year already exists. Please use a different name or contact admin.')
+            flash(
+                'A user with this name and year already exists. Please use a different name or contact admin.')
             return redirect(url_for('auth.register_admin'))
-        
+
         # Create new admin user
         user = User(
             full_name=full_name,
-            year=form.year.data, 
+            year=form.year.data,
             key_stage=key_stage,
             maths_class=form.maths_class.data,
             is_admin=True
@@ -208,19 +213,19 @@ def register_admin():
         flash('Congratulations, you are now a registered admin!')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register Admin', form=form)
-
 # ====================
 # Logout Route
 # ====================
+
 
 @bp.route('/logout')
 def logout():
     """
     Handle user logout process.
-    
+
     Returns:
-        Redirect to the main index page after logging out the current user.
-    
+        Redirect to the main index page after logging out the current user.        
+
     Notes:
         - Terminates the current user's session
         - Provides a clean logout experience
