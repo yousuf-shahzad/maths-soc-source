@@ -10,3 +10,5 @@ Werkzeug==2.0.1
 better-profanity==0.7.0
 WTForms==3.2.1
 gunicorn==23.0.0
+sphinx==8.1.0
+sphinx-rtd-theme==3.0.0
