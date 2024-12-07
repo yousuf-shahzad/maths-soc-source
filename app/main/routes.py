@@ -37,7 +37,18 @@ from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
 @bp.route('/')
 @bp.route('/index')
 def index():
-    """Homepage route showing recent content and top performers."""
+    """
+    Render the homepage with recent content.
+    
+    Returns:
+        Rendered homepage template with recent challenges, articles, leaderboard entries, 
+        latest newsletter, and latest announcement.
+    
+    Notes:
+        - Displays most recent challenges and articles (limited to 3 each)
+        - Shows the latest newsletter and announcement
+        - Falls back to the about page if a database error occurs
+    """
     try:
         challenges = Challenge.query
         articles = Article.query
@@ -49,10 +60,7 @@ def index():
         recent_articles = Article.query.filter_by(
             type='article'
         ).order_by(Article.date_posted.desc()).limit(3).all()
-        
-        top_performers = LeaderboardEntry.query.order_by(
-            LeaderboardEntry.score.desc()
-        ).limit(5).all()
+    
         
         latest_newsletter = Article.query.filter_by(
             type='newsletter'
@@ -68,7 +76,6 @@ def index():
                             leaderboard_entries=leaderboard_entries,
                             recent_challenges=recent_challenges,
                             recent_articles=recent_articles,
-                            top_performers=top_performers,
                             latest_newsletter=latest_newsletter,
                             latest_announcement=latest_announcement
         )
@@ -79,7 +86,12 @@ def index():
 
 @bp.route('/about')
 def about():
-    """About page route."""
+    """
+    Render the about page.
+    
+    Returns:
+        Rendered about page template.
+    """
     return render_template('main/about.html', title='About')
 
 # ============================================================================
@@ -88,7 +100,20 @@ def about():
 
 @bp.route('/challenges')
 def challenges():
-    """List all challenges with pagination."""
+    """
+    List all challenges with pagination.
+    
+    Query Parameters:
+        page (int, optional): Current page number for pagination. Defaults to 1.
+    
+    Returns:
+        Rendered challenges page template with paginated challenges.
+    
+    Notes:
+        - Displays 6 challenges per page
+        - Sorted by most recent date posted
+        - Redirects to index if database error occurs
+    """
     page = request.args.get('page', 1, type=int)
     try:
         challenges_pagination = Challenge.query.order_by(
@@ -107,12 +132,12 @@ def check_submission_count(user_id: int, challenge_id: int, box_id: int) -> int:
     Check how many submissions a user has made for a specific answer box.
     
     Args:
-        user_id: The ID of the user
-        challenge_id: The ID of the challenge
-        box_id: The ID of the answer box
+        user_id (int): The ID of the user.
+        challenge_id (int): The ID of the challenge.
+        box_id (int): The ID of the answer box.
         
     Returns:
-        Number of submissions
+        int: Number of submissions for the specified user, challenge, and answer box.
     """
     return AnswerSubmission.query.filter_by(
         user_id=user_id,
@@ -127,13 +152,13 @@ def create_submission(user_id: int, challenge_id: int,
     Create and save a new submission.
     
     Args:
-        user_id: The ID of the user
-        challenge_id: The ID of the challenge
-        answer_box: The answer box object
-        submitted_answer: The user's submitted answer
+        user_id (int): The ID of the user.
+        challenge_id (int): The ID of the challenge.
+        answer_box (ChallengeAnswerBox): The answer box object.
+        submitted_answer (str): The user's submitted answer.
         
     Returns:
-        Created AnswerSubmission object
+        AnswerSubmission: Created submission object.
     """
     submission = AnswerSubmission(
         user_id=user_id,
@@ -152,11 +177,11 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
     Check if user has correct submissions for all answer boxes in a challenge.
     
     Args:
-        challenge: The Challenge object
-        user_id: The ID of the user
+        challenge (Challenge): The Challenge object.
+        user_id (int): The ID of the user.
         
     Returns:
-        True if all answers are correct, False otherwise
+        bool: True if all answers are correct, False otherwise.
     """
     return all(
         AnswerSubmission.query.filter_by(
@@ -168,22 +193,24 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
         for box in challenge.answer_boxes
     )
 
-def update_leaderboard(user_id: int, points: int) -> None:
+def update_leaderboard(user_id: int, score: int) -> None:
     """
     Update user's points on the leaderboard.
     
     Args:
-        user_id: The ID of the user
-        points: Number of points to add
+        user_id (int): The ID of the user.
+        score (int): Number of points to add.
     """
     leaderboard_entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
     
     if leaderboard_entry:
-        leaderboard_entry.points += points
+        leaderboard_entry.score += score
     else:
-        leaderboard_entry = LeaderboardEntry(user_id=user_id, points=points)
+        leaderboard_entry = LeaderboardEntry(user_id=user_id, score=score)
         db.session.add(leaderboard_entry)
     
+    leaderboard_entry.last_updated = datetime.datetime.utcnow()
+
     db.session.commit()
 
 def handle_submission_result(submission: AnswerSubmission, 
@@ -193,9 +220,14 @@ def handle_submission_result(submission: AnswerSubmission,
     Handle the result of a submission, updating points and showing appropriate messages.
     
     Args:
-        submission: The AnswerSubmission object
-        challenge: The Challenge object
-        answer_box: The ChallengeAnswerBox object
+        submission (AnswerSubmission): The AnswerSubmission object.
+        challenge (Challenge): The Challenge object.
+        answer_box (ChallengeAnswerBox): The ChallengeAnswerBox object.
+    
+    Notes:
+        - Flashes success message for correct answers
+        - Awards bonus points for first correct solution
+        - Tracks remaining attempts for incorrect answers
     """
     submission_count = check_submission_count(
         submission.user_id, challenge.id, answer_box.id
@@ -223,7 +255,18 @@ def handle_submission_result(submission: AnswerSubmission,
 @bp.route('/challenges/<int:challenge_id>', methods=['GET', 'POST'])
 def challenge(challenge_id: int):
     """
-    Display a specific challenge. Allow submission only for authenticated users.
+    Display a specific challenge and handle answer submissions.
+    
+    Args:
+        challenge_id (int): The ID of the challenge to display.
+    
+    Returns:
+        Rendered challenge template with submission forms and previous submissions.
+    
+    Notes:
+        - Requires user authentication to submit answers
+        - Tracks remaining attempts and previous submissions
+        - Prevents submission after maximum attempts are reached
     """
     challenge = Challenge.query.get_or_404(challenge_id)
     forms = {}
@@ -254,17 +297,21 @@ def challenge(challenge_id: int):
         all_correct=all_correct
     )
 
-
 def handle_challenge_submission(challenge: Challenge, forms: Dict) -> redirect:
     """
     Process a challenge submission.
     
     Args:
-        challenge: The Challenge object
-        forms: Dictionary of forms for each answer box
+        challenge (Challenge): The Challenge object.
+        forms (Dict): Dictionary of forms for each answer box.
         
     Returns:
-        Redirect response
+        Redirect: Response redirecting back to the challenge page.
+    
+    Notes:
+        - Validates form submission
+        - Checks remaining attempts
+        - Creates and handles submission result
     """
     box_id = int(request.form.get('answer_box_id'))
     form = forms[box_id]
@@ -292,31 +339,55 @@ def handle_challenge_submission(challenge: Challenge, forms: Dict) -> redirect:
 
 @bp.route('/articles')
 def articles():
+    """
+    List all articles.
+    
+    Returns:
+        Rendered articles page template with all articles sorted by most recent.
+    """
     articles = Article.query.filter_by(type='article').order_by(Article.date_posted.desc()).all()
     return render_template('main/articles.html', title='Articles', articles=articles)
 
 @bp.route('/newsletters/<path:filename>')
 def serve_newsletter(filename):
+    """
+    Serve a newsletter file from the uploads directory.
+    
+    Args:
+        filename (str): Name of the newsletter file to serve.
+    
+    Returns:
+        Sent newsletter file from the uploads directory.
+    """
     return send_from_directory(
         os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters'),
         filename
     )
 
-
-def update_leaderboard(user_id, score):
-    entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
-    if entry is None:
-        entry = LeaderboardEntry(user_id=user_id, score=score)
-        db.session.add(entry)
-    else:
-        entry.score += score
-    entry.last_updated = datetime.datetime.utcnow()
-    db.session.commit()
-
 def check_user_submission_count(user_id, challenge_id):
+    """
+    Check the total number of submissions for a user in a specific challenge.
+    
+    Args:
+        user_id: The ID of the user.
+        challenge_id: The ID of the challenge.
+    
+    Returns:
+        int: Total number of submissions for the user in the challenge.
+    """
     return AnswerSubmission.query.filter_by(user_id=user_id, challenge_id=challenge_id).count()
 
 def has_correct_submission(user_id, challenge_id):
+    """
+    Check if a user has a correct submission for a specific challenge.
+    
+    Args:
+        user_id: The ID of the user.
+        challenge_id: The ID of the challenge.
+    
+    Returns:
+        bool: True if the user has a correct submission, False otherwise.
+    """
     return AnswerSubmission.query.filter_by(
         user_id=user_id,
         challenge_id=challenge_id,
@@ -325,11 +396,29 @@ def has_correct_submission(user_id, challenge_id):
 
 @bp.route('/newsletters')
 def newsletters():
+    """
+    List all newsletters.
+    
+    Returns:
+        Rendered newsletters page template with all newsletters sorted by most recent.
+    """
     newsletters = Article.query.filter_by(type='newsletter').order_by(Article.date_posted.desc()).all()
     return render_template('main/newsletters.html', title='Newsletters', articles=newsletters)
 
 @bp.route('/newsletter/<int:id>')
 def newsletter(id):
+    """
+    Display a specific newsletter.
+    
+    Args:
+        id (int): The ID of the newsletter.
+    
+    Returns:
+        Rendered newsletter detail page.
+    
+    Raises:
+        404 Error: If the article is not a newsletter.
+    """
     article = Article.query.get_or_404(id)
     if article.type != 'newsletter':
         abort(404)
@@ -337,6 +426,18 @@ def newsletter(id):
 
 @bp.route('/article/<int:id>')
 def article(id):
+    """
+    Display a specific article.
+    
+    Args:
+        id (int): The ID of the article.
+    
+    Returns:
+        Rendered article detail page.
+    
+    Raises:
+        404 Error: If the article is not an article type.
+    """
     article = Article.query.get_or_404(id)
     if article.type != 'article':
         abort(404)
@@ -344,9 +445,21 @@ def article(id):
 
 @bp.route('/leaderboard')
 def leaderboard():
+    """
+    Display the top 10 leaderboard entries.
+    
+    Returns:
+        Rendered leaderboard page with top 10 entries sorted by score.
+    """
     entries = LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).limit(10).all()
     return render_template('main/leaderboard.html', title='Leaderboard', entries=entries)
 
 @bp.route('/privacy_policy')
 def privacy_policy():
+    """
+    Display the privacy policy.
+    
+    Returns:
+        Rendered privacy policy page.
+    """
     return render_template('main/privacy_policy.html', title='Privacy Policy', current_date=datetime.datetime.utcnow())

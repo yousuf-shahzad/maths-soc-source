@@ -9,6 +9,15 @@ from better_profanity import profanity
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Login route for users to authenticate themselves.
+
+    Note:
+    -----
+    - If the user is already authenticated, they are redirected to the main index.
+    - The user's login is dependent on the year they select to allow for users of different age with the same name.
+    """
+    
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = LoginForm()
@@ -29,6 +38,16 @@ def login():
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Register route for users to create an account.
+
+    Note:
+    -----
+    - Key stage map mimics key stages used within the school as of 7/12/2024.
+    - Users are not allowed to have whitespace in their name to prevent issues with the leaderboard and other features.
+    - Profanity is checked in the user's name to prevent inappropriate content.
+    - Users with the same name and year are not allowed to register.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = RegistrationForm()
@@ -79,6 +98,14 @@ def register():
 
 @bp.route('/register_admin', methods=['GET', 'POST'])
 def register_admin():
+    """
+    Register route for admins to create an account.
+
+    Note:
+    -----
+    - Works exactly similar to the register route but with an additional indication for admin.
+    - Disable this route in production to prevent unauthorized admin registration.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = RegistrationForm()
@@ -125,5 +152,8 @@ def register_admin():
 
 @bp.route('/logout')
 def logout():
+    """
+    Logout route for users to end their session.
+    """
     logout_user()
     return redirect(url_for('main.index'))
