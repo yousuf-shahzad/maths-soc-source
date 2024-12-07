@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     submissions = db.relationship('AnswerSubmission', backref='user', lazy=True,
                                 cascade='all, delete-orphan')
     articles = db.relationship('Article', backref='author', lazy='dynamic',
-                             cascade='all, delete-orphan')
+                             cascade='all, save-update')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -31,7 +31,7 @@ class Challenge(db.Model):
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     file_url = db.Column(db.String(100))
     key_stage = db.Column(db.String(3), nullable=False)
-    answer_boxes = db.relationship('ChallengeAnswerBox', backref='challenge', lazy=True, cascade='all, delete-orphan')
+    answer_boxes = db.relationship('ChallengeAnswerBox', backref='challenge', lazy=True, cascade='all, save-update')
     submissions = db.relationship('AnswerSubmission', backref='challenge', lazy=True)
     first_correct_submission = db.Column(db.DateTime)
 
