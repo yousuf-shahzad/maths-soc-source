@@ -24,8 +24,8 @@ A comprehensive web application for Upton Court Grammar School's Maths Society, 
 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/math-society-website.git
-cd math-society-website
+git clone https://github.com/yousuf-shahzad/math-soc-source.git
+cd math-soc-source
 ```
 
 2. Create a virtual environment
@@ -101,11 +101,6 @@ math_soc/
 - Write comprehensive tests for new features
 
 ## Deployment
-### Recommended Platforms
-
-- Heroku
-- DigitalOcean
-- AWS Elastic Beanstalk
 
 ### Deployment Steps
 
@@ -114,13 +109,25 @@ math_soc/
 3. Configure your chosen hosting platform
 4. Deploy using the platform's CLI or integration
 
+## Documentation
+
+Documentation is generated using Sphinx. To build the docs:
+
+```bash
+cd docs
+pip install -r requirements.txt
+make html
+```
+
 ## License
+
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
-Maths Society Maintainer
+
+```
+Yousuf Shahzad or Sudhakara Ambati
 Upton Court Grammar School
-[Your Contact Email]
 ```
 
 ## Additional Resources
