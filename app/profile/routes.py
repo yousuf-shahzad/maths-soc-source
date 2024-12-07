@@ -68,8 +68,18 @@ def change_password():
         return redirect(url_for('auth.login'))
     form = ChangePasswordForm()
     if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash('Invalid current password.', 'error')
+            return redirect(url_for('profile.change_password'))
+        if form.current_password.data == form.new_password.data:
+            flash('New password must be different from the current password.', 'error')
+            return redirect(url_for('profile.change_password'))
+        if form.new_password.data != form.confirm_password.data:
+            flash('Ensure both new passwords are the same', 'error')
+            return redirect(url_for('profile.change_password'))
         current_user.set_password(form.new_password.data)
-        flash('Your password has been updated.')
+        db.session.commit()
+        flash('Your password has been updated.', 'success')
         return redirect(url_for('profile.profile'))
     return render_template('profile/change_password.html', title='Change Password', form=form)
 
