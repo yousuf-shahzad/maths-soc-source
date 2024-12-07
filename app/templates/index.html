@@ -34,7 +34,7 @@
     <div class="newsletter-card">
         <h3>{{ latest_announcement.title }}</h3>
         <p class="meta">
-            Posted {{ latest_newsletter.date_posted.strftime('%B %d, %Y') }}
+            Posted {{ latest_announcement.date_posted.strftime('%B %d, %Y') }}
         </p>
         <p class="newsletter-excerpt">{{ latest_announcement.content| safe }}</p>
         <div class="challenge-actions">
