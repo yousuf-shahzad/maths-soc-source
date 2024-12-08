@@ -44,9 +44,13 @@ pip install -r requirements.txt
 4. Set up environment variables
 Create a `.env` file in the root directory and add:
 
-```
-SECRET_KEY=your_secret_key
-DATABASE_URL=your_database_connection_string
+```env
+SECRET_KEY=your_super_secret_key
+DATABASE_TYPE=postgresql or sqlite
+DB_USERNAME=user
+DB_PASSWORD=pass
+DB_HOST=host
+DB_NAME=dbname
 ```
 
 ## Running the Project
@@ -65,7 +69,7 @@ pytest tests/
 
 ## Project Structure
 
-```
+```layout
 math_soc/
 │
 ├── app/                # Main application package
