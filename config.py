@@ -77,7 +77,7 @@ class ProductionConfig(Config):
     """Production-specific configuration"""
     DEBUG = False
     # Can be overridden by environment variables
-    SQLALCHEMY_DATABASE_URI = Config.get_database_uri('myapp_prod')
+    SQLALCHEMY_DATABASE_URI = Config.get_database_uri()
 
 
 # Configuration selector
