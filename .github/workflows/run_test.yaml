@@ -25,7 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov pytest-html
+        pip install pytest pytest-cov pytest-html ruff
 
     - name: Run PyTest with Coverage
       run: |
@@ -46,10 +46,10 @@ jobs:
           pytest-report.html
         retention-days: 5
 
-    - name: Code Style Check
+    - name: Code Style and Linting Check with Ruff
       run: |
-        pip install flake8
-        flake8 app/ tests/
+        ruff check app/ tests/
+        ruff format app/ tests/ --check
 
     - name: Upload Test Results
       if: always()
