@@ -61,7 +61,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development-specific configuration"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = Config.get_database_uri('socdb')
+    SQLALCHEMY_DATABASE_URI = Config.get_database_uri()
     CKEDITOR_SERVE_LOCAL = True
     CKEDITOR_HEIGHT = 400
 
