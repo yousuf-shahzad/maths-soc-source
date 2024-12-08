@@ -7,6 +7,7 @@ import os
 
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     year = db.Column(db.Integer)
@@ -55,7 +56,7 @@ class ChallengeAnswerBox(db.Model):
 
 class AnswerSubmission(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey(
         'challenge.id'), nullable=False)
     answer_box_id = db.Column(db.Integer, db.ForeignKey(
@@ -74,7 +75,7 @@ class Article(db.Model):
     named_creator = db.Column(db.String(100), nullable=True)
     date_posted = db.Column(db.DateTime, nullable=False,
                             default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     type = db.Column(db.String(20), default='article', nullable=False)
 
     @property
@@ -86,7 +87,7 @@ class Article(db.Model):
 
 class LeaderboardEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     score = db.Column(db.Integer, default=0)
     last_updated = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow)
