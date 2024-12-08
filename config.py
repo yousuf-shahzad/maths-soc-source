@@ -11,7 +11,7 @@ class DevelopmentConfig:
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app', 'static', 'uploads', "challenges")
     CKEDITOR_FILE_UPLOADER = 'upload'
 
-class TestingConfig(Config):
+class TestingConfig(DevelopmentConfig):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # Use in-memory SQLite for tests
     WTF_CSRF_ENABLED = False  # Disable CSRF for testing
