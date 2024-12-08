@@ -22,6 +22,16 @@ class Config:
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'app', 'static', 'uploads')
 
     @classmethod
+    def is_production(cls):
+        """
+        Determine if the application is running in production mode
+        based on environment variables
+        """
+        return os.environ.get('FLASK_ENV') == 'production' or \
+               os.environ.get('APP_ENVIRONMENT') == 'production' or \
+               os.environ.get('ENV') == 'prod'
+
+    @classmethod
     def get_database_uri(cls, database_name=None):
         """
         Dynamically generate database URI with sensible defaults
@@ -87,4 +97,9 @@ def get_config(config_name='development'):
     Returns:
         Config: Configuration class for the specified environment
     """
-    return config_map.get(config_name, DevelopmentConfig)
+    if Config.is_production() or config_name == 'production':
+        return ProductionConfig
+    elif os.environ.get('FLASK_ENV') == 'testing' or os.environ.get('APP_ENVIRONMENT') == 'testing' or config_name == 'testing':
+        return TestingConfig
+    else:
+        return DevelopmentConfig
