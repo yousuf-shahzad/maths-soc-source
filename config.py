@@ -59,7 +59,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing-specific configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = Config.get_database_uri('myapp_test')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
 
 
