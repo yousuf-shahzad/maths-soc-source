@@ -39,6 +39,7 @@ from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User
 from better_profanity import profanity
+from config import Config
 
 # ====================
 # Login Routes
@@ -154,77 +155,79 @@ def register():
     return render_template("auth/register.html", title="Register", form=form)
 
 
-@bp.route("/register_admin", methods=["GET", "POST"])
-def register_admin():
-    """
-    Handle admin user registration process.
+if not Config.is_production():
+    @bp.route("/register_admin", methods=["GET", "POST"])
+    def register_admin():
+        """
+        Handle admin user registration process.
 
-    Returns:
-        Rendered admin registration page or redirects to login upon successful registration.
+        Returns:
+            Rendered admin registration page or redirects to login upon successful registration.
 
-    Notes:
-        - Similar to standard user registration
-        - Creates users with admin privileges
-        - Should be disabled in production environments
-        - Prevents duplicate registrations
-        - Validates user input
+        Notes:
+            - Only available in non-production environments
+            - Creates users with admin privileges
+            - Prevents duplicate registrations
+            - Validates user input
+        """
+        if current_user.is_authenticated:
+            return redirect(url_for("main.index"))
+        form = RegistrationForm()
+        if form.validate_on_submit():
+            key_stage_map = {
+                "7": "KS3", "8": "KS3", 
+                "9": "KS4", "10": "KS4", "11": "KS4", 
+                "12": "KS5", "13": "KS5"
+            }
+            key_stage = key_stage_map.get(form.year.data, "Unknown")
 
-    Warnings:
-        - Use with caution in production
-        - Potential security risk if left enabled
-    """
-    if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        key_stage_map = {
-            "7": "KS3",
-            "8": "KS3",
-            "9": "KS4",
-            "10": "KS4",
-            "11": "KS4",
-            "12": "KS5",
-            "13": "KS5",
-        }
-        key_stage = key_stage_map.get(form.year.data, "Unknown")
-
-        first_name, last_name = (
-            form.first_name.data.strip(),
-            form.last_name.data.strip(),
-        )
-        full_name = f"{first_name} {last_name}"
-
-        # Check for profanity
-        if profanity.contains_profanity(full_name):
-            flash("Unauthorized content detected in your name. Please try again.")
-            return redirect(url_for("auth.register_admin"))
-
-        # Check if a user with the same full name and year already exists
-        existing_user = User.query.filter(
-            User.full_name == full_name, User.year == form.year.data
-        ).first()
-
-        if existing_user:
-            flash(
-                "A user with this name and year already exists. Please use a different name or contact admin."
+            first_name, last_name = (
+                form.first_name.data.strip(),
+                form.last_name.data.strip(),
             )
-            return redirect(url_for("auth.register_admin"))
+            full_name = f"{first_name} {last_name}"
 
-        # Create new admin user
-        user = User(
-            full_name=full_name,
-            year=form.year.data,
-            key_stage=key_stage,
-            maths_class=form.maths_class.data,
-            is_admin=True,
-        )
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash("Congratulations, you are now a registered admin!")
-        return redirect(url_for("auth.login"))
-    return render_template("auth/register.html", title="Register Admin", form=form)
+            # Check for profanity
+            if profanity.contains_profanity(full_name):
+                flash("Unauthorized content detected in your name. Please try again.")
+                return redirect(url_for("auth.register_admin"))
 
+            # Check if a user with the same full name and year already exists
+            existing_user = User.query.filter(
+                User.full_name == full_name, User.year == form.year.data
+            ).first()
+
+            if existing_user:
+                flash(
+                    "A user with this name and year already exists. Please use a different name or contact admin."
+                )
+                return redirect(url_for("auth.register_admin"))
+
+            # Create new admin user
+            user = User(
+                full_name=full_name,
+                year=form.year.data,
+                key_stage=key_stage,
+                maths_class=form.maths_class.data,
+                is_admin=True,
+            )
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash("Congratulations, you are now a registered admin!")
+            return redirect(url_for("auth.login"))
+        return render_template("auth/register.html", title="Register Admin", form=form)
+else:
+    @bp.route("/register_admin", methods=["GET", "POST"])
+    def register_admin():
+        """
+        Disabled admin registration route in production.
+        
+        Returns:
+            Redirects to the main index page with a warning message.
+        """
+        flash("Admin registration is disabled in production environments.")
+        return redirect(url_for("main.index"))
 
 # ====================
 # Logout Route
