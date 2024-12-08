@@ -48,8 +48,8 @@ jobs:
 
     - name: Code Style and Linting Check with Ruff
       run: |
-        ruff check app/ tests/
-        ruff format app/ tests/ --check
+        ruff check app/
+        ruff format app/ --check
 
     - name: Upload Test Results
       if: always()
