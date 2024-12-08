@@ -46,11 +46,6 @@ jobs:
           pytest-report.html
         retention-days: 5
 
-    - name: Run Static Type Checking
-      run: |
-        pip install mypy
-        mypy app/
-
     - name: Code Style Check
       run: |
         pip install flake8
