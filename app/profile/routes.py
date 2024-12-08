@@ -37,7 +37,7 @@ from app.profile.forms import ChangePasswordForm
 # ====================
 
 
-@bp.route('/')  # Changed from '/profile' to '/' since we're using url_prefix
+@bp.route("/")  # Changed from '/profile' to '/' since we're using url_prefix
 @login_required
 def profile():
     """
@@ -46,12 +46,13 @@ def profile():
     Returns:
         Rendered profile page with user data.
     """
-    leaderboard_data = LeaderboardEntry.query.filter_by(
-        user_id=current_user.id).first()
-    return render_template('profile/main_profile.html', title='Profile', leaderboard_data=leaderboard_data)
+    leaderboard_data = LeaderboardEntry.query.filter_by(user_id=current_user.id).first()
+    return render_template(
+        "profile/main_profile.html", title="Profile", leaderboard_data=leaderboard_data
+    )
 
 
-@bp.route('/change_password', methods=['GET', 'POST'])
+@bp.route("/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():
     """
@@ -67,27 +68,29 @@ def change_password():
         - Flashes success message upon successful password change
     """
     if not current_user.is_authenticated:
-        flash('You must be logged in to access this page.')
-        return redirect(url_for('auth.login'))
+        flash("You must be logged in to access this page.")
+        return redirect(url_for("auth.login"))
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if not current_user.check_password(form.current_password.data):
-            flash('Invalid current password.', 'error')
-            return redirect(url_for('profile.change_password'))
+            flash("Invalid current password.", "error")
+            return redirect(url_for("profile.change_password"))
         if form.current_password.data == form.new_password.data:
-            flash('New password must be different from the current password.', 'error')
-            return redirect(url_for('profile.change_password'))
+            flash("New password must be different from the current password.", "error")
+            return redirect(url_for("profile.change_password"))
         if form.new_password.data != form.confirm_password.data:
-            flash('Ensure both new passwords are the same', 'error')
-            return redirect(url_for('profile.change_password'))
+            flash("Ensure both new passwords are the same", "error")
+            return redirect(url_for("profile.change_password"))
         current_user.set_password(form.new_password.data)
         db.session.commit()
-        flash('Your password has been updated.', 'success')
-        return redirect(url_for('profile.profile'))
-    return render_template('profile/change_password.html', title='Change Password', form=form)
+        flash("Your password has been updated.", "success")
+        return redirect(url_for("profile.profile"))
+    return render_template(
+        "profile/change_password.html", title="Change Password", form=form
+    )
 
 
-@bp.route('/delete_account')
+@bp.route("/delete_account")
 @login_required
 def delete_account():
     """
@@ -108,5 +111,5 @@ def delete_account():
     user = User.query.get(current_user.id)
     db.session.delete(user)
     db.session.commit()
-    flash('Your account has been deleted.')
-    return redirect(url_for('main.index'))
+    flash("Your account has been deleted.")
+    return redirect(url_for("main.index"))

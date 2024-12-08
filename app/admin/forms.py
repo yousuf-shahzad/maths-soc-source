@@ -2,7 +2,7 @@
 Forms Module for Admin Panel
 ===========================
 
-This module defines Flask-WTF forms used across the application for various 
+This module defines Flask-WTF forms used across the application for various
 administrative and user interaction purposes.
 
 Key Form Classes:
@@ -34,7 +34,15 @@ Maintenance Notes:
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import StringField, SubmitField, BooleanField, SelectField, FileField, FieldList, FormField
+from wtforms import (
+    StringField,
+    SubmitField,
+    BooleanField,
+    SelectField,
+    FileField,
+    FieldList,
+    FormField,
+)
 from wtforms.validators import DataRequired, Length
 from flask_ckeditor import CKEditorField
 
@@ -52,9 +60,10 @@ class LeaderboardEntryForm(FlaskForm):
     submit : SubmitField
         Button to submit the leaderboard entry
     """
-    user_id = StringField('User ID', validators=[DataRequired()])
-    score = StringField('Score', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+
+    user_id = StringField("User ID", validators=[DataRequired()])
+    score = StringField("Score", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 
 class AnswerBoxForm(FlaskForm):
@@ -74,13 +83,14 @@ class AnswerBoxForm(FlaskForm):
     order : StringField
         Optional ordering for multiple answer boxes
     """
+
     class Meta:
         # Disable CSRF for nested form
         csrf = False
 
-    box_label = StringField('Box Label', validators=[DataRequired()])
-    correct_answer = StringField('Correct Answer', validators=[DataRequired()])
-    order = StringField('Order')
+    box_label = StringField("Box Label", validators=[DataRequired()])
+    correct_answer = StringField("Correct Answer", validators=[DataRequired()])
+    order = StringField("Order")
 
 
 class ChallengeForm(FlaskForm):
@@ -102,17 +112,21 @@ class ChallengeForm(FlaskForm):
     submit : SubmitField
         Button to submit the challenge
     """
-    title = StringField('Title', validators=[
-                        DataRequired(), Length(min=1, max=100)])
-    content = CKEditorField('Content', validators=[DataRequired()])
-    image = FileField('Image', validators=[FileAllowed(['jpg', 'png', 'gif'])])
-    key_stage = SelectField('Key Stage',
-                            choices=[('ks3', 'Key Stage 3'),
-                                     ('ks4', 'Key Stage 4'),
-                                     ('ks5', 'Key Stage 5')],
-                            validators=[DataRequired()])
+
+    title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
+    content = CKEditorField("Content", validators=[DataRequired()])
+    image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
+    key_stage = SelectField(
+        "Key Stage",
+        choices=[
+            ("ks3", "Key Stage 3"),
+            ("ks4", "Key Stage 4"),
+            ("ks5", "Key Stage 5"),
+        ],
+        validators=[DataRequired()],
+    )
     answer_boxes = FieldList(FormField(AnswerBoxForm), min_entries=1)
-    submit = SubmitField('Submit Challenge')
+    submit = SubmitField("Submit Challenge")
 
 
 class AnswerSubmissionForm(FlaskForm):
@@ -126,8 +140,9 @@ class AnswerSubmissionForm(FlaskForm):
     submit : SubmitField
         Button to submit the answer
     """
-    answer = StringField('Your Answer', validators=[DataRequired()])
-    submit = SubmitField('Submit Answer')
+
+    answer = StringField("Your Answer", validators=[DataRequired()])
+    submit = SubmitField("Submit Answer")
 
 
 class ArticleForm(FlaskForm):
@@ -149,19 +164,17 @@ class ArticleForm(FlaskForm):
     submit : SubmitField
         Button to submit the article
     """
-    title = StringField('Title', validators=[
-                        DataRequired(), Length(min=1, max=100)])
-    author = StringField('Author', validators=[
-                         DataRequired(), Length(min=1, max=100)])
-    content = CKEditorField('Content', validators=[DataRequired()])
-    type = SelectField('Type', choices=[
-        ('article', 'Article'), 
-        ('newsletter', 'Newsletter')
-    ], validators=[DataRequired()])
-    file = FileField('PDF File', validators=[
-        FileAllowed(['pdf'], 'PDF files only!')
-    ])
-    submit = SubmitField('Submit')
+
+    title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
+    author = StringField("Author", validators=[DataRequired(), Length(min=1, max=100)])
+    content = CKEditorField("Content", validators=[DataRequired()])
+    type = SelectField(
+        "Type",
+        choices=[("article", "Article"), ("newsletter", "Newsletter")],
+        validators=[DataRequired()],
+    )
+    file = FileField("PDF File", validators=[FileAllowed(["pdf"], "PDF files only!")])
+    submit = SubmitField("Submit")
 
 
 class EditUserForm(FlaskForm):
@@ -181,14 +194,24 @@ class EditUserForm(FlaskForm):
     submit : SubmitField
         Button to submit user edits
     """
-    first_name = StringField('First Name', validators=[DataRequired()])
-    last_name = StringField('Last Name', validators=[DataRequired()])
-    year = SelectField('Year', choices=[
-        ('7', '7'), ('8', '8'), ('9', '9'), 
-        ('10', '10'), ('11', '11'), ('12', '12'), ('13', '13')
-    ], validators=[DataRequired()])
-    maths_class = StringField('Maths Class', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    year = SelectField(
+        "Year",
+        choices=[
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+            ("11", "11"),
+            ("12", "12"),
+            ("13", "13"),
+        ],
+        validators=[DataRequired()],
+    )
+    maths_class = StringField("Maths Class", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 
 class CreateUserForm(FlaskForm):
@@ -212,16 +235,26 @@ class CreateUserForm(FlaskForm):
     submit : SubmitField
         Button to create new user
     """
-    first_name = StringField('First Name', validators=[DataRequired()])
-    last_name = StringField('Last Name', validators=[DataRequired()])
-    password = StringField('Password', validators=[DataRequired()])
-    year = SelectField('Year', choices=[
-        ('7', '7'), ('8', '8'), ('9', '9'), 
-        ('10', '10'), ('11', '11'), ('12', '12'), ('13', '13')
-    ], validators=[DataRequired()])
-    is_admin = BooleanField('Admin')
-    maths_class = StringField('Maths Class', validators=[DataRequired()])
-    submit = SubmitField('Create User')
+
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    password = StringField("Password", validators=[DataRequired()])
+    year = SelectField(
+        "Year",
+        choices=[
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+            ("11", "11"),
+            ("12", "12"),
+            ("13", "13"),
+        ],
+        validators=[DataRequired()],
+    )
+    is_admin = BooleanField("Admin")
+    maths_class = StringField("Maths Class", validators=[DataRequired()])
+    submit = SubmitField("Create User")
 
 
 class AnnouncementForm(FlaskForm):
@@ -237,6 +270,7 @@ class AnnouncementForm(FlaskForm):
     submit : SubmitField
         Button to submit the announcement
     """
-    title = StringField('Title', validators=[DataRequired()])
-    content = CKEditorField('Content', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+
+    title = StringField("Title", validators=[DataRequired()])
+    content = CKEditorField("Content", validators=[DataRequired()])
+    submit = SubmitField("Submit")

@@ -49,15 +49,14 @@ class ChangePasswordForm(FlaskForm):
 
     Notes:
     ------
-    Additional password validation should be implemented 
+    Additional password validation should be implemented
     in the route handling this form to ensure:
     1. Current password is correct
     2. New password meets complexity requirements
     3. New password is different from current password
     """
-    current_password = StringField(
-        'Current Password', validators=[DataRequired()])
-    new_password = StringField('New Password', validators=[DataRequired()])
-    confirm_password = StringField(
-        'Confirm New Password', validators=[DataRequired()])
-    submit = SubmitField('Change Password')
+
+    current_password = StringField("Current Password", validators=[DataRequired()])
+    new_password = StringField("New Password", validators=[DataRequired()])
+    confirm_password = StringField("Confirm New Password", validators=[DataRequired()])
+    submit = SubmitField("Change Password")

@@ -32,29 +32,46 @@ Maintenance Notes:
 """
 
 import os
-from flask import abort, current_app, render_template, flash, redirect, send_from_directory, url_for, request
-from flask_login import login_required, current_user
+from flask import (
+    abort,
+    current_app,
+    render_template,
+    flash,
+    redirect,
+    send_from_directory,
+    url_for,
+    request,
+)
+from flask_login import current_user
 import datetime
-from typing import Dict, List
+from typing import Dict
 from app import db
 from sqlalchemy.exc import SQLAlchemyError
 from app.main import bp
-from app.models import Challenge, Article, LeaderboardEntry, AnswerSubmission, ChallengeAnswerBox, Announcement
-from app.admin.forms import AnswerSubmissionForm, AnswerBoxForm
+from app.models import (
+    Challenge,
+    Article,
+    LeaderboardEntry,
+    AnswerSubmission,
+    ChallengeAnswerBox,
+    Announcement,
+)
+from app.admin.forms import AnswerSubmissionForm
 
 
 # ============================================================================
 # View Routes
 # ============================================================================
 
-@bp.route('/')
-@bp.route('/index')
+
+@bp.route("/")
+@bp.route("/index")
 def index():
     """
     Render the homepage with recent content.
 
     Returns:
-        Rendered homepage template with recent challenges, articles, leaderboard entries, 
+        Rendered homepage template with recent challenges, articles, leaderboard entries,
         latest newsletter, and latest announcement.
 
     Notes:
@@ -66,38 +83,44 @@ def index():
         challenges = Challenge.query
         articles = Article.query
         leaderboard_entries = LeaderboardEntry.query
-        recent_challenges = Challenge.query.order_by(
-            Challenge.date_posted.desc()
-        ).limit(3).all()
+        recent_challenges = (
+            Challenge.query.order_by(Challenge.date_posted.desc()).limit(3).all()
+        )
 
-        recent_articles = Article.query.filter_by(
-            type='article'
-        ).order_by(Article.date_posted.desc()).limit(3).all()
+        recent_articles = (
+            Article.query.filter_by(type="article")
+            .order_by(Article.date_posted.desc())
+            .limit(3)
+            .all()
+        )
 
-        latest_newsletter = Article.query.filter_by(
-            type='newsletter'
-        ).order_by(Article.date_posted.desc()).first()
+        latest_newsletter = (
+            Article.query.filter_by(type="newsletter")
+            .order_by(Article.date_posted.desc())
+            .first()
+        )
 
         latest_announcement = Announcement.query.order_by(
             Announcement.date_posted.desc()
         ).first()
 
-        return render_template('index.html',
-                               challenges=challenges,
-                               articles=articles,
-                               leaderboard_entries=leaderboard_entries,
-                               recent_challenges=recent_challenges,
-                               recent_articles=recent_articles,
-                               latest_newsletter=latest_newsletter,
-                               latest_announcement=latest_announcement
-                               )
+        return render_template(
+            "index.html",
+            challenges=challenges,
+            articles=articles,
+            leaderboard_entries=leaderboard_entries,
+            recent_challenges=recent_challenges,
+            recent_articles=recent_articles,
+            latest_newsletter=latest_newsletter,
+            latest_announcement=latest_announcement,
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in index route: {str(e)}")
         flash("An error occurred while loading the homepage.", "error")
-        return redirect(url_for('main.about'))
+        return redirect(url_for("main.about"))
 
 
-@bp.route('/about')
+@bp.route("/about")
 def about():
     """
     Render the about page.
@@ -105,14 +128,15 @@ def about():
     Returns:
         Rendered about page template.
     """
-    return render_template('main/about.html', title='About')
+    return render_template("main/about.html", title="About")
+
 
 # ============================================================================
 # Challenge Routes
 # ============================================================================
 
 
-@bp.route('/challenges')
+@bp.route("/challenges")
 def challenges():
     """
     List all challenges with pagination.
@@ -128,18 +152,17 @@ def challenges():
         - Sorted by most recent date posted
         - Redirects to index if database error occurs
     """
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     try:
         challenges_pagination = Challenge.query.order_by(
             Challenge.date_posted.desc()
         ).paginate(page=page, per_page=6, error_out=False)
 
-        return render_template('main/challenges.html',
-                               challenges=challenges_pagination)
+        return render_template("main/challenges.html", challenges=challenges_pagination)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error loading challenges: {str(e)}")
         flash("Unable to load challenges at this time.", "error")
-        return redirect(url_for('main.index'))
+        return redirect(url_for("main.index"))
 
 
 def check_submission_count(user_id: int, challenge_id: int, box_id: int) -> int:
@@ -155,15 +178,16 @@ def check_submission_count(user_id: int, challenge_id: int, box_id: int) -> int:
         int: Number of submissions for the specified user, challenge, and answer box.
     """
     return AnswerSubmission.query.filter_by(
-        user_id=user_id,
-        challenge_id=challenge_id,
-        answer_box_id=box_id
+        user_id=user_id, challenge_id=challenge_id, answer_box_id=box_id
     ).count()
 
 
-def create_submission(user_id: int, challenge_id: int,
-                      answer_box: ChallengeAnswerBox,
-                      submitted_answer: str) -> AnswerSubmission:
+def create_submission(
+    user_id: int,
+    challenge_id: int,
+    answer_box: ChallengeAnswerBox,
+    submitted_answer: str,
+) -> AnswerSubmission:
     """
     Create and save a new submission.
 
@@ -181,8 +205,8 @@ def create_submission(user_id: int, challenge_id: int,
         challenge_id=challenge_id,
         answer_box_id=answer_box.id,
         answer=submitted_answer,
-        is_correct=submitted_answer.lower().strip(
-        ) == answer_box.correct_answer.lower().strip()
+        is_correct=submitted_answer.lower().strip()
+        == answer_box.correct_answer.lower().strip(),
     )
 
     db.session.add(submission)
@@ -206,8 +230,9 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
             user_id=user_id,
             challenge_id=challenge.id,
             answer_box_id=box.id,
-            is_correct=True
-        ).first() is not None
+            is_correct=True,
+        ).first()
+        is not None
         for box in challenge.answer_boxes
     )
 
@@ -220,8 +245,7 @@ def update_leaderboard(user_id: int, score: int) -> None:
         user_id (int): The ID of the user.
         score (int): Number of points to add.
     """
-    leaderboard_entry = LeaderboardEntry.query.filter_by(
-        user_id=user_id).first()
+    leaderboard_entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
 
     if leaderboard_entry:
         leaderboard_entry.score += score
@@ -234,9 +258,9 @@ def update_leaderboard(user_id: int, score: int) -> None:
     db.session.commit()
 
 
-def handle_submission_result(submission: AnswerSubmission,
-                             challenge: Challenge,
-                             answer_box: ChallengeAnswerBox) -> None:
+def handle_submission_result(
+    submission: AnswerSubmission, challenge: Challenge, answer_box: ChallengeAnswerBox
+) -> None:
     """
     Handle the result of a submission, updating points and showing appropriate messages.
 
@@ -255,12 +279,14 @@ def handle_submission_result(submission: AnswerSubmission,
     )
 
     if submission.is_correct:
-        flash(f'Correct answer for {answer_box.box_label}!', 'success')
+        flash(f"Correct answer for {answer_box.box_label}!", "success")
 
         # Check if all parts are now correct
         if check_all_answers_correct(challenge, submission.user_id):
             flash(
-                'Congratulations! You have completed all parts of this challenge! 🎉', 'success')
+                "Congratulations! You have completed all parts of this challenge! 🎉",
+                "success",
+            )
 
             # Award bonus points for first correct solution
             if challenge.first_correct_submission is None:
@@ -275,10 +301,12 @@ def handle_submission_result(submission: AnswerSubmission,
     else:
         remaining = 3 - submission_count
         flash(
-            f'Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.', 'error')
+            f"Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.",
+            "error",
+        )
 
 
-@bp.route('/challenges/<int:challenge_id>', methods=['GET', 'POST'])
+@bp.route("/challenges/<int:challenge_id>", methods=["GET", "POST"])
 def challenge(challenge_id: int):
     """
     Display a specific challenge and handle answer submissions.
@@ -302,26 +330,31 @@ def challenge(challenge_id: int):
     if current_user.is_authenticated:
         for answer_box in challenge.answer_boxes:
             forms[answer_box.id] = AnswerSubmissionForm()
-            submissions[answer_box.id] = AnswerSubmission.query.filter_by(
-                user_id=current_user.id,
-                challenge_id=challenge_id,
-                answer_box_id=answer_box.id
-            ).order_by(AnswerSubmission.submitted_at.desc()).all()
+            submissions[answer_box.id] = (
+                AnswerSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge_id,
+                    answer_box_id=answer_box.id,
+                )
+                .order_by(AnswerSubmission.submitted_at.desc())
+                .all()
+            )
 
         # Handle submission if the form is submitted
-        if request.method == 'POST':
+        if request.method == "POST":
             return handle_challenge_submission(challenge, forms)
 
     all_correct = current_user.is_authenticated and check_all_answers_correct(
-        challenge, current_user.id)
+        challenge, current_user.id
+    )
 
     return render_template(
-        'main/challenge.html',
+        "main/challenge.html",
         challenge=challenge,
         forms=forms if current_user.is_authenticated else None,
         submissions=submissions,
         attempts_remaining=3,
-        all_correct=all_correct
+        all_correct=all_correct,
     )
 
 
@@ -341,32 +374,31 @@ def handle_challenge_submission(challenge: Challenge, forms: Dict) -> redirect:
         - Checks remaining attempts
         - Creates and handles submission result
     """
-    box_id = int(request.form.get('answer_box_id'))
+    box_id = int(request.form.get("answer_box_id"))
     form = forms[box_id]
 
     if not form.validate_on_submit():
         flash("Invalid submission.", "error")
-        return redirect(url_for('main.challenge', challenge_id=challenge.id))
+        return redirect(url_for("main.challenge", challenge_id=challenge.id))
 
     answer_box = ChallengeAnswerBox.query.get_or_404(box_id)
-    submission_count = check_submission_count(
-        current_user.id, challenge.id, box_id
-    )
+    submission_count = check_submission_count(current_user.id, challenge.id, box_id)
 
-    if submission_count >= 3 and not has_correct_submission(current_user.id, challenge.id):
-        flash('You have reached the maximum attempts for this part.', 'error')
-        return redirect(url_for('main.challenge', challenge_id=challenge.id))
+    if submission_count >= 3 and not has_correct_submission(
+        current_user.id, challenge.id
+    ):
+        flash("You have reached the maximum attempts for this part.", "error")
+        return redirect(url_for("main.challenge", challenge_id=challenge.id))
 
     submission = create_submission(
-        current_user.id, challenge.id,
-        answer_box, form.answer.data
+        current_user.id, challenge.id, answer_box, form.answer.data
     )
 
     handle_submission_result(submission, challenge, answer_box)
-    return redirect(url_for('main.challenge', challenge_id=challenge.id))
+    return redirect(url_for("main.challenge", challenge_id=challenge.id))
 
 
-@bp.route('/articles')
+@bp.route("/articles")
 def articles():
     """
     List all articles.
@@ -374,12 +406,15 @@ def articles():
     Returns:
         Rendered articles page template with all articles sorted by most recent.
     """
-    articles = Article.query.filter_by(type='article').order_by(
-        Article.date_posted.desc()).all()
-    return render_template('main/articles.html', title='Articles', articles=articles)
+    articles = (
+        Article.query.filter_by(type="article")
+        .order_by(Article.date_posted.desc())
+        .all()
+    )
+    return render_template("main/articles.html", title="Articles", articles=articles)
 
 
-@bp.route('/newsletters/<path:filename>')
+@bp.route("/newsletters/<path:filename>")
 def serve_newsletter(filename):
     """
     Serve a newsletter file from the uploads directory.
@@ -391,8 +426,7 @@ def serve_newsletter(filename):
         Sent newsletter file from the uploads directory.
     """
     return send_from_directory(
-        os.path.join(current_app.config['UPLOAD_FOLDER'], 'newsletters'),
-        filename
+        os.path.join(current_app.config["UPLOAD_FOLDER"], "newsletters"), filename
     )
 
 
@@ -407,7 +441,9 @@ def check_user_submission_count(user_id, challenge_id):
     Returns:
         int: Total number of submissions for the user in the challenge.
     """
-    return AnswerSubmission.query.filter_by(user_id=user_id, challenge_id=challenge_id).count()
+    return AnswerSubmission.query.filter_by(
+        user_id=user_id, challenge_id=challenge_id
+    ).count()
 
 
 def has_correct_submission(user_id, challenge_id):
@@ -421,14 +457,15 @@ def has_correct_submission(user_id, challenge_id):
     Returns:
         bool: True if the user has a correct submission, False otherwise.
     """
-    return AnswerSubmission.query.filter_by(
-        user_id=user_id,
-        challenge_id=challenge_id,
-        is_correct=True
-    ).first() is not None
+    return (
+        AnswerSubmission.query.filter_by(
+            user_id=user_id, challenge_id=challenge_id, is_correct=True
+        ).first()
+        is not None
+    )
 
 
-@bp.route('/newsletters')
+@bp.route("/newsletters")
 def newsletters():
     """
     List all newsletters.
@@ -436,12 +473,17 @@ def newsletters():
     Returns:
         Rendered newsletters page template with all newsletters sorted by most recent.
     """
-    newsletters = Article.query.filter_by(
-        type='newsletter').order_by(Article.date_posted.desc()).all()
-    return render_template('main/newsletters.html', title='Newsletters', articles=newsletters)
+    newsletters = (
+        Article.query.filter_by(type="newsletter")
+        .order_by(Article.date_posted.desc())
+        .all()
+    )
+    return render_template(
+        "main/newsletters.html", title="Newsletters", articles=newsletters
+    )
 
 
-@bp.route('/newsletter/<int:id>')
+@bp.route("/newsletter/<int:id>")
 def newsletter(id):
     """
     Display a specific newsletter.
@@ -456,12 +498,12 @@ def newsletter(id):
         404 Error: If the article is not a newsletter.
     """
     article = Article.query.get_or_404(id)
-    if article.type != 'newsletter':
+    if article.type != "newsletter":
         abort(404)
-    return render_template('main/newsletter.html', article=article)
+    return render_template("main/newsletter.html", article=article)
 
 
-@bp.route('/article/<int:id>')
+@bp.route("/article/<int:id>")
 def article(id):
     """
     Display a specific article.
@@ -476,12 +518,12 @@ def article(id):
         404 Error: If the article is not an article type.
     """
     article = Article.query.get_or_404(id)
-    if article.type != 'article':
+    if article.type != "article":
         abort(404)
-    return render_template('main/article.html', title=article.title, article=article)
+    return render_template("main/article.html", title=article.title, article=article)
 
 
-@bp.route('/leaderboard')
+@bp.route("/leaderboard")
 def leaderboard():
     """
     Display the top 10 leaderboard entries.
@@ -489,12 +531,15 @@ def leaderboard():
     Returns:
         Rendered leaderboard page with top 10 entries sorted by score.
     """
-    entries = LeaderboardEntry.query.order_by(
-        LeaderboardEntry.score.desc()).limit(10).all()
-    return render_template('main/leaderboard.html', title='Leaderboard', entries=entries)
+    entries = (
+        LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).limit(10).all()
+    )
+    return render_template(
+        "main/leaderboard.html", title="Leaderboard", entries=entries
+    )
 
 
-@bp.route('/privacy_policy')
+@bp.route("/privacy_policy")
 def privacy_policy():
     """
     Display the privacy policy.
@@ -502,4 +547,8 @@ def privacy_policy():
     Returns:
         Rendered privacy policy page.
     """
-    return render_template('main/privacy_policy.html', title='Privacy Policy', current_date=datetime.datetime.utcnow())
+    return render_template(
+        "main/privacy_policy.html",
+        title="Privacy Policy",
+        current_date=datetime.datetime.utcnow(),
+    )

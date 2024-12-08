@@ -2,7 +2,7 @@
 Authentication Forms Module
 ==========================
 
-This module defines Flask-WTF forms for user authentication processes, 
+This module defines Flask-WTF forms for user authentication processes,
 including login and registration.
 
 Key Form Classes:
@@ -55,15 +55,25 @@ class LoginForm(FlaskForm):
     submit : SubmitField
         Button to submit login credentials
     """
-    first_name = StringField('First Name', validators=[DataRequired()])
-    last_name = StringField('Last Name', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    year = SelectField('Year', choices=[
-        ('7', '7'), ('8', '8'), ('9', '9'), 
-        ('10', '10'), ('11', '11'), ('12', '12'), ('13', '13')
-    ], validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign In')
+
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    year = SelectField(
+        "Year",
+        choices=[
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+            ("11", "11"),
+            ("12", "12"),
+            ("13", "13"),
+        ],
+        validators=[DataRequired()],
+    )
+    remember_me = BooleanField("Remember Me")
+    submit = SubmitField("Sign In")
 
 
 class RegistrationForm(FlaskForm):
@@ -92,17 +102,28 @@ class RegistrationForm(FlaskForm):
     validate_username(first_name, last_name)
         Custom validation to prevent duplicate usernames
     """
-    first_name = StringField('First Name', validators=[DataRequired()])
-    last_name = StringField('Last Name', validators=[DataRequired()])
-    year = SelectField('Year', choices=[
-        ('7', '7'), ('8', '8'), ('9', '9'), 
-        ('10', '10'), ('11', '11'), ('12', '12'), ('13', '13')
-    ], validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
+
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    year = SelectField(
+        "Year",
+        choices=[
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+            ("11", "11"),
+            ("12", "12"),
+            ("13", "13"),
+        ],
+        validators=[DataRequired()],
+    )
+    password = PasswordField("Password", validators=[DataRequired()])
     password2 = PasswordField(
-        'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    maths_class = StringField('Maths Class', validators=[DataRequired()])
-    submit = SubmitField('Register')
+        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+    )
+    maths_class = StringField("Maths Class", validators=[DataRequired()])
+    submit = SubmitField("Register")
 
     def validate_username(self, first_name, last_name):
         """
@@ -121,8 +142,7 @@ class RegistrationForm(FlaskForm):
             If a user with the same first and last name already exists
         """
         user = User.query.filter(
-            first_name == first_name.data,
-            last_name == last_name.data
+            first_name == first_name.data, last_name == last_name.data
         ).first()
         if user is not None:
-            raise ValidationError('Please use a different username.')
+            raise ValidationError("Please use a different username.")
