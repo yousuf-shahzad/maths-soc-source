@@ -4,7 +4,7 @@ from flask_login import LoginManager
 from app.models import User
 from app.database import db
 from flask_migrate import Migrate
-from config import Config, TestingConfig
+from config import DevelopmentConfig, TestingConfig
 from flask_ckeditor import CKEditor
 
 login_manager = LoginManager()
@@ -21,13 +21,13 @@ def create_app(config_type='development'):
     """
     # Choose the appropriate configuration
     config_mapping = {
-        'development': Config,
+        'development': DevelopmentConfig,
         'testing': TestingConfig,
         # 'production': ProductionConfig
     }
 
     # Default to development if an unknown config is passed
-    config_class = config_mapping.get(config_type, Config)
+    config_class = config_mapping.get(config_type, DevelopmentConfig)
 
     # Create the Flask app
     app = Flask(__name__)

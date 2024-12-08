@@ -1,6 +1,6 @@
 import os
 
-class Config:
+class DevelopmentConfig:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app.db')
@@ -16,3 +16,7 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # Use in-memory SQLite for tests
     WTF_CSRF_ENABLED = False  # Disable CSRF for testing
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'app', 'static', 'uploads', "tests")
+    
+# class ProductionConfig(Config):
+#     pass
+#
