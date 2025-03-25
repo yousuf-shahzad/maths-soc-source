@@ -1,573 +1,386 @@
-Administrator Setup Guide
-========================
+Maths Society Website Deployment Guide
+======================================
 
-This guide provides comprehensive instructions for school administrators to set up, configure, and maintain the Upton Court Grammar School Maths Society website. It focuses on production deployment using PostgreSQL and covers all necessary administrative tasks.
+Overview
+--------
+
+This guide provides comprehensive instructions for deploying the Upton Court Grammar School Maths Society website, with support for both Linux (Ubuntu/Debian) and Windows environments.
 
 Prerequisites
-------------
-Before beginning the setup process, ensure you have:
+-------------
 
-- A server with Python 3.8+ installed
-- PostgreSQL 12+ installed on your server or a separate database server
-- Basic understanding of command-line operations
+Before beginning, ensure you have:
+
+- Python 3.8 or higher
+- Git
+- PostgreSQL 12+ (recommended)
 - Administrator access to the server
-- Git installed for repository management
+- Basic understanding of command-line operations
 
-PostgreSQL Database Setup
-------------------------
+Deployment Options
+------------------
 
-Installing PostgreSQL
-~~~~~~~~~~~~~~~~~~~~
+Option 1.1: Local Server Deployment (Linux)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If PostgreSQL is not already installed on your server:
+PostgreSQL Setup (Ubuntu/Debian)
+'''''''''''''''''''''''''''''''''
 
-**For Ubuntu/Debian:**
-
-.. code-block:: bash
-
-   sudo apt update
-   sudo apt install postgresql postgresql-contrib
-
-**For CentOS/RHEL:**
+1. Install PostgreSQL:
 
 .. code-block:: bash
 
-   sudo yum install postgresql-server postgresql-contrib
-   sudo postgresql-setup initdb
-   sudo systemctl start postgresql
-   sudo systemctl enable postgresql
+    sudo apt update
+    sudo apt install postgresql postgresql-contrib
 
-Creating the Database and User
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. Log in to PostgreSQL as the postgres user:
-
-   .. code-block:: bash
-
-      sudo -u postgres psql
-
-2. Create a dedicated database user for the application:
-
-   .. code-block:: sql
-
-      CREATE USER mathsoc WITH PASSWORD 'secure_password_here';
-
-3. Create the database:
-
-   .. code-block:: sql
-
-      CREATE DATABASE mathsoc_db OWNER mathsoc;
-
-4. Grant privileges:
-
-   .. code-block:: sql
-
-      GRANT ALL PRIVILEGES ON DATABASE mathsoc_db TO mathsoc;
-
-5. Exit PostgreSQL:
-
-   .. code-block:: sql
-
-        q
-
-Setting PostgreSQL for Remote Access (Optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If your database is on a separate server:
-
-1. Edit PostgreSQL configuration:
-
-   .. code-block:: bash
-
-      sudo nano /etc/postgresql/12/main/postgresql.conf
-
-2. Update the listen address:
-
-   .. code-block:: text
-
-      listen_addresses = '*'
-
-3. Configure client authentication:
-
-   .. code-block:: bash
-
-      sudo nano /etc/postgresql/12/main/pg_hba.conf
-
-4. Add the following line (adjust as needed for security):
-
-   .. code-block:: text
-
-      host    mathsoc_db    mathsoc    <app_server_ip>/32    md5
-
-5. Restart PostgreSQL:
-
-   .. code-block:: bash
-
-      sudo systemctl restart postgresql
-
-Environment Configuration
-------------------------
-
-Setting Environment Variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Create a ``.env`` file in the application root directory:
+2. Create Database and User:
 
 .. code-block:: bash
 
-   # Create and edit .env file
-   nano .env
+    # Switch to postgres user
+    sudo -u postgres psql
 
-Add the following variables:
+    # Create database user and database
+    CREATE USER mathsoc WITH PASSWORD 'your_secure_password';
+    CREATE DATABASE mathsoc_db OWNER mathsoc;
+    GRANT ALL PRIVILEGES ON DATABASE mathsoc_db TO mathsoc;
 
-.. code-block:: text
+    # Exit PostgreSQL
+    \q
 
-   # Application configuration
-   SECRET_KEY=generate_a_secure_random_key_here
-   FLASK_ENV=production
-   APP_ENVIRONMENT=production
+Option 1.2: Local Server Deployment (Windows)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   # Database configuration
-   DATABASE_TYPE=postgresql
-   DB_USERNAME=mathsoc
-   DB_PASSWORD=secure_password_here
-   DB_HOST=localhost
-   DB_NAME=mathsoc_db
+1. Install PostgreSQL:
+   - Download from official PostgreSQL website
+   - During installation, set a strong password for the postgres user
+   - Use pgAdmin to create the database:
+     - Create user: ``mathsoc``
+     - Create database: ``mathsoc_db``
+     - Assign user as owner
 
-   # Logging
-   LOG_TO_STDOUT=true
+Environment Setup (Both Linux and Windows)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To generate a secure random key:
-
-.. code-block:: bash
-
-   python -c "import os; print(os.urandom(24).hex())"
-
-Setting Up Virtual Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Clone the Repository:
 
 .. code-block:: bash
 
-   # Create a virtual environment
-   python -m venv venv
+    git clone https://github.com/yousuf-shahzad/math-soc-source.git
+    cd math-soc-source
 
-   # Activate the virtual environment
-   source venv/bin/activate
-
-   # On Windows: venv\Scripts\activate
-
-   # Install dependencies
-   pip install -r requirements.txt
-
-Initial Deployment
------------------
-
-Cloning the Repository
-~~~~~~~~~~~~~~~~~~~~
+2. Create Virtual Environment:
 
 .. code-block:: bash
 
-   git clone https://github.com/yousuf-shahzad/math-soc-source.git
-   cd math-soc-source
+    # Linux/macOS
+    python3 -m venv venv
+    source venv/bin/activate
 
-Database Initialization
-~~~~~~~~~~~~~~~~~~~~~
+    # Windows
+    python -m venv venv
+    venv\Scripts\activate
 
-.. code-block:: bash
-
-   # With virtual environment activated
-   flask db upgrade
-
-Creating an Admin User
-~~~~~~~~~~~~~~~~~~~~~
-
-Access the Flask shell:
+3. Install Dependencies:
 
 .. code-block:: bash
 
-   flask shell
+    pip install -r requirements.txt
 
-In the shell, create an admin user:
+4. Configure Environment Variables:
+Create a ``.env`` file in the project root:
 
-.. code-block:: python
+.. code-block:: ini
 
-   from app.models import User
-   from app.database import db
+    SECRET_KEY=generate_a_long_random_string_here
+    FLASK_ENV=production
+    APP_ENVIRONMENT=production
 
-   # Create admin user
-   admin = User(
+    DATABASE_TYPE=postgresql
+    DB_USERNAME=mathsoc
+    DB_PASSWORD=your_secure_password
+    DB_HOST=localhost
+    DB_NAME=mathsoc_db
+
+5. Initialize Database:
+
+.. code-block:: bash
+
+    flask db upgrade
+
+6. Create Admin User:
+
+.. code-block:: bash
+
+    flask shell
+
+    # In the shell
+    from app.models import User
+    from app.database import db
+
+    admin = User(
         full_name='Admin User', 
-        year=13,  # Can be any valid year
+        year=13,
         maths_class='Staff',
         key_stage='KS5',
         is_admin=True
-   )
-   admin.set_password('secure_admin_password')
-   db.session.add(admin)
-   db.session.commit()
+    )
+    admin.set_password('your_admin_password')
+    db.session.add(admin)
+    db.session.commit()
+    exit()
 
-   # Confirm creation
-   admin_check = User.query.filter_by(is_admin=True).first()
-   print(f"Admin created: {admin_check.full_name}")
+Option 2: External Hosting Providers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   # Exit shell
-   exit()
+Recommended Providers
+^^^^^^^^^^^^^^^^^^^^^
 
-Setting Up with Gunicorn and Nginx
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Heroku
+- DigitalOcean
+- AWS Elastic Beanstalk
+- PythonAnywhere
 
-1. Install Gunicorn (should already be in requirements.txt)
+General Deployment Checklist for External Providers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2. Create a systemd service file:
+1. **Prepare Application**
+   - Ensure ``requirements.txt`` is up to date
+   - Create a ``Procfile`` for Heroku or similar:
 
-   .. code-block:: bash
+     .. code-block:: bash
 
-      sudo nano /etc/systemd/system/mathsoc.service
+         web: gunicorn run:app
 
-3. Add the following configuration:
+   - Add ``runtime.txt`` specifying Python version:
 
-   .. code-block:: text
+     .. code-block:: bash
 
-      [Unit]
-      Description=Maths Society Website
-      After=network.target
-      
-      [Service]
-      User=your_server_username
-      WorkingDirectory=/path/to/math-soc-source
-      Environment="PATH=/path/to/math-soc-source/venv/bin"
-      EnvironmentFile=/path/to/math-soc-source/.env
-      ExecStart=/path/to/math-soc-source/venv/bin/gunicorn -w 4 -k gevent -b 127.0.0.1:8000 "run:app"
-      Restart=always
-      
-      [Install]
-      WantedBy=multi-user.target
+         python-3.8.10
 
-4. Start and enable the service:
+2. **Database Configuration**
+   - Use provider's managed PostgreSQL service
+   - Set environment variables in provider's dashboard
+   - Ensure ``DATABASE_URL`` is correctly configured in ``.env``
 
-   .. code-block:: bash
+3. **Static Files**
+   - Configure static file hosting
+   - Use cloud storage like AWS S3 for user uploads
 
-      sudo systemctl start mathsoc
-      sudo systemctl enable mathsoc
+4. **Security Considerations**
+   - Use provider's SSL/TLS encryption
+   - Enable two-factor authentication
+   - Regularly update dependencies
+   - Use strong, unique passwords
+   - Limit administrative access
 
-5. Install and configure Nginx:
+Provider-Specific Notes
+^^^^^^^^^^^^^^^^^^^^^^^
 
-   .. code-block:: bash
+- **Heroku**:
 
-      sudo apt install nginx
+  .. code-block:: bash
 
-6. Create Nginx site configuration:
+      heroku create your-app-name
+      heroku addons:create heroku-postgresql
+      heroku config:set SECRET_KEY=your_secret_key
+      git push heroku main
 
-   .. code-block:: bash
+- **DigitalOcean App Platform**:
+  - Connect GitHub repository
+  - Auto-deploy on push
+  - Use managed databases
 
-      sudo nano /etc/nginx/sites-available/mathsoc
+- **AWS Elastic Beanstalk**:
+  - Use Elastic Beanstalk CLI
+  - Configure ``.ebextensions`` for environment setup
 
-7. Add the following configuration:
+Maintenance and Updates
+----------------------
 
-   .. code-block:: text
-
-      server {
-          listen 80;
-          server_name your_domain.com;
-          
-          location / {
-              proxy_pass http://127.0.0.1:8000;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-          }
-          
-          location /static {
-              alias /path/to/math-soc-source/app/static;
-          }
-      }
-
-8. Enable the site:
-
-   .. code-block:: bash
-
-      sudo ln -s /etc/nginx/sites-available/mathsoc /etc/nginx/sites-enabled
-      sudo nginx -t  # Test configuration
-      sudo systemctl restart nginx
-
-9. Set up SSL with Let's Encrypt (recommended):
-
-   .. code-block:: bash
-
-      sudo apt install certbot python3-certbot-nginx
-      sudo certbot --nginx -d your_domain.com
-
-User Management
---------------
-
-Managing Admin Users
-~~~~~~~~~~~~~~~~~~
-
-To create additional admin users, use the Flask shell method shown in the Initial Deployment section.
-
-To remove admin privileges:
-
-.. code-block:: python
-
-   from app.models import User
-   from app.database import db
-
-   user = User.query.filter_by(full_name='Admin Name').first()
-   if user:
-        user.is_admin = False
-        db.session.commit()
-        print(f"Admin privileges removed from {user.full_name}")
-
-User Moderation
-~~~~~~~~~~~~~
-
-The website includes profanity checking for user registration. Admin users can further manage users through the admin panel:
-
-1. Log in with an admin account
-2. Navigate to the admin section
-3. Use the user management interface to:
-   - View all users
-   - Reset passwords if needed
-   - Delete problematic accounts
-
-Backup and Recovery
-------------------
-
-Database Backup
-~~~~~~~~~~~~~
-
-Set up regular PostgreSQL backups:
-
-1. Create a backup script:
-
-   .. code-block:: bash
-
-      nano /path/to/backup_script.sh
-
-2. Add the following content:
-
-   .. code-block:: bash
-
-      #!/bin/bash
-      BACKUP_DIR="/path/to/backups"
-      TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-      BACKUP_FILE="$BACKUP_DIR/mathsoc_db_$TIMESTAMP.sql"
-      
-      # Create backup directory if it doesn't exist
-      mkdir -p $BACKUP_DIR
-      
-      # Create backup
-      PGPASSWORD="secure_password_here" pg_dump -h localhost -U mathsoc -d mathsoc_db > $BACKUP_FILE
-      
-      # Compress backup
-      gzip $BACKUP_FILE
-      
-      # Delete backups older than 30 days
-      find $BACKUP_DIR -name "mathsoc_db_*.sql.gz" -mtime +30 -delete
-
-3. Make the script executable:
-
-   .. code-block:: bash
-
-      chmod +x /path/to/backup_script.sh
-
-4. Set up a cron job to run daily:
-
-   .. code-block:: bash
-
-      crontab -e
-
-   Add:
-
-   .. code-block:: text
-
-      0 2 * * * /path/to/backup_script.sh
-
-Recovery Procedure
-~~~~~~~~~~~~~~~~
-
-To restore from a backup:
+1. Regular Updates:
 
 .. code-block:: bash
 
-   # Uncompress backup if needed
-   gunzip /path/to/backup_file.sql.gz
+    git pull
+    pip install -U -r requirements.txt
+    flask db upgrade
+    sudo systemctl restart mathsoc  # For Linux systemd
 
-   # Restore database
-   PGPASSWORD="secure_password_here" psql -h localhost -U mathsoc -d mathsoc_db < /path/to/backup_file.sql
+2. Backup Database:
 
-Security Considerations
-----------------------
+.. code-block:: bash
 
-Application Security
-~~~~~~~~~~~~~~~~~
+    # Linux PostgreSQL backup
+    pg_dump -U mathsoc mathsoc_db > backup.sql
 
-1. **Keep dependencies updated**:
+Backup Strategy
+---------------
 
-   .. code-block:: bash
+Backup Intervals and Methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-      pip install -U -r requirements.txt
+1. Local Server Deployments
+'''''''''''''''''''''''''''
 
-2. **Set secure passwords** for database and admin users
+**Daily Backups**
+- Recommended for small to medium-sized deployments
+- Best practice: Automated daily database and file backups
 
-3. **Use HTTPS** with Let's Encrypt as configured earlier
+PostgreSQL Daily Backup Script (Linux):
 
-4. **Restrict .env file permissions**:
+.. code-block:: bash
 
-   .. code-block:: bash
+    #!/bin/bash
+    
+    # Create backup directory
+    BACKUP_DIR="/var/backups/mathsoc"
+    mkdir -p $BACKUP_DIR
+    
+    # Database backup
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    DB_BACKUP_FILE="$BACKUP_DIR/mathsoc_db_backup_$TIMESTAMP.sql"
+    
+    # Perform PostgreSQL backup
+    pg_dump -U mathsoc -d mathsoc_db -F c -f $DB_BACKUP_FILE
+    
+    # File system backup (excluding temporary and cache files)
+    tar -czvf "$BACKUP_DIR/mathsoc_files_$TIMESTAMP.tar.gz" \
+        /path/to/math-soc-source \
+        --exclude='*.pyc' \
+        --exclude='__pycache__' \
+        --exclude='venv'
+    
+    # Optional: Rotate and remove old backups (keep last 7 days)
+    find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
+    find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
 
-      chmod 600 .env
+PostgreSQL Daily Backup Script (Windows):
 
-Server Security
-~~~~~~~~~~~~~
+.. code-block:: batch
 
-1. **Enable firewall**:
+    @echo off
+    
+    REM Create backup directory
+    set BACKUP_DIR=C:\Backups\MathSoc
+    if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+    
+    REM Generate timestamp
+    for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set datetime=%%I
+    set TIMESTAMP=%datetime:~0,4%%datetime:~4,2%%datetime:~6,2%_%datetime:~8,2%%datetime:~10,2%%datetime:~12,2%
+    
+    REM Backup database
+    "C:\Program Files\PostgreSQL\12\bin\pg_dump.exe" -U mathsoc -d mathsoc_db -F c -f "%BACKUP_DIR%\mathsoc_db_backup_%TIMESTAMP%.sql"
+    
+    REM File system backup
+    powershell Compress-Archive -Path "C:\path\to\math-soc-source" -DestinationPath "%BACKUP_DIR%\mathsoc_files_%TIMESTAMP%.zip" -Force
 
-   .. code-block:: bash
+2. Cloud Deployment Backup Strategies
+''''''''''''''''''''''''''''''''''''
 
-      sudo ufw allow 22
-      sudo ufw allow 80
-      sudo ufw allow 443
-      sudo ufw enable
+**Provider-Specific Backup Methods**
 
-2. **Configure automatic security updates**:
+Heroku:
+- Automated Database Backups:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-      sudo apt install unattended-upgrades
-      sudo dpkg-reconfigure unattended-upgrades
+    # Manual database backup
+    heroku pg:backups capture
 
-3. **Set up fail2ban** to protect against brute force attacks:
+    # Schedule automated backups
+    heroku pg:backups schedule DATABASE_URL --at '02:00 UTC'
 
-   .. code-block:: bash
+    # List backups
+    heroku pg:backups
 
-      sudo apt install fail2ban
-      sudo systemctl enable fail2ban
-      sudo systemctl start fail2ban
+DigitalOcean Managed Databases:
+- Enable automated backups in dashboard
+- Configure backup window and retention
+- Backup frequency options:
+  - Daily
+  - Weekly
+  - Custom intervals
 
-Maintenance Procedures
----------------------
+AWS RDS Backup Configuration:
+- Enable automated backups
+- Set backup retention period (1-35 days)
+- Configure backup window in AWS Management Console
 
-Regular Updates
-~~~~~~~~~~~~~
+3. Backup Verification and Testing
+''''''''''''''''''''''''''''''''''
 
-1. **Update the application**:
+Backup Verification Script:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-      cd /path/to/math-soc-source
-      git pull
-      source venv/bin/activate
-      pip install -U -r requirements.txt
-      flask db upgrade  # If there are database migrations
-      sudo systemctl restart mathsoc
+    #!/bin/bash
+    
+    # Restore test database
+    TEST_DB="mathsoc_backup_test"
+    
+    # Latest backup file
+    LATEST_BACKUP=$(ls -t /var/backups/mathsoc/*.sql | head -n1)
+    
+    # Create test database
+    createdb $TEST_DB
+    
+    # Restore backup to test database
+    pg_restore -d $TEST_DB $LATEST_BACKUP
+    
+    # Run basic validation queries
+    psql -d $TEST_DB -c "SELECT COUNT(*) FROM users;"
+    
+    # Drop test database
+    dropdb $TEST_DB
 
-2. **System updates**:
+1. Offsite and Cloud Storage Backup
+'''''''''''''''''''''''''''''''''''
 
-   .. code-block:: bash
+Additional Backup Strategies:
+- Use cloud storage services
+- Implement multi-location backups
 
-      sudo apt update
-      sudo apt upgrade
+Example AWS S3 Backup Script:
 
-Monitoring
-~~~~~~~~
+.. code-block:: bash
 
-1. **Check application logs**:
+    #!/bin/bash
+    
+    BACKUP_FILE="/var/backups/mathsoc/latest_backup.tar.gz"
+    S3_BUCKET="s3://mathsoc-backups"
+    
+    # Compress and upload to S3
+    tar -czvf $BACKUP_FILE /path/to/math-soc-source
+    aws s3 cp $BACKUP_FILE $S3_BUCKET/
 
-   .. code-block:: bash
+5. Backup Retention Policy
+'''''''''''''''''''''''''
 
-      sudo journalctl -u mathsoc
+Recommended Retention Intervals:
+- Daily backups: Retain for 7 days
+- Weekly backups: Retain for 4 weeks
+- Monthly backups: Retain for 3-6 months
+- Annual backups: Retain for 1-2 years
 
-2. **Monitor database performance**:
-
-   .. code-block:: sql
-
-      -- In psql
-      SELECT * FROM pg_stat_activity;
-
-3. **Check disk usage**:
-
-   .. code-block:: bash
-
-      df -h
-
-Newsletter Management
-~~~~~~~~~~~~~~~~~~~
-
-The application includes a newsletter system. To manage subscribers:
-
-1. Log in as an admin
-2. Navigate to the newsletter admin section
-3. Create and send newsletters
-4. Export subscriber lists if needed
+**Considerations:**
+- Storage costs
+- Compliance requirements
+- Disk space limitations
 
 Troubleshooting
---------------
+---------------
 
-Common Issues and Solutions
-~~~~~~~~~~~~~~~~~~~~~~~~~
+- Check application logs
+- Verify database connections
+- Ensure all environment variables are set
+- Validate dependencies
 
-Application Won't Start
-^^^^^^^^^^^^^^^^^^^^^^^
+Contact Support
+---------------
 
-1. Check the logs:
-
-   .. code-block:: bash
-
-      sudo journalctl -u mathsoc -n 50
-
-2. Verify environment variables:
-
-   .. code-block:: bash
-
-      cat .env
-
-3. Confirm the database is running:
-
-   .. code-block:: bash
-
-      sudo systemctl status postgresql
-
-Database Connection Issues
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-1. Check database credentials in ``.env``
-
-2. Verify PostgreSQL is running:
-
-   .. code-block:: bash
-
-      sudo pg_isready
-
-3. Test connection:
-
-   .. code-block:: bash
-
-      PGPASSWORD="secure_password_here" psql -h localhost -U mathsoc -d mathsoc_db
-
-Slow Performance
-^^^^^^^^^^^^^
-
-1. Check server resources:
-
-   .. code-block:: bash
-
-      top
-
-2. Consider increasing gunicorn workers (in mathsoc.service)
-
-3. Analyze database performance:
-
-   .. code-block:: sql
-
-      -- In psql
-      EXPLAIN ANALYZE SELECT * FROM your_problematic_query;
-
-Contact Information
------------------
-
-For additional assistance, please contact:
-
+For technical issues:
 - Yousuf Shahzad (Developer)
 - Sudhakara Ambati (Developer)
 
-Upton Court Grammar School
+**Note**: Always test deployment in a staging environment first.

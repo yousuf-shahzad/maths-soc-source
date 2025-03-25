@@ -1,6 +1,8 @@
 Installation
 ============
 
+Outlined is the most basic setup for installing the project locally.
+
 Prerequisites
 -------------
 - Python 3.8+
