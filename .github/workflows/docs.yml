@@ -17,7 +17,7 @@ jobs:
         cd docs
         make html
     - name: Upload Documentation
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: docs/build/html
