@@ -44,11 +44,25 @@ def profile():
     Display the user's profile page.
 
     Returns:
-        Rendered profile page with user data.
+        Rendered profile page with user data and all leaderboard entries.
+        
+    Notes:
+        - Now fetches all leaderboard entries for the user (one per key stage they've completed)
+        - Template will need to handle multiple entries instead of a single entry
     """
-    leaderboard_data = LeaderboardEntry.query.filter_by(user_id=current_user.id).first()
+    leaderboard_entries = LeaderboardEntry.query.filter_by(user_id=current_user.id).all()
+    
+    # Count
+    length = len(leaderboard_entries)
+    
+    # Calculate total score across all key stages
+    total_score = sum(entry.score for entry in leaderboard_entries)
+    
     return render_template(
-        "profile/main_profile.html", title="Profile", leaderboard_data=leaderboard_data
+        "profile/main_profile.html", 
+        title="Profile", 
+        leaderboard_entries_count=length,
+        total_score=total_score
     )
 
 

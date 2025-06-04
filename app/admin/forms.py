@@ -36,6 +36,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
 from wtforms import (
     StringField,
+    IntegerField,
     SubmitField,
     BooleanField,
     SelectField,
@@ -43,27 +44,39 @@ from wtforms import (
     FieldList,
     FormField,
 )
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange
 from flask_ckeditor import CKEditorField
 
 
 class LeaderboardEntryForm(FlaskForm):
     """
-    Form for creating or updating a leaderboard entry.
+    Form for creating and editing leaderboard entries.
+
+    This form allows administrators to manually create or modify leaderboard
+    entries, including selecting the appropriate key stage for fair competition.
 
     Fields:
     -------
-    user_id : StringField
-        Unique identifier for the user
-    score : StringField
-        User's score in the leaderboard
+    user_id : SelectField
+        Dropdown selection of registered users
+    score : IntegerField
+        User's current point total (minimum 0)
+    key_stage : SelectField
+        Educational key stage classification:
+        - KS3: Years 7-8
+        - KS4: Years 9-11  
+        - KS5: Years 12-13
     submit : SubmitField
-        Button to submit the leaderboard entry
+        Button to save the leaderboard entry
     """
-
-    user_id = StringField("User ID", validators=[DataRequired()])
-    score = StringField("Score", validators=[DataRequired()])
-    submit = SubmitField("Submit")
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    score = IntegerField('Score', validators=[DataRequired(), NumberRange(min=0)])
+    key_stage = SelectField('Key Stage', choices=[
+        ('KS3', 'Key Stage 3 (Years 7-8)'),
+        ('KS4', 'Key Stage 4 (Years 9-11)'),
+        ('KS5', 'Key Stage 5 (Years 12-13)')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Save Entry')
 
 
 class AnswerBoxForm(FlaskForm):

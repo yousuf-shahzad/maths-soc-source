@@ -89,6 +89,7 @@ class LeaderboardEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     score = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    key_stage = db.Column(db.String(3), nullable=False, index=True)
     user = db.relationship(
         "User", backref=db.backref("leaderboard_entries", cascade="all, delete-orphan")
     )

@@ -5,21 +5,21 @@
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <p>
-            {{ form.first_name.label }}<br>
+            {{ form.first_name.label }}
             {{ form.first_name(size=32) }}<br>
             {% for error in form.first_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.last_name.label }}<br>
+            {{ form.last_name.label }}
             {{ form.last_name(size=32) }}<br>
             {% for error in form.last_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.password.label }}<br>
+            {{ form.password.label }}
             {{ form.password(size=32) }}<br>
             {% for error in form.password.errors %}
             <span style="color: red;">[{{ error }}]</span>
@@ -27,13 +27,15 @@
         </p>
         <p>
             {{ form.year.label }}
-            {{ form.year }}<br>
+            {{ form.year(class="form-control") }}<br>
             {% for error in form.year.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
-        <p>{{ form.remember_me.label }} </p>
-        <p>{{ form.remember_me(size=2) }}</p>
+        <div class="checkbox-container">
+            {{ form.remember_me() }}
+            {{ form.remember_me.label }}
+        </div>
         <p>{{ form.submit() }}</p>
         <br>
         <p>If you forget your password, contact site admin to have it reset.</p>

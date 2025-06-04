@@ -27,8 +27,12 @@
                     <td>{{ 'Admin' if current_user.is_admin else 'User' }}</td>
                 </tr>
                 <tr>
-                    <th>Leaderboard Score</th>
-                    <td>{{ leaderboard_data.score if leaderboard_data.score else '0' }}</td>
+                    <th>Challenges Answered</th>
+                    <td>{{ leaderboard_entries_count if leaderboard_entries_count else '0' }}</td>
+                </tr>
+                <tr>
+                    <th>Total Points</th>
+                    <td>{{ total_score }}</td>
                 </tr>
             </table>
         </div>
@@ -41,8 +45,9 @@
         <a href="{{ url_for('auth.logout') }}" class="button button-secondary">
             Logout
         </a>
-        <a href="{{ url_for('profile.delete_account') }}" class="button button-danger">
+        <a href="{{ url_for('profile.delete_account') }}" class="button button-danger" onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
             Delete Account
+            
         </a>
     </div>
     <br>

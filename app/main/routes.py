@@ -46,6 +46,7 @@ from flask_login import current_user
 import datetime
 from typing import Dict
 from app import db
+from app.models import User
 from sqlalchemy.exc import SQLAlchemyError
 from app.main import bp
 from app.models import (
@@ -237,24 +238,38 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
     )
 
 
-def update_leaderboard(user_id: int, score: int) -> None:
+def update_leaderboard(user_id: int, score: int, challenge_key_stage: str) -> None:
     """
-    Update user's points on the leaderboard.
+    Update user's points on the leaderboard for the specific challenge key stage.
 
     Args:
         user_id (int): The ID of the user.
         score (int): Number of points to add.
+        challenge_key_stage (str): The key stage of the challenge being completed.
     """
-    leaderboard_entry = LeaderboardEntry.query.filter_by(user_id=user_id).first()
+
+    user = User.query.get(user_id)
+    if not user:
+        return
+    
+    # Look for existing leaderboard entry for this user and challenge key stage
+    leaderboard_entry = LeaderboardEntry.query.filter_by(
+        user_id=user_id, 
+        key_stage=challenge_key_stage
+    ).first()
 
     if leaderboard_entry:
         leaderboard_entry.score += score
     else:
-        leaderboard_entry = LeaderboardEntry(user_id=user_id, score=score)
+        # Create new entry for this key stage
+        leaderboard_entry = LeaderboardEntry(
+            user_id=user_id, 
+            score=score, 
+            key_stage=challenge_key_stage
+        )
         db.session.add(leaderboard_entry)
 
     leaderboard_entry.last_updated = datetime.datetime.utcnow()
-
     db.session.commit()
 
 
@@ -273,6 +288,7 @@ def handle_submission_result(
         - Flashes success message for correct answers
         - Awards bonus points for first correct solution
         - Tracks remaining attempts for incorrect answers
+        - Updates leaderboard based on challenge key stage, not user key stage
     """
     submission_count = check_submission_count(
         submission.user_id, challenge.id, answer_box.id
@@ -283,19 +299,14 @@ def handle_submission_result(
 
         # Check if all parts are now correct
         if check_all_answers_correct(challenge, submission.user_id):
-            flash(
-                "Congratulations! You have completed all parts of this challenge! 🎉",
-                "success",
-            )
-
             # Award bonus points for first correct solution
             if challenge.first_correct_submission is None:
                 challenge.first_correct_submission = datetime.datetime.utcnow()
-                # First solution bonus
-                update_leaderboard(submission.user_id, 3)
+                # First solution bonus - use challenge's key stage
+                update_leaderboard(submission.user_id, 3, challenge.key_stage)
             else:
-                # Regular completion points
-                update_leaderboard(submission.user_id, 1)
+                # Regular completion points - use challenge's key stage
+                update_leaderboard(submission.user_id, 1, challenge.key_stage)
 
             db.session.commit()
     else:
@@ -304,7 +315,6 @@ def handle_submission_result(
             f"Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.",
             "error",
         )
-
 
 @bp.route("/challenges/<int:challenge_id>", methods=["GET", "POST"])
 def challenge(challenge_id: int):
@@ -526,16 +536,46 @@ def article(id):
 @bp.route("/leaderboard")
 def leaderboard():
     """
-    Display the top 10 leaderboard entries.
+    Display leaderboards separated by key stages.
 
     Returns:
-        Rendered leaderboard page with top 10 entries sorted by score.
+        Rendered leaderboard page with entries grouped by key stage.
+        
+    Notes:
+        - Now filters by LeaderboardEntry.key_stage instead of User.key_stage
+        - This shows scores based on challenge difficulty completed, not user's year group
+        - Users may appear on multiple leaderboards if they completed challenges from different key stages
     """
-    entries = (
-        LeaderboardEntry.query.order_by(LeaderboardEntry.score.desc()).limit(10).all()
+    ks3_entries = (
+        LeaderboardEntry.query.join(User)
+        .filter(LeaderboardEntry.key_stage == 'KS3')
+        .order_by(LeaderboardEntry.score.desc())
+        .limit(10)
+        .all()
     )
+    
+    ks4_entries = (
+        LeaderboardEntry.query.join(User)
+        .filter(LeaderboardEntry.key_stage == 'KS4')
+        .order_by(LeaderboardEntry.score.desc())
+        .limit(10)
+        .all()
+    )
+    
+    ks5_entries = (
+        LeaderboardEntry.query.join(User)
+        .filter(LeaderboardEntry.key_stage == 'KS5')
+        .order_by(LeaderboardEntry.score.desc())
+        .limit(10)
+        .all()
+    )
+    
     return render_template(
-        "main/leaderboard.html", title="Leaderboard", entries=entries
+        "main/leaderboard.html", 
+        title="Leaderboards",
+        ks3_entries=ks3_entries,
+        ks4_entries=ks4_entries,
+        ks5_entries=ks5_entries
     )
 
 

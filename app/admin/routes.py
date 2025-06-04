@@ -876,19 +876,27 @@ def reset_password(user_id):
 @admin_required
 def manage_leaderboard():
     """
-    Displays leaderboard management interface with statistics
+    Displays leaderboard management interface with key stage statistics
     """
+    from app.models import LeaderboardEntry, User
+    
     try:
-        # Get sorted leaderboard entries
         leaderboard = (
             LeaderboardEntry.query.join(User)
-            .order_by(LeaderboardEntry.score.desc())
+            .order_by(LeaderboardEntry.key_stage, LeaderboardEntry.score.desc())
             .all()
         )
 
-        # Calculate statistics
+        ks3_count = LeaderboardEntry.query.filter_by(key_stage='KS3').count()
+        ks4_count = LeaderboardEntry.query.filter_by(key_stage='KS4').count() 
+        ks5_count = LeaderboardEntry.query.filter_by(key_stage='KS5').count()
+
+        # Get unique users across all key stages
+        unique_users = db.session.query(LeaderboardEntry.user_id).distinct().count()
+
         stats = {
-            "total_participants": LeaderboardEntry.query.count(),
+            "total_entries": LeaderboardEntry.query.count(),
+            "unique_participants": unique_users,
             "highest_score": db.session.query(
                 db.func.max(LeaderboardEntry.score)
             ).scalar()
@@ -905,9 +913,13 @@ def manage_leaderboard():
             "admin/manage_leaderboard.html",
             title="Manage Leaderboard",
             leaderboard=leaderboard,
-            total_participants=stats["total_participants"],
+            total_entries=stats["total_entries"],
+            unique_participants=stats["unique_participants"],
             highest_score=stats["highest_score"],
             average_score=stats["average_score"],
+            ks3_count=ks3_count,
+            ks4_count=ks4_count,
+            ks5_count=ks5_count,
             export_enabled=export_enabled,
         )
 
@@ -925,17 +937,17 @@ def export_leaderboard():
     Exports leaderboard data to CSV file
     """
     try:
-        # Get sorted leaderboard entries
+        # Get sorted leaderboard entries grouped by key stage
         leaderboard = (
             LeaderboardEntry.query.join(User)
-            .order_by(LeaderboardEntry.score.desc())
+            .order_by(LeaderboardEntry.key_stage, LeaderboardEntry.score.desc())
             .all()
         )
 
         # Create CSV data
-        csv_data = "User ID,Name,Year,Class,Score,Last Updated\n"
+        csv_data = "User ID,Name,Year,Class,Key Stage,Score,Last Updated\n"
         for entry in leaderboard:
-            csv_data += f"{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.maths_class},{entry.score},{entry.last_updated}\n"
+            csv_data += f"{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.maths_class},{entry.key_stage},{entry.score},{entry.last_updated}\n"
 
         # Create file
         file = BytesIO()
@@ -960,26 +972,50 @@ def export_leaderboard():
 @admin_required
 def edit_leaderboard_entry(entry_id):
     """
-    Edits a leaderboard entry
+    Edits a leaderboard entry with key stage selection
 
     Args:
         entry_id: int ID of entry to edit
     """
+    from app.admin.forms import LeaderboardEntryForm
+    from app.models import User, LeaderboardEntry
+    import datetime
+    
     entry = LeaderboardEntry.query.get_or_404(entry_id)
     form = LeaderboardEntryForm(obj=entry)
+    form.user_id.choices = [(user.id, user.full_name) for user in User.query.all()]
 
     if form.validate_on_submit():
         try:
+            # Check if changing user/key_stage combination would create duplicate
+            if (entry.user_id != form.user_id.data or entry.key_stage != form.key_stage.data):
+                existing_entry = LeaderboardEntry.query.filter_by(
+                    user_id=form.user_id.data, 
+                    key_stage=form.key_stage.data
+                ).first()
+                
+                if existing_entry and existing_entry.id != entry.id:
+                    flash(f'User already has an entry for {form.key_stage.data}. Please edit that entry instead.', 'error')
+                    return render_template(
+                        "admin/edit_leaderboard_entry.html",
+                        title="Edit Leaderboard Entry",
+                        form=form,
+                        entry=entry,
+                    )
+
             entry.user_id = form.user_id.data
             entry.score = form.score.data
+            entry.key_stage = form.key_stage.data
+            entry.last_updated = datetime.datetime.utcnow()
+            
             db.session.commit()
-            flash("Leaderboard entry updated successfully.")
-            return redirect(url_for("admin.manage_leaderboard"))
+            flash('Leaderboard entry updated successfully!', 'success')
+            return redirect(url_for('admin.manage_leaderboard'))
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error(f"Error updating entry: {str(e)}")
-            flash("Error updating leaderboard entry.")
+            current_app.logger.error(f"Error updating leaderboard entry: {str(e)}")
+            flash("Error updating leaderboard entry. Please try again.")
 
     return render_template(
         "admin/edit_leaderboard_entry.html",
@@ -994,15 +1030,44 @@ def edit_leaderboard_entry(entry_id):
 @admin_required
 def create_leaderboard_entry():
     """
-    Creates a leaderboard entry
+    Creates a new leaderboard entry with key stage selection
     """
+    from app.admin.forms import LeaderboardEntryForm
+    from app.models import User, LeaderboardEntry
+    import datetime
+    
     form = LeaderboardEntryForm()
+    form.user_id.choices = [(user.id, user.full_name) for user in User.query.all()]
+    
     if form.validate_on_submit():
-        entry = LeaderboardEntry(user_id=form.user_id.data, score=form.score.data)
-        db.session.add(entry)
-        db.session.commit()
-        flash("Leaderboard entry created successfully.")
-        return redirect(url_for("admin.manage_leaderboard"))
+        try:
+            # Check if user already has entry for this key stage
+            existing_entry = LeaderboardEntry.query.filter_by(
+                user_id=form.user_id.data, 
+                key_stage=form.key_stage.data
+            ).first()
+            
+            if existing_entry:
+                flash(f'User already has a leaderboard entry for {form.key_stage.data}. Please edit the existing entry.', 'error')
+                return redirect(url_for('admin.edit_leaderboard_entry', entry_id=existing_entry.id))
+            
+            entry = LeaderboardEntry(
+                user_id=form.user_id.data,
+                score=form.score.data,
+                key_stage=form.key_stage.data,
+                last_updated=datetime.datetime.utcnow()
+            )
+            
+            db.session.add(entry)
+            db.session.commit()
+            flash('Leaderboard entry created successfully!', 'success')
+            return redirect(url_for('admin.manage_leaderboard'))
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating leaderboard entry: {str(e)}")
+            flash("Error creating leaderboard entry. Please try again.")
+    
     return render_template(
         "admin/create_leaderboard_entry.html",
         title="Create Leaderboard Entry",
@@ -1024,7 +1089,7 @@ def delete_leaderboard_entry(entry_id):
     try:
         db.session.delete(entry)
         db.session.commit()
-        flash("Leaderboard entry deleted successfully.")
+        flash(f"Leaderboard entry for {entry.user.full_name} ({entry.key_stage}) deleted successfully.")
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"Error deleting entry: {str(e)}")
@@ -1046,7 +1111,7 @@ def reset_leaderboard():
     try:
         LeaderboardEntry.query.delete()
         db.session.commit()
-        flash("Leaderboard reset successfully.")
+        flash("All leaderboard entries reset successfully.")
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"Error resetting leaderboard: {str(e)}")
@@ -1059,28 +1124,46 @@ def reset_leaderboard():
 @admin_required
 def update_leaderboard():
     """
-    Updates the leaderboard with new scores
+    Updates the leaderboard with new scores based on challenge submissions
 
     Notes:
-    - Calculates scores based on challenge submissions
+    - Calculates scores based on challenge submissions grouped by key stage
     - Updates existing entries or creates new ones
+    - A user can have multiple entries (one per key stage they've completed challenges for)
     """
     try:
+        # Clear existing leaderboard
+        LeaderboardEntry.query.delete()
+        
         # Get all users and their submissions
         users = User.query.all()
+        
         for user in users:
-            user_score = 0
+            # Group submissions by challenge key stage
+            key_stage_scores = {}
+            
             for submission in user.submissions:
                 if submission.is_correct:
-                    user_score += 1
-            entry = LeaderboardEntry.query.filter_by(user_id=user.id).first()
-            if entry:
-                entry.score = user_score
-            else:
-                entry = LeaderboardEntry(user_id=user.id, score=user_score)
-                db.session.add(entry)
+                    challenge = Challenge.query.get(submission.challenge_id)
+                    if challenge:
+                        challenge_ks = challenge.key_stage
+                        if challenge_ks not in key_stage_scores:
+                            key_stage_scores[challenge_ks] = 0
+                        key_stage_scores[challenge_ks] += 1
+            
+            # Create leaderboard entries for each key stage the user has points in
+            for key_stage, score in key_stage_scores.items():
+                if score > 0:  # Only create entries for users with points
+                    entry = LeaderboardEntry(
+                        user_id=user.id, 
+                        score=score, 
+                        key_stage=key_stage,
+                        last_updated=datetime.datetime.utcnow()
+                    )
+                    db.session.add(entry)
+        
         db.session.commit()
-        flash("Leaderboard updated successfully.")
+        flash("Leaderboard updated successfully based on challenge submissions.")
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating leaderboard: {str(e)}")

@@ -1,7 +1,146 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <article>
-        <h1>About Us</h1>
-    </article>
+<div class="about-container profile-container">
+    <div class="school-crest">
+        <img src="{{ url_for('static', filename='images/crest.png') }}" alt="Upton Court Grammar School Crest">
+        <h1>Mathematics Society</h1>
+    </div>
+
+    <div class="hero-section">
+        <h2 class="hero-subtitle">Fostering Mathematical Excellence at Upton Court Grammar School</h2>
+        <p>Welcome to the official website of the UCGS Mathematics Society - where passion for mathematics meets academic excellence.</p>
+    </div>
+
+    <div class="section-container">
+        <h2 class="section-title">About Our Society</h2>
+        <p>The Upton Court Grammar School Mathematics Society is a vibrant community of students who share a passion for mathematical discovery and problem-solving. Founded to promote mathematical thinking beyond the classroom, we provide a platform for students to explore advanced concepts, participate in competitions, and collaborate on challenging problems.</p>
+        
+        <p>Our society welcomes students from all key stages who demonstrate enthusiasm for mathematics, regardless of their current level. We believe that mathematics is not just a subject to be studied, but a beautiful language that describes the world around us.</p>
+    </div>
+
+    <div class="section-container">
+        <h2 class="section-title">About This Website</h2>
+        <p>This platform serves as the digital hub for our mathematics community, featuring:</p>
+        
+        <div class="privacy-content">
+            <p><strong>Challenge System:</strong> Regular mathematical challenges across different key stages, from KS3 to A-Level, designed to stretch and inspire our members.</p>
+            
+            <p><strong>Leaderboards:</strong> Track your progress and see how you compare with fellow mathematicians across different year groups.</p>
+            
+            <p><strong>Resources & Articles:</strong> Access to mathematical articles, problem-solving techniques, and educational materials curated by our team.</p>
+            
+            <p><strong>Community Features:</strong> Connect with like-minded students, share solutions, and participate in mathematical discussions.</p>
+        </div>
+    </div>
+
+    <div class="leaderboard-sections">
+        <section>
+            <h2>Society Leadership</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>Head of Society</h3>
+                    <p>Aditya Prabhakar</p>
+                    <small class="meta">Year 12 - A-Level Mathematics, Further Mathematics and Physics</small>
+                </div>
+                
+                <div class="stats-card">
+                    <h3>Deputy Head</h3>
+                    <p>Ria Benade</p>
+                    <small class="meta">Year 12 - A-Level Mathematics, Further Mathematics and Physics</small>
+                </div>
+
+                <div class="stats-card">
+                    <h3>Deputy Head</h3>
+                    <p>Edward Kalnakov</p>
+                    <small class="meta">Year 12 - A-Level Mathematics, Further Mathematics, Physics and Economics</small>
+                </div>
+                
+                
+                <div class="stats-card">
+                    <h3>KS3 Representative</h3>
+                    <p>Who</p>
+                    <small class="meta">Year 9 - Key Stage 3</small>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Website Development Team</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>Lead Developer</h3>
+                    <p>Yousuf Shahzad</p>
+                    <small class="meta">Year 12 - Computer Science, Mathematics and Further Mathematics</small>
+                </div>
+                
+                <div class="stats-card">
+                    <h3>Lead Developer</h3>
+                    <p>Sudhakara Ambati</p>
+                    <small class="meta">Year 12 - Computer Science, Mathematics, Further Mathematics and Physics</small>
+                </div>
+            </div>
+
+            <br />
+
+            <div class="privacy-content">
+                <p><strong>Technologies Used:</strong> This website is built using Python Flask, SQLite database, HTML5, CSS3, and JavaScript. The challenge system supports LaTeX mathematical notation for complex equations and formulas.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Faculty Advisor</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>Staff Advisor & Challenge Coordinator</h3>
+                    <p>Dr. Horia Ioras</p>
+                    <small class="meta">Head of Mathematics Department</small>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="section-container">
+        <h2 class="section-title">Membership</h2>
+        <p>Our society currently has over 150 active members across all year groups, making us one of the largest academic societies at UCGS. Members enjoy:</p>
+        <br />
+        <div class="privacy-content">
+            <p><strong>Weekly Challenges:</strong> New mathematical problems posted every week, with solutions and explanations provided.</p>
+            
+            <p><strong>Competition Preparation:</strong> Training sessions for national competitions such as the UK Mathematics Challenge and Team Mathematics Challenge.</p>
+            
+            <p><strong>Guest Lectures:</strong> Regular talks from mathematicians, university professors, and industry professionals.</p>
+            
+            <p><strong>Study Groups:</strong> Peer-to-peer learning sessions for exam preparation and concept exploration.</p>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="{{ url_for('auth.register') }}" class="button">Join Our Society</a>
+            <a href="{{ url_for('main.challenges') }}" class="button button-secondary">View Challenges</a>
+        </div>
+    </div>
+
+    <div class="section-container">
+        <h2 class="section-title">Connect with UCGS Mathematics Department</h2>
+        <p>Learn more about mathematics at Upton Court Grammar School:</p>
+        
+        <div style="text-align: center;">
+            <a href="https://www.uptoncourtgrammar.org.uk/ks3-mathematics/" class="button" target="_blank">KS3 Curriculum</a>
+            <a href="https://www.uptoncourtgrammar.org.uk/ks4-mathematics/" class="button" target="_blank">KS4 Curriculum</a>
+            <a href="https://www.uptoncourtgrammar.org.uk/ks5-mathematics/" class="button" target="_blank">KS5 Curriculum</a>
+            <a href="https://www.uptoncourtgrammar.org.uk" class="button button-secondary" target="_blank">School Website</a>
+        </div>
+        <br />
+        <div class="privacy-content">
+            <p><strong>Contact Information:</strong></p>
+            <p>Mathematics Department: maths@upton-court.slough.sch.uk</p>
+            <p>Society Inquiries: mathsociety@upton-court.slough.sch.uk</p>
+        </div>
+    </div>
+
+    <div class="hero-section">
+        <h3>Join Us in Exploring the Beauty of Mathematics</h3>
+        <p>Whether you're just beginning your mathematical journey or preparing for university, the UCGS Mathematics Society provides the support, challenge, and community you need to excel.</p>
+    </div>
+</div>
 {% endblock %}

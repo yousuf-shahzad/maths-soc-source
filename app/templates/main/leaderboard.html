@@ -1,23 +1,114 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Leaderboard</h1>
-    <table>
-        <tr>
-            <th>User</th>
-            <th>Score</th>
-            <th>Last Updated</th>
-            <th>Year</th>
-            <th>Class</th>
-        </tr>
-        {% for entry in entries %}
-        <tr>
-            <td>{{ entry.user.full_name }}</td>
-            <td>{{ entry.score }}</td>
-            <td>{{ entry.last_updated.strftime('%d/%m/%Y') }}</td>
-            <td>{{ entry.user.year }}</td>
-            <td>{{ entry.user.maths_class }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+<div class="leaderboard-container">
+    <h1>Leaderboards</h1>
+    
+    <div class="key-stage-leaderboards">
+        <div class="key-stage-section">
+            <div class="key-stage-header">
+                <h2>Key Stage 3</h2>
+                <p>Years 7-8</p>
+            </div>
+            <div class="leaderboard-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Year</th>
+                            <th>Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in ks3_entries %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ entry.user.full_name }}</td>
+                            <td>{{ entry.score }}</td>
+                            <td>{{ entry.user.year }}</td>
+                            <td>{{ entry.user.maths_class }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="key-stage-section">
+            <div class="key-stage-header">
+                <h2>Key Stage 4</h2>
+                <p>Years 9-11</p>
+            </div>
+            <div class="leaderboard-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Year</th>
+                            <th>Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in ks4_entries %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ entry.user.full_name }}</td>
+                            <td>{{ entry.score }}</td>
+                            <td>{{ entry.user.year }}</td>
+                            <td>{{ entry.user.maths_class }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="key-stage-section">
+            <div class="key-stage-header">
+                <h2>Key Stage 5</h2>
+                <p>Years 12-13</p>
+            </div>
+            <div class="leaderboard-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Year</th>
+                            <th>Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in ks5_entries %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ entry.user.full_name }}</td>
+                            <td>{{ entry.score }}</td>
+                            <td>{{ entry.user.year }}</td>
+                            <td>{{ entry.user.maths_class }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
