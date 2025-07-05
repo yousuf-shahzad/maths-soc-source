@@ -74,7 +74,9 @@ class TestDatabaseOperations:
             # Create a leaderboard entry
             leaderboard_entry = LeaderboardEntry(
                 user=user,
-                score=100
+                score=100,
+                last_updated=datetime.now(),
+                key_stage='KS5'
             )
             
             # Add all to session and commit

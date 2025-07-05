@@ -155,7 +155,9 @@ class TestLeaderboardEntryModel:
         """Test leaderboard entry creation"""
         leaderboard_entry = LeaderboardEntry(
             user=test_user,
-            score=100
+            score=100,
+            last_updated=datetime.now(),
+            key_stage='KS4'
         )
         
         _db.session.add(leaderboard_entry)

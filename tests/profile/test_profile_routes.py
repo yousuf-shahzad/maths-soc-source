@@ -33,6 +33,7 @@ def test_profile_page_renders(test_client, test_user, app, _db):
             user_id=test_user.id,
             score=100,
             last_updated=datetime.now(),
+            key_stage='KS4',
         )
 
         _db.session.add(leaderboard_entry)
