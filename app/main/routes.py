@@ -66,8 +66,8 @@ from app.admin.forms import AnswerSubmissionForm
 
 
 @bp.route("/")
-@bp.route("/index")
-def index():
+@bp.route("/home")
+def home():
     """
     Render the homepage with recent content.
 
@@ -163,7 +163,7 @@ def challenges():
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error loading challenges: {str(e)}")
         flash("Unable to load challenges at this time.", "error")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.home"))
 
 
 def check_submission_count(user_id: int, challenge_id: int, box_id: int) -> int:

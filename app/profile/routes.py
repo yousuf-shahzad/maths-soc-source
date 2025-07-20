@@ -126,4 +126,4 @@ def delete_account():
     db.session.delete(user)
     db.session.commit()
     flash("Your account has been deleted.")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.home"))

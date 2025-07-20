@@ -61,7 +61,7 @@ def login():
         - Flashes error for invalid credentials
     """
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.home"))
     form = LoginForm()
     if form.validate_on_submit():
         # Query using full_name for consistency
@@ -74,7 +74,7 @@ def login():
             flash("Invalid name or password")
             return redirect(url_for("auth.login"))
         login_user(user, remember=form.remember_me.data)
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.home"))
     return render_template("auth/login.html", title="Sign In", form=form)
 
 
@@ -99,7 +99,7 @@ def register():
         - Checks for inappropriate content in names
     """
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.home"))
     form = RegistrationForm()
     if form.validate_on_submit():
         key_stage_map = {
@@ -171,7 +171,7 @@ if not Config.is_production():
             - Validates user input
         """
         if current_user.is_authenticated:
-            return redirect(url_for("main.index"))
+            return redirect(url_for("main.home"))
         form = RegistrationForm()
         if form.validate_on_submit():
             key_stage_map = {
@@ -227,7 +227,7 @@ else:
             Redirects to the main index page with a warning message.
         """
         flash("Admin registration is disabled in production environments.")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.home"))
 
 # ====================
 # Logout Route
@@ -247,4 +247,4 @@ def logout():
         - Provides a clean logout experience
     """
     logout_user()
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.home"))
