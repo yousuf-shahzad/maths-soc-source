@@ -56,6 +56,11 @@ from app.models import (
     AnswerSubmission,
     ChallengeAnswerBox,
     Announcement,
+    SummerChallenge,
+    SummerLeaderboard,
+    SummerSubmission,
+    SummerChallengeAnswerBox,
+    School,
 )
 from app.admin.forms import AnswerSubmissionForm
 
@@ -140,26 +145,36 @@ def about():
 @bp.route("/challenges")
 def challenges():
     """
-    List all challenges with pagination.
+    List all challenges with pagination, including summer challenges.
 
     Query Parameters:
         page (int, optional): Current page number for pagination. Defaults to 1.
 
     Returns:
-        Rendered challenges page template with paginated challenges.
-
-    Notes:
-        - Displays 6 challenges per page
-        - Sorted by most recent date posted
-        - Redirects to index if database error occurs
+        Rendered challenges page template with paginated challenges and summer challenges.
     """
     page = request.args.get("page", 1, type=int)
     try:
         challenges_pagination = Challenge.query.order_by(
             Challenge.date_posted.desc()
         ).paginate(page=page, per_page=6, error_out=False)
-
-        return render_template("main/challenges.html", challenges=challenges_pagination)
+        
+        # Filter summer challenges by user's key stage if authenticated
+        if current_user.is_authenticated:
+            summer_challenges = SummerChallenge.query.filter_by(
+                key_stage=current_user.key_stage
+            ).order_by(SummerChallenge.date_posted.desc()).all()
+        else:
+            # For unauthenticated users, show all summer challenges
+            summer_challenges = SummerChallenge.query.order_by(
+                SummerChallenge.date_posted.desc()
+            ).all()
+            
+        return render_template(
+            "main/challenges.html",
+            challenges=challenges_pagination,
+            summer_challenges=summer_challenges
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error loading challenges: {str(e)}")
         flash("Unable to load challenges at this time.", "error")
@@ -226,6 +241,10 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
     Returns:
         bool: True if all answers are correct, False otherwise.
     """
+    answer_boxes = challenge.answer_boxes.all()
+    if not answer_boxes:
+        return False
+        
     return all(
         AnswerSubmission.query.filter_by(
             user_id=user_id,
@@ -234,7 +253,7 @@ def check_all_answers_correct(challenge: Challenge, user_id: int) -> bool:
             is_correct=True,
         ).first()
         is not None
-        for box in challenge.answer_boxes
+        for box in answer_boxes
     )
 
 
@@ -269,8 +288,66 @@ def update_leaderboard(user_id: int, score: int, challenge_key_stage: str) -> No
         )
         db.session.add(leaderboard_entry)
 
-    leaderboard_entry.last_updated = datetime.datetime.utcnow()
+    leaderboard_entry.last_updated = datetime.datetime.datetime.utcnow()
     db.session.commit()
+
+
+def update_summer_leaderboard(user_id: int, school_id: int, points: int) -> None:
+    """
+    Update user's points on the summer competition leaderboard.
+
+    Args:
+        user_id (int): The ID of the user.
+        school_id (int): The ID of the user's school.
+        points (int): Number of points to add.
+    """
+    # Look for existing summer leaderboard entry
+    summer_entry = SummerLeaderboard.query.filter_by(
+        user_id=user_id,
+        school_id=school_id
+    ).first()
+
+    if summer_entry:
+        summer_entry.score += points
+        summer_entry.last_updated = datetime.datetime.utcnow()
+    else:
+        # Create new summer leaderboard entry
+        summer_entry = SummerLeaderboard(
+            user_id=user_id,
+            school_id=school_id,
+            score=points,
+            last_updated=datetime.datetime.utcnow()
+        )
+        db.session.add(summer_entry)
+
+    db.session.commit()
+
+
+def calculate_summer_challenge_points(challenge: SummerChallenge, is_first_correct: bool = False) -> int:
+    """
+    Calculate points for a summer challenge based on difficulty and timing.
+
+    Args:
+        challenge (SummerChallenge): The challenge object.
+        is_first_correct (bool): Whether this is the first correct submission for this answer box.
+
+    Returns:
+        int: Points to award for this challenge.
+    """
+    # Base points - could be extended to have different point values per challenge
+    base_points = getattr(challenge, 'points', 1)  # Default to 1 if no points field
+    
+    # Bonus points for being first to solve this specific answer box
+    if is_first_correct:
+        base_points += 2
+    
+    # Time-based bonus (if challenge was solved within first 24 hours of being posted)
+    if hasattr(challenge, 'date_posted') and challenge.date_posted:
+        time_since_posted = datetime.datetime.utcnow() - challenge.date_posted
+        if time_since_posted.total_seconds() <= 86400:  # 24 hours
+            base_points += 1
+    
+    return base_points
 
 
 def handle_submission_result(
@@ -301,7 +378,7 @@ def handle_submission_result(
         if check_all_answers_correct(challenge, submission.user_id):
             # Award bonus points for first correct solution
             if challenge.first_correct_submission is None:
-                challenge.first_correct_submission = datetime.datetime.utcnow()
+                challenge.first_correct_submission = datetime.datetime.datetime.utcnow()
                 # First solution bonus - use challenge's key stage
                 update_leaderboard(submission.user_id, 3, challenge.key_stage)
             else:
@@ -338,7 +415,7 @@ def challenge(challenge_id: int):
 
     # Create forms and get submissions only if user is authenticated
     if current_user.is_authenticated:
-        for answer_box in challenge.answer_boxes:
+        for answer_box in challenge.answer_boxes.all():  # Add .all() here
             forms[answer_box.id] = AnswerSubmissionForm()
             submissions[answer_box.id] = (
                 AnswerSubmission.query.filter_by(
@@ -365,6 +442,71 @@ def challenge(challenge_id: int):
         submissions=submissions,
         attempts_remaining=3,
         all_correct=all_correct,
+    )
+
+@bp.route("/summer_challenge/<int:challenge_id>", methods=["GET", "POST"])
+def summer_challenge(challenge_id: int):
+    challenge = SummerChallenge.query.get_or_404(challenge_id)
+    
+    # Check if user is authenticated and if their key stage matches the challenge
+    if current_user.is_authenticated and current_user.key_stage != challenge.key_stage:
+        flash(f"This summer challenge is for {challenge.key_stage} students only. You are registered for {current_user.key_stage}.", "error")
+        return redirect(url_for("main.challenges"))
+    
+    forms = {}
+    submissions = {}
+
+    # Only allow answer submission if user is a summer participant, challenge is not locked, and user's key stage matches
+    can_submit = (
+        current_user.is_authenticated
+        and getattr(current_user, "is_competition_participant", False)
+        and current_user.school_id is not None
+        and not challenge.is_locked
+        and current_user.key_stage == challenge.key_stage
+    )
+
+    if current_user.is_authenticated:
+        # Create forms and get submissions for each answer box
+        for answer_box in challenge.answer_boxes.all():  # Add .all() here
+            forms[answer_box.id] = AnswerSubmissionForm()
+            submissions[answer_box.id] = (
+                SummerSubmission.query.filter_by(
+                    user_id=current_user.id,
+                    challenge_id=challenge_id,
+                    answer_box_id=answer_box.id,
+                )
+                .order_by(SummerSubmission.submitted_at.desc())
+                .all()
+            )
+
+        # Handle submission if the form is submitted and allowed
+        if request.method == "POST" and can_submit:
+            return handle_summer_challenge_submission(challenge, forms)
+
+    # Check if all answers are correct for this user
+    all_correct = (
+        current_user.is_authenticated
+        and len(challenge.answer_boxes.all()) > 0  # Add .all() here
+        and all(
+            SummerSubmission.query.filter_by(
+                user_id=current_user.id,
+                challenge_id=challenge.id,
+                answer_box_id=box.id,
+                is_correct=True,
+            ).first()
+            is not None
+            for box in challenge.answer_boxes.all()  # Add .all() here
+        )
+    )
+
+    return render_template(
+        "main/summer_challenge.html",
+        challenge=challenge,
+        forms=forms if current_user.is_authenticated else None,
+        submissions=submissions,
+        attempts_remaining=3,
+        all_correct=all_correct,
+        can_submit=can_submit,
     )
 
 
@@ -406,6 +548,138 @@ def handle_challenge_submission(challenge: Challenge, forms: Dict) -> redirect:
 
     handle_submission_result(submission, challenge, answer_box)
     return redirect(url_for("main.challenge", challenge_id=challenge.id))
+
+
+def handle_summer_challenge_submission(challenge: SummerChallenge, forms: Dict) -> redirect:
+    """
+    Process a summer challenge submission.
+
+    Args:
+        challenge (SummerChallenge): The SummerChallenge object.
+        forms (Dict): Dictionary of forms for each answer box.
+
+    Returns:
+        Redirect: Response redirecting back to the summer challenge page.
+
+    Notes:
+        - Validates form submission
+        - Checks remaining attempts (max 3 per answer box)
+        - Creates submission and updates leaderboards
+        - Awards points based on challenge difficulty and timing
+    """
+    box_id = int(request.form.get("answer_box_id"))
+    form = forms[box_id]
+
+    if not form.validate_on_submit():
+        flash("Invalid submission.", "error")
+        return redirect(url_for("main.summer_challenge", challenge_id=challenge.id))
+
+    answer_box = SummerChallengeAnswerBox.query.get_or_404(box_id)
+    
+    # Check submission count for this specific answer box
+    submission_count = SummerSubmission.query.filter_by(
+        user_id=current_user.id,
+        challenge_id=challenge.id,
+        answer_box_id=box_id,
+    ).count()
+
+    if submission_count >= 3:
+        flash("You have reached the maximum attempts for this part.", "error")
+        return redirect(url_for("main.summer_challenge", challenge_id=challenge.id))
+
+    # Check if answer is correct
+    is_correct = form.answer.data.lower().strip() == answer_box.correct_answer.lower().strip()
+    
+    # Calculate points awarded
+    points_awarded = 0
+    if is_correct:
+        # Check if this is the first correct submission for this answer box
+        first_correct = SummerSubmission.query.filter_by(
+            challenge_id=challenge.id,
+            answer_box_id=answer_box.id,
+            is_correct=True
+        ).first() is None
+        
+        points_awarded = calculate_summer_challenge_points(challenge, first_correct)
+
+    # Create the submission
+    submission = SummerSubmission(
+        user_id=current_user.id,
+        challenge_id=challenge.id,
+        school_id=current_user.school_id,
+        answer_box_id=answer_box.id,
+        answer=form.answer.data,
+        is_correct=is_correct,
+        submitted_at=datetime.datetime.utcnow(),
+        points_awarded=points_awarded,
+    )
+
+    try:
+        db.session.add(submission)
+        db.session.commit()
+
+        # Handle submission result
+        handle_summer_submission_result(submission, challenge, answer_box)
+        
+        # Update summer leaderboard if points were awarded
+        if points_awarded > 0:
+            update_summer_leaderboard(current_user.id, current_user.school_id, points_awarded)
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error saving summer submission: {str(e)}")
+        flash("Error saving submission. Please try again.", "error")
+
+    return redirect(url_for("main.summer_challenge", challenge_id=challenge.id))
+
+
+def handle_summer_submission_result(
+    submission: SummerSubmission, 
+    challenge: SummerChallenge, 
+    answer_box: SummerChallengeAnswerBox
+) -> None:
+    """
+    Handle the result of a summer submission, showing appropriate messages.
+
+    Args:
+        submission (SummerSubmission): The SummerSubmission object.
+        challenge (SummerChallenge): The SummerChallenge object.
+        answer_box (SummerChallengeAnswerBox): The SummerChallengeAnswerBox object.
+
+    Notes:
+        - Flashes success message for correct answers with points earned
+        - Shows remaining attempts for incorrect answers
+        - Checks if challenge is fully completed
+    """
+    submission_count = SummerSubmission.query.filter_by(
+        user_id=submission.user_id, 
+        challenge_id=challenge.id, 
+        answer_box_id=answer_box.id
+    ).count()
+
+    if submission.is_correct:
+        points_msg = f" (+{submission.points_awarded} points)" if submission.points_awarded > 0 else ""
+        flash(f"Correct answer for {answer_box.box_label}!{points_msg}", "success")
+
+        # Check if all parts are now correct for this user
+        all_correct = all(
+            SummerSubmission.query.filter_by(
+                user_id=submission.user_id,
+                challenge_id=challenge.id,
+                answer_box_id=box.id,
+                is_correct=True,
+            ).first() is not None
+            for box in challenge.answer_boxes
+        )
+        
+        if all_correct:
+            flash(f"🎉 Challenge completed! Well done!", "success")
+    else:
+        remaining = 3 - submission_count
+        flash(
+            f"Incorrect answer for {answer_box.box_label}. {remaining} attempts remaining.",
+            "error",
+        )
 
 
 @bp.route("/articles")
@@ -576,6 +850,157 @@ def leaderboard():
         ks3_entries=ks3_entries,
         ks4_entries=ks4_entries,
         ks5_entries=ks5_entries
+    )
+
+
+@bp.route("/summer_leaderboard")
+def summer_leaderboard():
+    """
+    Display summer competition leaderboards separated by key stages.
+
+    Returns:
+        Rendered summer leaderboard page with:
+        - Key stage separated leaderboards (KS3, KS4, KS5)
+        - School leaderboard by key stage
+        - Recent activity
+        
+    Notes:
+        - Shows top performers by key stage for fair competition
+        - Updates in real-time based on summer submissions
+        - Includes school rankings separated by key stage
+    """
+    from sqlalchemy import func
+    
+    # Key Stage 3 Leaderboard (Years 7-8)
+    ks3_leaders = (
+        SummerLeaderboard.query
+        .join(User)
+        .join(School, User.school_id == School.id)
+        .filter(User.key_stage == 'KS3')
+        .order_by(SummerLeaderboard.score.desc())
+        .limit(15)
+        .all()
+    )
+    
+    # Key Stage 4 Leaderboard (Years 9-11)
+    ks4_leaders = (
+        SummerLeaderboard.query
+        .join(User)
+        .join(School, User.school_id == School.id)
+        .filter(User.key_stage == 'KS4')
+        .order_by(SummerLeaderboard.score.desc())
+        .limit(15)
+        .all()
+    )
+    
+    # Key Stage 5 Leaderboard (Years 12-13)
+    ks5_leaders = (
+        SummerLeaderboard.query
+        .join(User)
+        .join(School, User.school_id == School.id)
+        .filter(User.key_stage == 'KS5')
+        .order_by(SummerLeaderboard.score.desc())
+        .limit(15)
+        .all()
+    )
+    
+    # School leaderboards by key stage
+    ks3_school_leaders = (
+        db.session.query(
+            School.id,
+            School.name,
+            func.sum(SummerLeaderboard.score).label('total_score'),
+            func.count(SummerLeaderboard.user_id).label('participant_count'),
+            func.avg(SummerLeaderboard.score).label('average_score')
+        )
+        .join(SummerLeaderboard, School.id == SummerLeaderboard.school_id)
+        .join(User, SummerLeaderboard.user_id == User.id)
+        .filter(User.key_stage == 'KS3')
+        .group_by(School.id, School.name)
+        .order_by(func.sum(SummerLeaderboard.score).desc())
+        .limit(8)
+        .all()
+    )
+    
+    ks4_school_leaders = (
+        db.session.query(
+            School.id,
+            School.name,
+            func.sum(SummerLeaderboard.score).label('total_score'),
+            func.count(SummerLeaderboard.user_id).label('participant_count'),
+            func.avg(SummerLeaderboard.score).label('average_score')
+        )
+        .join(SummerLeaderboard, School.id == SummerLeaderboard.school_id)
+        .join(User, SummerLeaderboard.user_id == User.id)
+        .filter(User.key_stage == 'KS4')
+        .group_by(School.id, School.name)
+        .order_by(func.sum(SummerLeaderboard.score).desc())
+        .limit(8)
+        .all()
+    )
+    
+    ks5_school_leaders = (
+        db.session.query(
+            School.id,
+            School.name,
+            func.sum(SummerLeaderboard.score).label('total_score'),
+            func.count(SummerLeaderboard.user_id).label('participant_count'),
+            func.avg(SummerLeaderboard.score).label('average_score')
+        )
+        .join(SummerLeaderboard, School.id == SummerLeaderboard.school_id)
+        .join(User, SummerLeaderboard.user_id == User.id)
+        .filter(User.key_stage == 'KS5')
+        .group_by(School.id, School.name)
+        .order_by(func.sum(SummerLeaderboard.score).desc())
+        .limit(8)
+        .all()
+    )
+    
+    # Recent activity - latest submissions with points
+    recent_activity = (
+        SummerSubmission.query
+        .join(User)
+        .join(SummerChallenge)
+        .join(School, User.school_id == School.id)
+        .filter(SummerSubmission.is_correct == True)
+        .filter(SummerSubmission.points_awarded > 0)
+        .order_by(SummerSubmission.submitted_at.desc())
+        .limit(15)
+        .all()
+    )
+    
+    # Competition statistics by key stage
+    stats = {
+        'ks3_participants': SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS3').count(),
+        'ks4_participants': SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS4').count(),
+        'ks5_participants': SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS5').count(),
+        'total_participants': SummerLeaderboard.query.count(),
+        'total_schools': db.session.query(SummerLeaderboard.school_id).distinct().count(),
+        'total_submissions': SummerSubmission.query.count(),
+        'correct_submissions': SummerSubmission.query.filter_by(is_correct=True).count(),
+        'total_points_awarded': db.session.query(func.sum(SummerSubmission.points_awarded)).scalar() or 0,
+    }
+    
+    # Calculate active challenges using Python logic since SQL interval syntax varies by database
+    from datetime import timedelta
+    all_challenges = SummerChallenge.query.all()
+    active_count = 0
+    for challenge in all_challenges:
+        if not challenge.is_locked:  # Use the existing is_locked property
+            active_count += 1
+    stats['active_challenges'] = active_count
+    
+    return render_template(
+        "main/summer_leaderboard.html",
+        title="Summer Competition 2025 Leaderboard",
+        ks3_leaders=ks3_leaders,
+        ks4_leaders=ks4_leaders,
+        ks5_leaders=ks5_leaders,
+        ks3_school_leaders=ks3_school_leaders,
+        ks4_school_leaders=ks4_school_leaders,
+        ks5_school_leaders=ks5_school_leaders,
+        recent_activity=recent_activity,
+        stats=stats
     )
 
 

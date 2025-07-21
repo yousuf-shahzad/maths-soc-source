@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="challenge-container">
+        <article>
+            <h1 class="challenge-title">{{ challenge.title }}</h1>
+            
+            {% if all_correct %}
+                <div class="alert alert-success">
+                    <h4>🎉 Challenge Completed! 🎉</h4>
+                    <p>You have successfully solved this challenge!</p>
+                </div>
+            {% endif %}
+            
+            <div class="challenge-meta">
+                <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
+                <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
+                <p>Duration: {{ challenge.duration_hours }} hours</p>
+                {% if challenge.is_locked %}
+                    {% if challenge.is_manually_locked %}
+                        <div class="alert alert-warning" style="background: #ffe066; color: #333;">
+                            🔒 This challenge has been manually locked by an admin. Answers are now revealed below.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning" style="background: #ffe066; color: #333;">
+                            ⏰ This summer challenge has expired. Answers are now revealed below.
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <div class="challenge-content">
+                {{ challenge.content | safe }}
+            </div>
+            
+            {% if challenge.file_url %}
+            <div class="challenge-image">
+                <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" 
+                     alt="Challenge Image" 
+                     class="responsive-image">
+            </div>
+            {% endif %}
+            
+            {% for answer_box in challenge.answer_boxes.all() %}
+                {% set form = forms[answer_box.id] if forms else None %}
+                {% set box_submissions = submissions[answer_box.id] if submissions else [] %}
+                {% set has_correct = box_submissions and box_submissions[0].is_correct %}
+                {% set submission_count = box_submissions|length %}
+                {% set attempts_remaining = 3 - submission_count %}
+                
+                <div class="answer-box" id="answer-box-{{ answer_box.id }}"{% if challenge.is_locked %} style="opacity:0.8;"{% endif %}>
+                    <h3>{{ answer_box.box_label }}</h3>
+                    
+                    {% if challenge.is_locked %}
+                        <!-- Show correct answer when locked -->
+                        <div class="correct-answer-reveal" style="background: #d4edda; padding: 1rem; border-radius: 4px; border-left: 4px solid #28a745; margin: 1rem 0;">
+                            <h4 style="color: #155724; margin: 0 0 0.5rem 0;">✅ Correct Answer:</h4>
+                            <div style="background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #c3e6cb;">
+                                <math-field readonly class="form-control" style="font-size: 1.2rem; background: none; border: none;">{{ answer_box.correct_answer }}</math-field>
+                            </div>
+                        </div>
+                    {% elif not has_correct and attempts_remaining > 0 %}
+                        <div class="meta">
+                            <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
+                        </div>
+                        
+                        <div class="answer-submission">
+                            {% if current_user.is_authenticated and current_user.is_competition_participant %}
+                                <form method="POST" class="answer-form">
+                                    {{ form.hidden_tag() }}
+                                    <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
+                                    
+                                    <div class="form-group">
+                                        {{ form.answer.label(class="form-label") }}
+                                        <div class="pdf-viewer">
+                                            <math-field 
+                                                id="formula-{{ answer_box.id }}"
+                                                class="form-control"
+                                                style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                        </div>
+                                        {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
+                                        {% for error in form.answer.errors %}
+                                            <span class="error-message">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="challenge-actions">
+                                        {{ form.submit(class="button") }}
+                                    </div>
+                                </form>
+                            {% elif current_user.is_authenticated %}
+                                <p class="alert alert-warning">Only Summer Competition participants can submit answers.</p>
+                            {% else %}
+                                <p class="alert alert-warning">You need to <a href="{{ url_for('auth.summer_login') }}">log in</a> as a Summer Competition participant to submit answers.</p>
+                            {% endif %}
+                        </div>
+                    {% elif not has_correct %}
+                        <div class="alert alert-error">
+                            <p>You have used all your attempts for this part.</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if box_submissions %}
+                        <div class="submissions-history">
+                            <h4>Your Submission History for {{ answer_box.box_label }}</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Attempt</th>
+                                        <th>Answer</th>
+                                        <th>Result</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in box_submissions %}
+                                    <tr class="{{ 'success' if submission.is_correct else 'error' }}">
+                                        <td>{{ loop.revindex }}</td>
+                                        <td>
+                                            <math-field 
+                                                readonly 
+                                                class="form-control submission-math">{{ submission.answer }}</math-field>
+                                        </td>
+                                        <td>{{ "✓ Correct" if submission.is_correct else "✗ Incorrect" }}</td>
+                                        <td>{{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </article>
+    </div>
+
+<script defer src="//unpkg.com/mathlive"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle all math fields in the document
+        document.querySelectorAll('math-field').forEach(formulaField => {
+            if (!formulaField.id || !formulaField.id.startsWith('formula-')) return;
+            
+            const boxId = formulaField.id.replace('formula-', '');
+            const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+
+            // Initialize MathLive field with any existing value
+            if (hiddenInput && hiddenInput.value) {
+                formulaField.value = hiddenInput.value;
+            }
+
+            // Update hidden input whenever math field changes
+            formulaField.addEventListener('input', (evt) => {
+                if (hiddenInput) hiddenInput.value = formulaField.value;
+            });
+        });
+
+        // Update hidden inputs before form submission
+        document.querySelectorAll('.answer-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const boxId = this.querySelector('[name="answer_box_id"]').value;
+                const formulaField = document.getElementById(`formula-${boxId}`);
+                const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+                if (hiddenInput && formulaField) hiddenInput.value = formulaField.value;
+            });
+        });
+    });
+</script>
+
+<style>
+    .answer-box {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid #ffe066;
+        border-radius: 4px;
+        background: #fffbe6;
+    }
+    .correct-answer-reveal {
+        animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .submissions-history {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #ddd;
+    }
+    .submission-math {
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        background: none;
+        border: none;
+    }
+    .submissions-history table td {
+        vertical-align: middle;
+    }
+    .submissions-history .success {
+        background-color: #d4edda;
+    }
+    .submissions-history .error {
+        background-color: #f8d7da;
+    }
+</style>
+{% endblock %}

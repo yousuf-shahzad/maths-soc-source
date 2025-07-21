@@ -1,8 +1,8 @@
-"""init
+"""empty message
 
-Revision ID: d39961a2efa5
+Revision ID: 1af01441d011
 Revises: 
-Create Date: 2025-07-20 13:18:31.799247
+Create Date: 2025-07-21 00:38:23.716767
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd39961a2efa5'
+revision = '1af01441d011'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -48,8 +48,6 @@ def upgrade():
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('email_domain', sa.String(length=100), nullable=True),
     sa.Column('address', sa.String(length=200), nullable=True),
-    sa.Column('contact_person', sa.String(length=100), nullable=True),
-    sa.Column('contact_email', sa.String(length=100), nullable=True),
     sa.Column('date_joined', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_school'))
     )
@@ -61,17 +59,14 @@ def upgrade():
     sa.Column('title', sa.String(length=100), nullable=False),
     sa.Column('content', sa.Text(), nullable=False),
     sa.Column('date_posted', sa.DateTime(), nullable=False),
-    sa.Column('start_date', sa.DateTime(), nullable=False),
-    sa.Column('end_date', sa.DateTime(), nullable=False),
+    sa.Column('duration_hours', sa.Integer(), nullable=False),
     sa.Column('file_url', sa.String(length=100), nullable=True),
-    sa.Column('difficulty', sa.String(length=20), nullable=False),
-    sa.Column('points', sa.Integer(), nullable=False),
+    sa.Column('key_stage', sa.String(length=3), nullable=False),
+    sa.Column('is_manually_locked', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_summer_challenge'))
     )
     with op.batch_alter_table('summer_challenge', schema=None) as batch_op:
-        batch_op.create_index('ix_summer_challenge_dates', ['start_date', 'end_date'], unique=False)
-        batch_op.create_index(batch_op.f('ix_summer_challenge_end_date'), ['end_date'], unique=False)
-        batch_op.create_index(batch_op.f('ix_summer_challenge_start_date'), ['start_date'], unique=False)
+        batch_op.create_index(batch_op.f('ix_summer_challenge_key_stage'), ['key_stage'], unique=False)
         batch_op.create_index(batch_op.f('ix_summer_challenge_title'), ['title'], unique=False)
 
     op.create_table('challenge_answer_box',
@@ -109,7 +104,6 @@ def upgrade():
     sa.Column('is_admin', sa.Boolean(), nullable=False),
     sa.Column('key_stage', sa.String(length=3), nullable=False),
     sa.Column('school_id', sa.Integer(), nullable=True),
-    sa.Column('user_type', sa.String(length=20), nullable=False),
     sa.Column('is_competition_participant', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['school_id'], ['school.id'], name=op.f('fk_users_school_id_school')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_users'))
@@ -279,9 +273,7 @@ def downgrade():
     op.drop_table('challenge_answer_box')
     with op.batch_alter_table('summer_challenge', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_summer_challenge_title'))
-        batch_op.drop_index(batch_op.f('ix_summer_challenge_start_date'))
-        batch_op.drop_index(batch_op.f('ix_summer_challenge_end_date'))
-        batch_op.drop_index('ix_summer_challenge_dates')
+        batch_op.drop_index(batch_op.f('ix_summer_challenge_key_stage'))
 
     op.drop_table('summer_challenge')
     with op.batch_alter_table('school', schema=None) as batch_op:

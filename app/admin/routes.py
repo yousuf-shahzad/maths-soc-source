@@ -64,6 +64,11 @@ from app.models import (
     Announcement,
     ChallengeAnswerBox,
     LeaderboardEntry,
+    School,
+    SummerChallenge,
+    SummerChallengeAnswerBox,
+    SummerLeaderboard,
+    SummerSubmission
 )
 from app.admin.forms import (
     ChallengeForm,
@@ -73,6 +78,9 @@ from app.admin.forms import (
     EditUserForm,
     CreateUserForm,
     AnnouncementForm,
+    SchoolForm,
+    SummerChallengeForm,
+    SummerLeaderboardEntryForm
 )
 
 # ============================================================================
@@ -701,12 +709,24 @@ def create_user():
                 return redirect(url_for("admin.create_user"))
 
             full_name = f"{first_name} {last_name}"
+            
+            # Handle school assignment for competition participants
+            school_id = None
+            if form.is_competition_participant.data:
+                if form.school_id.data and form.school_id.data != 0:
+                    school_id = form.school_id.data
+                else:
+                    flash("Please select a school for summer competition participants.")
+                    return redirect(url_for("admin.create_user"))
+            
             user = User(
                 full_name=full_name,
                 year=form.year.data,
                 key_stage=key_stage,
-                maths_class=form.maths_class.data,
+                maths_class=form.maths_class.data if not form.is_competition_participant.data else None,
                 is_admin=form.is_admin.data,
+                is_competition_participant=form.is_competition_participant.data,
+                school_id=school_id,
             )
             user.set_password(form.password.data)
 
@@ -744,12 +764,14 @@ def edit_user(user_id):
     # Split full_name into first_name and last_name
     first_name, last_name = user.full_name.split(" ", 1)
 
-    # Populate the form with the split names
+    # Populate the form with the split names and other user data
     form = EditUserForm(
         first_name=first_name.strip(),
         last_name=last_name.strip(),
         year=user.year,
         maths_class=user.maths_class,
+        is_competition_participant=user.is_competition_participant,
+        school_id=user.school_id if user.school_id else 0,
     )
 
     if form.validate_on_submit():
@@ -763,10 +785,21 @@ def edit_user(user_id):
                 flash("Please remove any whitespace from your name.")
                 return redirect(url_for("admin.edit_user", user_id=user_id))
 
+            # Handle school assignment for competition participants
+            school_id = None
+            if form.is_competition_participant.data:
+                if form.school_id.data and form.school_id.data != 0:
+                    school_id = form.school_id.data
+                else:
+                    flash("Please select a school for summer competition participants.")
+                    return redirect(url_for("admin.edit_user", user_id=user_id))
+
             user.full_name = f"{first_name} {last_name}"
             user.year = form.year.data
             user.key_stage = key_stage
-            user.maths_class = form.maths_class.data
+            user.maths_class = form.maths_class.data if not form.is_competition_participant.data else None
+            user.is_competition_participant = form.is_competition_participant.data
+            user.school_id = school_id
 
             db.session.commit()
             flash("User updated successfully.")
@@ -1270,6 +1303,547 @@ def delete_announcement(announcement_id):
         current_app.logger.error(f"Error deleting announcement: {str(e)}")
         flash("Error deleting announcement. Please try again.")
     return redirect(url_for("admin.manage_announcements"))
+
+# ============================================================================
+# Summer Challenge Management Routes
+# ============================================================================
+
+@bp.route("/admin/summer_competition")
+@login_required
+@admin_required
+def manage_summer_competition():
+    return render_template("admin/manage_summer_competition.html", title="Manage Summer Competition")
+
+@bp.route("/admin/manage_summer_challenges", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_summer_challenges():
+    challenges = SummerChallenge.query.order_by(SummerChallenge.date_posted.desc()).all()
+    return render_template("admin/manage_summer_challenges.html", challenges=challenges)
+
+@bp.route("/admin/summer_challenges/toggle_lock/<int:challenge_id>", methods=["POST"])
+@login_required
+@admin_required
+def toggle_summer_challenge_lock(challenge_id):
+    """Toggle manual lock status for a summer challenge"""
+    challenge = SummerChallenge.query.get_or_404(challenge_id)
+    
+    try:
+        challenge.is_manually_locked = not challenge.is_manually_locked
+        db.session.commit()
+        
+        status = "locked" if challenge.is_manually_locked else "unlocked"
+        flash(f"Summer Challenge '{challenge.title}' has been {status}.", "success")
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error toggling lock status: {str(e)}")
+        flash("Error updating lock status. Please try again.", "error")
+    
+    return redirect(url_for("admin.manage_summer_challenges"))
+
+@bp.route("/admin/summer_challenges/create", methods=["GET", "POST"])
+@login_required
+@admin_required
+def create_summer_challenge():
+    form = SummerChallengeForm()
+    if form.validate_on_submit():
+        try:
+            challenge = SummerChallenge(
+                title=form.title.data,
+                content=form.content.data,
+                key_stage=form.key_stage.data,
+                duration_hours=form.duration_hours.data,
+                date_posted=datetime.datetime.now()
+            )
+            
+            # Handle image upload if provided
+            if form.image.data:
+                challenge_folder = create_challenge_folder(challenge.date_posted)
+                try:
+                    filename = handle_file_upload(
+                        form.image.data, challenge_folder, form.image.data.filename
+                    )
+                    challenge.file_url = filename
+                except IOError as e:
+                    current_app.logger.error(f"File save error: {str(e)}")
+                    flash("Error saving the image file. Please try again.", "error")
+                    return render_template("admin/create_summer_challenge.html", form=form)
+            
+            # Add challenge to get ID
+            db.session.add(challenge)
+            db.session.flush()
+            
+            # Create answer boxes
+            for box_form in form.answer_boxes:
+                answer_box = SummerChallengeAnswerBox(
+                    challenge_id=challenge.id,
+                    box_label=box_form.box_label.data,
+                    correct_answer=box_form.correct_answer.data,
+                    order=int(box_form.order.data) if box_form.order.data else 0,
+                )
+                db.session.add(answer_box)
+            
+            db.session.commit()
+            flash("Summer Challenge created successfully.", "success")
+            return redirect(url_for("admin.manage_summer_challenges"))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating summer challenge: {str(e)}")
+            flash("Error creating summer challenge. Please try again.", "error")
+            
+    return render_template("admin/create_summer_challenge.html", form=form)
+
+@bp.route("/admin/summer_challenges/edit/<int:challenge_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_summer_challenge(challenge_id):
+    challenge = SummerChallenge.query.get_or_404(challenge_id)
+    form = SummerChallengeForm(obj=challenge)
+    
+    if form.validate_on_submit():
+        try:
+            challenge.title = form.title.data
+            challenge.content = form.content.data
+            challenge.key_stage = form.key_stage.data
+            challenge.duration_hours = form.duration_hours.data
+            
+            # Handle image upload if provided
+            if form.image.data:
+                challenge_folder = create_challenge_folder(challenge.date_posted)
+                filename = handle_file_upload(
+                    form.image.data, challenge_folder, form.image.data.filename
+                )
+                challenge.file_url = filename
+            
+            # Manage answer boxes
+            existing_boxes = {box.order: box for box in challenge.answer_boxes}
+            used_box_ids = set()
+            
+            for index, box_form in enumerate(form.answer_boxes):
+                if index in existing_boxes:
+                    # Update existing box
+                    box = existing_boxes[index]
+                    box.box_label = box_form.box_label.data
+                    box.correct_answer = box_form.correct_answer.data
+                    box.order = int(box_form.order.data) if box_form.order.data else index
+                    used_box_ids.add(box.id)
+                else:
+                    # Create new box
+                    new_box = SummerChallengeAnswerBox(
+                        challenge_id=challenge.id,
+                        box_label=box_form.box_label.data,
+                        correct_answer=box_form.correct_answer.data,
+                        order=int(box_form.order.data) if box_form.order.data else index,
+                    )
+                    db.session.add(new_box)
+            
+            # Delete unused boxes (those with submissions should be archived, but for simplicity we'll delete)
+            for box in challenge.answer_boxes:
+                if box.id not in used_box_ids:
+                    if box.submissions.count() == 0:
+                        db.session.delete(box)
+                    # Note: Could implement archiving for boxes with submissions if needed
+            
+            db.session.commit()
+            flash("Summer Challenge updated successfully.", "success")
+            return redirect(url_for("admin.manage_summer_challenges"))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating summer challenge: {str(e)}")
+            flash("Error updating summer challenge. Please try again.", "error")
+    
+    # Pre-populate form with existing answer boxes on GET request
+    if request.method == "GET":
+        form.title.data = challenge.title
+        form.content.data = challenge.content
+        form.key_stage.data = challenge.key_stage
+        form.duration_hours.data = challenge.duration_hours
+        
+        # Add current answer boxes
+        form.answer_boxes.entries = []
+        for box in sorted(challenge.answer_boxes, key=lambda x: x.order or 0):
+            form.answer_boxes.append_entry(
+                {
+                    "box_label": box.box_label,
+                    "correct_answer": box.correct_answer,
+                    "order": str(box.order) if box.order is not None else "",
+                }
+            )
+    
+    return render_template("admin/edit_summer_challenge.html", form=form, challenge=challenge)
+
+@bp.route("/admin/summer_challenges/delete/<int:challenge_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_summer_challenge(challenge_id):
+    challenge = SummerChallenge.query.get_or_404(challenge_id)
+    db.session.delete(challenge)
+    db.session.commit()
+    flash("Summer Challenge deleted.", "success")
+    return redirect(url_for("admin.manage_summer_challenges"))
+
+@bp.route("/admin/manage_schools", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_schools():
+    form = SchoolForm()
+    schools = School.query.order_by(School.name).all()
+    if form.validate_on_submit():
+        school = School(
+            name=form.name.data.strip(),
+            email_domain=form.email_domain.data.strip() or None,
+            address=form.address.data.strip() or None,
+        )
+        db.session.add(school)
+        db.session.commit()
+        flash("School added successfully.", "success")
+        return redirect(url_for("admin.manage_schools"))
+    return render_template("admin/manage_schools.html", title="Manage Schools", form=form, schools=schools)
+
+@bp.route("/admin/manage_schools/edit/<int:school_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_school(school_id):
+    school = School.query.get_or_404(school_id)
+    form = SchoolForm(obj=school)
+    if form.validate_on_submit():
+        school.name = form.name.data.strip()
+        school.email_domain = form.email_domain.data.strip() or None
+        school.address = form.address.data.strip() or None
+        db.session.commit()
+        flash("School updated successfully.", "success")
+        return redirect(url_for("admin.manage_schools"))
+    return render_template("admin/edit_school.html", title="Edit School", form=form, school=school)
+
+@bp.route("/admin/manage_schools/delete/<int:school_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_school(school_id):
+    school = School.query.get_or_404(school_id)
+    db.session.delete(school)
+    db.session.commit()
+    flash("School deleted successfully.", "success")
+    return redirect(url_for("admin.manage_schools"))
+
+
+# ============================================================================
+# Summer Leaderboard Management Routes
+# ============================================================================
+
+
+@bp.route("/admin/manage_summer_leaderboard")
+@login_required
+@admin_required
+def manage_summer_leaderboard():
+    """
+    Displays summer leaderboard management interface with key stage and school statistics
+    """
+    try:
+        # Get summer leaderboard entries with user and school information
+        summer_leaderboard = (
+            SummerLeaderboard.query
+            .join(User)
+            .join(School)
+            .order_by(User.key_stage, SummerLeaderboard.score.desc())
+            .all()
+        )
+
+        # Statistics by key stage
+        ks3_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS3').count()
+        ks4_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS4').count()
+        ks5_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS5').count()
+
+        # General statistics
+        unique_users = db.session.query(SummerLeaderboard.user_id).distinct().count()
+        unique_schools = db.session.query(SummerLeaderboard.school_id).distinct().count()
+
+        stats = {
+            "total_entries": SummerLeaderboard.query.count(),
+            "unique_participants": unique_users,
+            "participating_schools": unique_schools,
+            "highest_score": db.session.query(
+                db.func.max(SummerLeaderboard.score)
+            ).scalar() or 0,
+            "average_score": db.session.query(
+                db.func.avg(SummerLeaderboard.score)
+            ).scalar() or 0,
+            "total_points": db.session.query(
+                db.func.sum(SummerLeaderboard.score)
+            ).scalar() or 0,
+        }
+
+        export_enabled = current_app.config.get("ENABLE_SUMMER_LEADERBOARD_EXPORT", True)
+
+        return render_template(
+            "admin/manage_summer_leaderboard.html",
+            title="Manage Summer Leaderboard",
+            summer_leaderboard=summer_leaderboard,
+            stats=stats,
+            ks3_count=ks3_count,
+            ks4_count=ks4_count,
+            ks5_count=ks5_count,
+            export_enabled=export_enabled,
+        )
+
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error loading summer leaderboard: {str(e)}")
+        flash("Error loading summer leaderboard data.", "error")
+        return redirect(url_for("admin.admin_index"))
+
+
+@bp.route("/admin/summer_leaderboard/export")
+@login_required
+@admin_required
+def export_summer_leaderboard():
+    """
+    Exports summer leaderboard data to CSV file
+    """
+    try:
+        # Get sorted summer leaderboard entries grouped by key stage
+        summer_leaderboard = (
+            SummerLeaderboard.query
+            .join(User)
+            .join(School)
+            .order_by(User.key_stage, SummerLeaderboard.score.desc())
+            .all()
+        )
+
+        # Create CSV data
+        csv_data = "User ID,Name,Year,Class,Key Stage,School,Score,Last Updated\n"
+        for entry in summer_leaderboard:
+            csv_data += f"{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.maths_class},{entry.user.key_stage},{entry.school.name},{entry.score},{entry.last_updated}\n"
+
+        # Create file
+        file = BytesIO()
+        file.write(csv_data.encode())
+        file.seek(0)
+
+        return send_file(
+            file,
+            as_attachment=True,
+            attachment_filename="summer_leaderboard_export.csv",
+            mimetype="text/csv",
+        )
+
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error exporting summer leaderboard: {str(e)}")
+        flash("Error exporting summer leaderboard data.", "error")
+        return redirect(url_for("admin.manage_summer_leaderboard"))
+
+
+@bp.route("/admin/summer_leaderboard/add", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_summer_leaderboard_entry():
+    """
+    Add a new summer leaderboard entry
+    """
+    form = SummerLeaderboardEntryForm()
+    
+    # Populate form choices
+    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage})") for user in User.query.order_by(User.full_name).all()]
+    form.school_id.choices = [(school.id, school.name) for school in School.query.order_by(School.name).all()]
+
+    if form.validate_on_submit():
+        try:
+            # Check if user already has a summer leaderboard entry
+            existing_entry = SummerLeaderboard.query.filter_by(
+                user_id=form.user_id.data
+            ).first()
+            
+            if existing_entry:
+                flash(f'User already has a summer leaderboard entry. Please edit the existing entry instead.', 'error')
+                return render_template(
+                    "admin/add_summer_leaderboard_entry.html",
+                    title="Add Summer Leaderboard Entry",
+                    form=form,
+                )
+
+            entry = SummerLeaderboard(
+                user_id=form.user_id.data,
+                school_id=form.school_id.data,
+                score=form.score.data,
+                last_updated=datetime.datetime.utcnow()
+            )
+            
+            db.session.add(entry)
+            db.session.commit()
+            flash('Summer leaderboard entry added successfully!', 'success')
+            return redirect(url_for('admin.manage_summer_leaderboard'))
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error adding summer leaderboard entry: {str(e)}")
+            flash("Error adding summer leaderboard entry. Please try again.", "error")
+
+    return render_template(
+        "admin/add_summer_leaderboard_entry.html",
+        title="Add Summer Leaderboard Entry",
+        form=form,
+    )
+
+
+@bp.route("/admin/summer_leaderboard/edit/<int:entry_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_summer_leaderboard_entry(entry_id):
+    """
+    Edit a summer leaderboard entry
+
+    Args:
+        entry_id: int ID of entry to edit
+    """
+    entry = SummerLeaderboard.query.get_or_404(entry_id)
+    form = SummerLeaderboardEntryForm(obj=entry)
+    
+    # Populate form choices
+    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage})") for user in User.query.order_by(User.full_name).all()]
+    form.school_id.choices = [(school.id, school.name) for school in School.query.order_by(School.name).all()]
+
+    if form.validate_on_submit():
+        try:
+            # Check if changing user would create duplicate
+            if entry.user_id != form.user_id.data:
+                existing_entry = SummerLeaderboard.query.filter_by(
+                    user_id=form.user_id.data
+                ).first()
+                
+                if existing_entry and existing_entry.id != entry.id:
+                    flash(f'User already has a summer leaderboard entry. Please edit that entry instead.', 'error')
+                    return render_template(
+                        "admin/edit_summer_leaderboard_entry.html",
+                        title="Edit Summer Leaderboard Entry",
+                        form=form,
+                        entry=entry,
+                    )
+
+            entry.user_id = form.user_id.data
+            entry.school_id = form.school_id.data
+            entry.score = form.score.data
+            entry.last_updated = datetime.datetime.utcnow()
+            
+            db.session.commit()
+            flash('Summer leaderboard entry updated successfully!', 'success')
+            return redirect(url_for('admin.manage_summer_leaderboard'))
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating summer leaderboard entry: {str(e)}")
+            flash("Error updating summer leaderboard entry. Please try again.", "error")
+
+    return render_template(
+        "admin/edit_summer_leaderboard_entry.html",
+        title="Edit Summer Leaderboard Entry",
+        form=form,
+        entry=entry,
+    )
+
+
+@bp.route("/admin/summer_leaderboard/delete/<int:entry_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_summer_leaderboard_entry(entry_id):
+    """
+    Delete a summer leaderboard entry
+
+    Args:
+        entry_id: int ID of entry to delete
+    """
+    try:
+        entry = SummerLeaderboard.query.get_or_404(entry_id)
+        user_name = entry.user.full_name
+        
+        db.session.delete(entry)
+        db.session.commit()
+        
+        flash(f'Summer leaderboard entry for {user_name} deleted successfully!', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting summer leaderboard entry: {str(e)}")
+        flash("Error deleting summer leaderboard entry. Please try again.", "error")
+    
+    return redirect(url_for('admin.manage_summer_leaderboard'))
+
+
+@bp.route("/admin/summer_leaderboard/reset", methods=["POST"])
+@login_required
+@admin_required
+def reset_summer_leaderboard():
+    """
+    Reset all summer leaderboard scores to zero (for new competition periods)
+    """
+    try:
+        # Update all entries to score 0
+        updated_count = SummerLeaderboard.query.update({
+            SummerLeaderboard.score: 0,
+            SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+        })
+        
+        db.session.commit()
+        flash(f'Summer leaderboard reset successfully! {updated_count} entries updated.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error resetting summer leaderboard: {str(e)}")
+        flash("Error resetting summer leaderboard. Please try again.", "error")
+    
+    return redirect(url_for('admin.manage_summer_leaderboard'))
+
+
+@bp.route("/admin/summer_leaderboard/bulk_update", methods=["GET", "POST"])
+@login_required  
+@admin_required
+def bulk_update_summer_leaderboard():
+    """
+    Bulk update summer leaderboard entries (e.g., add points to all participants)
+    """
+    if request.method == "POST":
+        try:
+            points_to_add = int(request.form.get("points", 0))
+            key_stage_filter = request.form.get("key_stage", "all")
+            
+            if points_to_add == 0:
+                flash("Please enter a valid number of points to add.", "error")
+                return redirect(url_for("admin.bulk_update_summer_leaderboard"))
+            
+            # Build query based on filter
+            query = SummerLeaderboard.query
+            if key_stage_filter != "all":
+                query = query.join(User).filter(User.key_stage == key_stage_filter)
+            
+            # Update scores
+            if key_stage_filter == "all":
+                updated_count = SummerLeaderboard.query.update({
+                    SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
+                    SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+                })
+            else:
+                # For filtered updates, we need to get IDs first
+                entry_ids = [entry.id for entry in query.all()]
+                updated_count = SummerLeaderboard.query.filter(
+                    SummerLeaderboard.id.in_(entry_ids)
+                ).update({
+                    SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
+                    SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+                }, synchronize_session=False)
+            
+            db.session.commit()
+            
+            filter_text = f" for {key_stage_filter} students" if key_stage_filter != "all" else ""
+            flash(f'Bulk update successful! Added {points_to_add} points to {updated_count} entries{filter_text}.', 'success')
+            return redirect(url_for('admin.manage_summer_leaderboard'))
+            
+        except (ValueError, SQLAlchemyError) as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error in bulk update: {str(e)}")
+            flash("Error performing bulk update. Please try again.", "error")
+    
+    return render_template(
+        "admin/bulk_update_summer_leaderboard.html",
+        title="Bulk Update Summer Leaderboard"
+    )
 
 
 # ! ERROR HANDLERS

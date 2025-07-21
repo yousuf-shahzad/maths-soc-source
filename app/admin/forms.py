@@ -44,7 +44,7 @@ from wtforms import (
     FieldList,
     FormField,
 )
-from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange
+from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional
 from flask_ckeditor import CKEditorField
 
 
@@ -141,6 +141,18 @@ class ChallengeForm(FlaskForm):
     answer_boxes = FieldList(FormField(AnswerBoxForm), min_entries=1)
     submit = SubmitField("Submit Challenge")
 
+class SummerChallengeForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
+    content = CKEditorField("Content", validators=[DataRequired()])
+    image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
+    key_stage = SelectField(
+        "Key Stage",
+        choices=[("KS3", "Key Stage 3"), ("KS4", "Key Stage 4"), ("KS5", "Key Stage 5")],
+        validators=[DataRequired()],
+    )
+    duration_hours = IntegerField("Duration (hours)", validators=[DataRequired(), NumberRange(min=1, max=168)])
+    answer_boxes = FieldList(FormField(AnswerBoxForm), min_entries=1)
+    submit = SubmitField("Submit Summer Challenge")
 
 class AnswerSubmissionForm(FlaskForm):
     """
@@ -202,8 +214,12 @@ class EditUserForm(FlaskForm):
         User's last name
     year : SelectField
         User's current academic year (7-13)
+    is_competition_participant : BooleanField
+        Flag to indicate if user is a summer competition participant
+    school_id : SelectField
+        School selection for summer competition participants
     maths_class : StringField
-        User's mathematics class
+        User's mathematics class (for regular users)
     submit : SubmitField
         Button to submit user edits
     """
@@ -223,8 +239,15 @@ class EditUserForm(FlaskForm):
         ],
         validators=[DataRequired()],
     )
-    maths_class = StringField("Maths Class", validators=[DataRequired()])
+    is_competition_participant = BooleanField("Summer Competition Participant")
+    school_id = SelectField("School", coerce=int, validators=[Optional()])
+    maths_class = StringField("Maths Class")
     submit = SubmitField("Submit")
+    
+    def __init__(self, *args, **kwargs):
+        super(EditUserForm, self).__init__(*args, **kwargs)
+        from app.models import School
+        self.school_id.choices = [(0, 'Select School...')] + [(school.id, school.name) for school in School.query.order_by(School.name).all()]
 
 
 class CreateUserForm(FlaskForm):
@@ -243,8 +266,12 @@ class CreateUserForm(FlaskForm):
         User's current academic year (7-13)
     is_admin : BooleanField
         Flag to grant administrative privileges
+    is_competition_participant : BooleanField
+        Flag to indicate if user is a summer competition participant
+    school_id : SelectField
+        School selection for summer competition participants
     maths_class : StringField
-        User's mathematics class
+        User's mathematics class (for regular users)
     submit : SubmitField
         Button to create new user
     """
@@ -266,8 +293,15 @@ class CreateUserForm(FlaskForm):
         validators=[DataRequired()],
     )
     is_admin = BooleanField("Admin")
-    maths_class = StringField("Maths Class", validators=[DataRequired()])
+    is_competition_participant = BooleanField("Summer Competition Participant")
+    school_id = SelectField("School", coerce=int, validators=[Optional()])
+    maths_class = StringField("Maths Class")
     submit = SubmitField("Create User")
+    
+    def __init__(self, *args, **kwargs):
+        super(CreateUserForm, self).__init__(*args, **kwargs)
+        from app.models import School
+        self.school_id.choices = [(0, 'Select School...')] + [(school.id, school.name) for school in School.query.order_by(School.name).all()]
 
 
 class AnnouncementForm(FlaskForm):
@@ -287,3 +321,33 @@ class AnnouncementForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
     content = CKEditorField("Content", validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+class SchoolForm(FlaskForm):
+    name = StringField("School Name", validators=[DataRequired(), Length(max=100)])
+    email_domain = StringField("Email Domain", validators=[Length(max=100)])
+    address = StringField("Address", validators=[Length(max=200)])
+    submit = SubmitField("Save School")
+
+
+class SummerLeaderboardEntryForm(FlaskForm):
+    """
+    Form for creating and editing summer leaderboard entries.
+
+    This form allows administrators to manually create or modify summer competition
+    leaderboard entries, linking users to their schools and managing their scores.
+
+    Fields:
+    -------
+    user_id : SelectField
+        Dropdown selection of registered users
+    school_id : SelectField  
+        Dropdown selection of participating schools
+    score : IntegerField
+        User's current point total for summer competition (minimum 0)
+    submit : SubmitField
+        Button to save the summer leaderboard entry
+    """
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    school_id = SelectField('School', coerce=int, validators=[DataRequired()])
+    score = IntegerField('Score', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Save Entry')

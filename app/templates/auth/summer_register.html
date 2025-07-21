@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Summer Competition 2025 Sign Up{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="summer-hero" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+        <h1>🏆 Summer Competition 2025</h1>
+        <p>Sign up now to compete with students across the region!</p>
+    </div>
+    <div class="competition-info" style="background-color: #f8f9fa; border-left: 4px solid #ff6b6b; padding: 1.5rem; margin-bottom: 2rem; border-radius: 0 8px 8px 0;">
+        <h3 style="color: #ff6b6b;">Competition Details</h3>
+        <p><strong>Competition Period:</strong> July 21 - August 31, 2025</p>
+        <p><strong>Registration Deadline:</strong> July 25, 2025</p>
+        <p>Solve weekly challenges, earn points, and win prizes!</p>
+    </div>
+    <div class="signup-form-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2>Join the Competition</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('auth.summer_register') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.first_name.label(class="form-label") }}
+                    {{ form.first_name(class="form-control") }}
+                    {% for error in form.first_name.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.last_name.label(class="form-label") }}
+                    {{ form.last_name(class="form-control") }}
+                    {% for error in form.last_name.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.year.label(class="form-label") }}
+                    {{ form.year(class="form-control") }}
+                    {% for error in form.year.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.school_id.label(class="form-label") }}
+                    {{ form.school_id(class="form-control") }}
+                    {% for error in form.school_id.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control") }}
+                    {% for error in form.password.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.password2.label(class="form-label") }}
+                    {{ form.password2(class="form-control") }}
+                    {% for error in form.password2.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="checkbox-container">
+                {{ form.accept_terms() }}
+                {{ form.accept_terms.label }}
+                {% for error in form.accept_terms.errors %}
+                    <div class="error-message">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div>
+                {{ form.submit(class="button") }}
+            </div>
+        </form>
+        <div class="login-link" style="text-align:center; margin-top:2rem;">
+            Already have an account? <a href="{{ url_for('auth.summer_login') }}">Log in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

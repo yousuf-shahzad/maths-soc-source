@@ -1,54 +1,275 @@
 
 {# admin/create_user.html #}
 {% extends "base.html" %}
+{% block title %}Create User - Summer Competition 2025{% endblock %}
 {% block content %}
-<div class="challenge-container">
-    <h1>Create New User</h1>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="form-group">
-            <label for="first_name">First Name</label>
-            {{ form.first_name(class="form-control") }}
-            {% for error in form.first_name.errors %}
-                <span class="error-message">{{ error }}</span>
+<div class="container">
+    <!-- Admin Header -->
+    <div class="admin-hero" style="background: linear-gradient(135deg, #6f42c1, #007bff); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+        <h1>➕ Create New User</h1>
+        <p>Add a new student or admin account to Summer Competition 2025</p>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    <nav style="margin-bottom: 2rem; color: #666;">
+        <a href="{{ url_for('admin.manage_users') }}" style="color: #6f42c1; text-decoration: none;">👥 User Management</a>
+        <span style="margin: 0 0.5rem;">></span>
+        <span>Create New User</span>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert" style="padding: 1rem; margin-bottom: 1rem; border-radius: 6px; {% if category == 'success' %}border-left: 4px solid #28a745; background: #d4edda; color: #155724;{% else %}border-left: 4px solid #dc3545; background: #f8d7da; color: #721c24;{% endif %}">
+                    {{ message }}
+                </div>
             {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Main Form -->
+        <div class="form-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2 style="color: #6f42c1; margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                👤 User Details
+            </h2>
+            
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <!-- Personal Information -->
+                <div class="form-section" style="margin-bottom: 2rem;">
+                    <h3 style="color: #007bff; margin: 0 0 1rem 0; font-size: 1.1rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem;">
+                        📝 Personal Information
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="first_name" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">First Name *</label>
+                            {{ form.first_name(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;", placeholder="Enter first name") }}
+                            {% for error in form.first_name.errors %}
+                                <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="last_name" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">Last Name *</label>
+                            {{ form.last_name(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;", placeholder="Enter last name") }}
+                            {% for error in form.last_name.errors %}
+                                <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Settings -->
+                <div class="form-section" style="margin-bottom: 2rem;">
+                    <h3 style="color: #007bff; margin: 0 0 1rem 0; font-size: 1.1rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem;">
+                        🔐 Account Settings
+                    </h3>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="password" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">Password *</label>
+                        {{ form.password(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;", placeholder="Enter secure password") }}
+                        {% for error in form.password.errors %}
+                            <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                        {% endfor %}
+                        <small style="color: #666; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                            Choose a strong password for account security
+                        </small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; color: #495057; cursor: pointer;">
+                            {{ form.is_admin(style="margin-right: 0.5rem;") }}
+                            👑 Administrator Account
+                        </label>
+                        {% for error in form.is_admin.errors %}
+                            <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                        {% endfor %}
+                        <small style="color: #666; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                            Admin users can manage content and other users
+                        </small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; color: #495057; cursor: pointer;">
+                            {{ form.is_competition_participant(id="is_competition_participant", style="margin-right: 0.5rem;") }}
+                            🏆 Summer Competition Participant
+                        </label>
+                        {% for error in form.is_competition_participant.errors %}
+                            <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                        {% endfor %}
+                        <small style="color: #666; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                            Competition participants represent a school in summer challenges
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div class="form-section" style="margin-bottom: 2rem;">
+                    <h3 style="color: #007bff; margin: 0 0 1rem 0; font-size: 1.1rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem;">
+                        📚 Academic Information
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="year" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">Year Group *</label>
+                            {{ form.year(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;") }}
+                            {% for error in form.year.errors %}
+                                <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group school-field" style="margin-bottom: 1rem; display: none;">
+                            <label for="school_id" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">School *</label>
+                            {{ form.school_id(id="school_id", class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;") }}
+                            {% for error in form.school_id.errors %}
+                                <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                            {% endfor %}
+                            <small style="color: #666; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                                Select the school this participant represents
+                            </small>
+                        </div>
+                        
+                        <div class="form-group maths-class-field" style="margin-bottom: 1rem;">
+                            <label for="maths_class" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #495057;">Maths Class</label>
+                            {{ form.maths_class(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s;", placeholder="e.g., 10M1, 11A, etc.") }}
+                            {% for error in form.maths_class.errors %}
+                                <span style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; display: block;">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e9ecef; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button type="submit" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.75rem 2rem; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        ➕ Create User
+                    </button>
+                    <a href="{{ url_for('admin.manage_users') }}" style="background: #6c757d; color: white; padding: 0.75rem 2rem; border-radius: 6px; font-weight: bold; font-size: 1rem; text-decoration: none; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        ↩️ Back to Users
+                    </a>
+                </div>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="last_name">Last Name</label>
-            {{ form.last_name(class="form-control") }}
-            {% for error in form.last_name.errors %}
-                <span class="error-message">{{ error }}</span>
-            {% endfor %}
-        <div class="form-group">
-            <label for="password">Password</label>
-            {{ form.password(class="form-control") }}
-            {% for error in form.password.errors %}
-                <span class="error-message">{{ error }}</span>
-            {% endfor %}
+
+        <!-- Help Panel -->
+        <div class="help-panel">
+            <!-- Quick Tips -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 1rem;">
+                <h3 style="color: #007bff; margin: 0 0 1rem 0; font-size: 1.1rem;">💡 Quick Tips</h3>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #666; line-height: 1.6;">
+                    <li>Use clear, recognizable names</li>
+                    <li>Passwords should be secure and memorable</li>
+                    <li>Admin users have full system access</li>
+                    <li>Year group determines key stage automatically</li>
+                </ul>
+            </div>
+
+            <!-- Account Types -->
+            <div style="background: #fff3cd; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 1rem;">
+                <h3 style="color: #856404; margin: 0 0 1rem 0; font-size: 1.1rem;">🎯 Account Types</h3>
+                <div style="color: #856404; line-height: 1.6;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>👑 Admin:</strong> Can manage all content
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>� Summer Participant:</strong> Represents a school in competition
+                    </div>
+                    <div>
+                        <strong>�🎓 Regular Student:</strong> Can participate in general challenges
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summer Competition Info -->
+            <div style="background: #e7f3ff; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 1rem;">
+                <h3 style="color: #0056b3; margin: 0 0 1rem 0; font-size: 1.1rem;">🏆 Summer Competition</h3>
+                <div style="color: #0056b3; line-height: 1.6; font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.25rem;">• Participants represent their school</div>
+                    <div style="margin-bottom: 0.25rem;">• School selection is required</div>
+                    <div style="margin-bottom: 0.25rem;">• Maths class is not used for competition</div>
+                    <div>• Points contribute to school leaderboard</div>
+                </div>
+            </div>
+
+            <!-- Key Stages -->
+            <div style="background: #d4edda; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h3 style="color: #155724; margin: 0 0 1rem 0; font-size: 1.1rem;">📊 Key Stages</h3>
+                <div style="color: #155724; line-height: 1.6; font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.25rem;"><strong>KS3:</strong> Years 7-9</div>
+                    <div style="margin-bottom: 0.25rem;"><strong>KS4:</strong> Years 10-11</div>
+                    <div><strong>KS5:</strong> Years 12-13</div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="is_admin">Is admin?</label>
-            {{ form.is_admin(class="form-control") }}
-            {% for error in form.is_admin.errors %}
-                <span class="error-message">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            <label for="year">Year</label>
-            {{ form.year(class="form-control") }}
-            {% for error in form.year.errors %}
-                <span class="error-message">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            <label for="maths_class">Maths Class</label>
-            {{ form.maths_class(class="form-control") }}
-            {% for error in form.maths_class.errors %}
-                <span class="error-message">{{ error }}</span>
-            {% endfor %}
-        </div>
-        <input type="submit" value="Create User" class="button">
-        <a href="{{ url_for('admin.manage_users') }}" class="button button-secondary">Back</a>
-    </form>
+    </div>
 </div>
+
+<style>
+.form-control:focus {
+    border-color: #6f42c1 !important;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25) !important;
+    outline: none;
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+@media (max-width: 768px) {
+    .container > div {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .form-section > div {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .form-actions {
+        flex-direction: column !important;
+    }
+    
+    .form-actions button,
+    .form-actions a {
+        text-align: center;
+        justify-content: center;
+    }
+    
+    .admin-hero h1 {
+        font-size: 1.5rem;
+    }
+    
+    .admin-hero p {
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const competitionCheckbox = document.getElementById('is_competition_participant');
+    const schoolField = document.querySelector('.school-field');
+    const mathsClassField = document.querySelector('.maths-class-field');
+    
+    function toggleFields() {
+        if (competitionCheckbox.checked) {
+            schoolField.style.display = 'block';
+            mathsClassField.style.display = 'none';
+        } else {
+            schoolField.style.display = 'none';
+            mathsClassField.style.display = 'block';
+        }
+    }
+    
+    // Initial setup
+    toggleFields();
+    
+    // Listen for changes
+    competitionCheckbox.addEventListener('change', toggleFields);
+});
+</script>
 {% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Manage Summer Competition</h1>
+<div class="admin-dashboard">
+    <a href="{{ url_for('admin.manage_schools') }}" class="button" style="margin-right: 2rem;">Manage Schools</a>
+    <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button" style="margin-right: 2rem;">Manage Challenges</a>
+    <a href="{{ url_for('admin.manage_summer_leaderboard') }}" class="button">Manage Summer Leaderboard</a>
+</div>
+{% endblock %}

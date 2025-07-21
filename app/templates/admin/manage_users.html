@@ -1,59 +1,215 @@
 {% extends "base.html" %}
+{% block title %}Manage Users - Summer Competition 2025{% endblock %}
 {% block content %}
-<div class="challenge-container">
-    <h1>Manage Users</h1>
-    
-    <div class="challenge-actions">
-        <a href="{{ url_for('admin.create_user') }}" class="button">Create New User</a>
+<div class="container">
+    <!-- Admin Header -->
+    <div class="admin-hero" style="background: linear-gradient(135deg, #6f42c1, #007bff); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+        <h1>👥 User Management</h1>
+        <p>Manage student and admin accounts for Summer Competition 2025</p>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>ID</th>
-                <th>Year</th>
-                <th>Maths Class</th>
-                <th>Key Stage</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td data-label="Name">{{ user.full_name }}</td>
-                <td data-label="ID">{{ user.id }}</td>
-                <td data-label="Year">{{ user.year }}</td>
-                <td data-label="Maths Class">{{ user.maths_class }}</td>
-                <td data-label="Key Stage">{{ user.key_stage }}</td>
-                <td data-label="Status">
-                    <span class="status-indicator {% if user.is_admin %}success{% endif %}">
-                        {{ 'Admin' if user.is_admin else 'User' }}
-                    </span>
-                </td>
-                <td class="challenge-actions">
-                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
-                       class="button">Edit</a>
-                    <a href="{{ url_for('admin.toggle_admin', user_id=user.id) }}" 
-                       class="button button-secondary"
-                       onclick="return confirm('Are you sure you want to toggle admin status for this user?');">
-                        Toggle Admin
-                    </a>
-                    <a href="{{ url_for('admin.reset_password', user_id=user.id) }}" 
-                       class="button button-secondary"
-                       onclick="return confirm('Are you sure you want to reset the password for this user?');">
-                        Reset Password
-                    </a>
-                    <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
-                       class="button delete-button"
-                       onclick="return confirm('Are you sure you want to delete this user?');">
-                        Delete
-                    </a>
-                </td>
-            </tr>
+    <!-- Quick Stats -->
+    <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #6f42c1;">
+            <h3 style="margin: 0; color: #6f42c1; font-size: 2rem;">{{ users|length }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: #666;">Total Users</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #28a745;">
+            <h3 style="margin: 0; color: #28a745; font-size: 2rem;">{{ users|selectattr('is_admin')|list|length }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: #666;">Admin Users</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #17a2b8;">
+            <h3 style="margin: 0; color: #17a2b8; font-size: 2rem;">{{ users|rejectattr('is_admin')|list|length }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: #666;">Student Users</p>
+        </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="actions-container" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="margin: 0; color: #6f42c1;">👤 All Users</h2>
+        <a href="{{ url_for('admin.create_user') }}" style="background: linear-gradient(135deg, #6f42c1, #007bff); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;">
+            ➕ Create New User
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert" style="padding: 1rem; margin-bottom: 1rem; border-radius: 6px; border-left: 4px solid {{ '#28a745' if category == 'success' else '#dc3545' }}; background: {{ '#d4edda' if category == 'success' else '#f8d7da' }}; color: {{ '#155724' if category == 'success' else '#721c24' }};">
+                    {{ message }}
+                </div>
             {% endfor %}
-        </tbody>
-    </table>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Users Table -->
+    <div class="users-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #6f42c1, #007bff);">
+                        <th style="padding: 1rem; text-align: left; border-radius: 6px 0 0 0;">👤 Name</th>
+                        <th style="padding: 1rem; text-align: center;">#️⃣ ID</th>
+                        <th style="padding: 1rem; text-align: center;">📚 Year</th>
+                        <th style="padding: 1rem; text-align: center;">🔢 Class/School</th>
+                        <th style="padding: 1rem; text-align: center;">📊 Key Stage</th>
+                        <th style="padding: 1rem; text-align: center;">🏆 Type</th>
+                        <th style="padding: 1rem; text-align: center;">⭐ Status</th>
+                        <th style="padding: 1rem; text-align: center; border-radius: 0 6px 0 0;">⚙️ Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr style="border-bottom: 1px solid #e9ecef; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">
+                            <td style="padding: 1rem; font-weight: bold; color: #6f42c1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    {% if user.is_admin %}👑{% elif user.is_competition_participant %}�{% else %}�🎓{% endif %}
+                                    {{ user.full_name }}
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; color: #666; font-family: monospace;">{{ user.id }}</td>
+                            <td style="padding: 1rem; text-align: center; color: #666;">
+                                <span style="background: #e9ecef; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                    Year {{ user.year }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; color: #666;">
+                                {% if user.is_competition_participant and user.school %}
+                                    <span style="background: #e7f3ff; color: #0056b3; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">
+                                        🏫 {{ user.school.name }}
+                                    </span>
+                                {% else %}
+                                    {{ user.maths_class or '—' }}
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="background: {% if user.key_stage == 'KS3' %}#fff8e1{% elif user.key_stage == 'KS4' %}#fff3cd{% else %}#d4edda{% endif %}; color: {% if user.key_stage == 'KS3' %}#ff6b6b{% elif user.key_stage == 'KS4' %}#ffa500{% else %}#28a745{% endif %}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">
+                                    {{ user.key_stage }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                {% if user.is_competition_participant %}
+                                    <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
+                                        🏆 Summer
+                                    </span>
+                                {% else %}
+                                    <span style="background: #e9ecef; color: #495057; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
+                                        🎓 Regular
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="background: {% if user.is_admin %}#d4edda{% else %}#e2e3e5{% endif %}; color: {% if user.is_admin %}#155724{% else %}#495057{% endif %}; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
+                                    {% if user.is_admin %}👑 Admin{% else %}👤 User{% endif %}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <div style="display: flex; gap: 0.25rem; justify-content: center; flex-wrap: wrap;">
+                                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
+                                       style="background: #17a2b8; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;">
+                                        ✏️ Edit
+                                    </a>
+                                    <a href="{{ url_for('admin.toggle_admin', user_id=user.id) }}" 
+                                       style="background: #ffc107; color: #212529; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
+                                       onclick="return confirm('Are you sure you want to toggle admin status for {{ user.full_name }}?');">
+                                        👑 Toggle
+                                    </a>
+                                    <a href="{{ url_for('admin.reset_password', user_id=user.id) }}" 
+                                       style="background: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
+                                       onclick="return confirm('Are you sure you want to reset the password for {{ user.full_name }}?');">
+                                        🔑 Reset
+                                    </a>
+                                    {% if current_user.id != user.id %}
+                                        <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+                                           style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
+                                           onclick="return confirm('Are you sure you want to delete {{ user.full_name }}? This action cannot be undone.');">
+                                            🗑️ Delete
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" style="padding: 2rem; text-align: center; color: #666; font-style: italic;">
+                                No users found. Create the first user! 👤
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="help-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #007bff; margin-top: 2rem;">
+        <h3 style="color: #007bff; margin: 0 0 1rem 0;">💡 User Management Tips</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; color: #666;">
+            <div>
+                <strong>👑 Admin Users:</strong> Can access admin panel and manage content
+            </div>
+            <div>
+                <strong>� Summer Participants:</strong> Represent schools in summer competition
+            </div>
+            <div>
+                <strong>🎓 Regular Students:</strong> Can participate in general challenges
+            </div>
+            <div>
+                <strong>🏫 School Assignment:</strong> Required for summer participants only
+            </div>
+            <div>
+                <strong>🔑 Password Reset:</strong> Generates a new random password for the user
+            </div>
+            <div>
+                <strong>🗑️ Delete User:</strong> Permanently removes user and all associated data
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+.actions-container a:hover {
+    transform: translateY(-2px);
+}
+
+.table-responsive a:hover {
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .actions-container {
+        flex-direction: column !important;
+        text-align: center;
+    }
+    
+    .users-container {
+        padding: 1rem !important;
+    }
+    
+    table {
+        font-size: 0.8rem !important;
+    }
+    
+    th, td {
+        padding: 0.5rem !important;
+    }
+    
+    .admin-hero h1 {
+        font-size: 1.5rem;
+    }
+    
+    .admin-hero p {
+        font-size: 0.9rem;
+    }
+    
+    .help-section {
+        padding: 1rem !important;
+    }
+}
+</style>
 {% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Manage Schools - Summer Competition 2025{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Admin Header -->
+    <div class="admin-hero" style="background: linear-gradient(135deg, #6f42c1, #28a745); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+        <h1>🏫 School Management</h1>
+        <p>Manage participating schools for Summer Competition 2025</p>
+    </div>
+
+    <!-- Add School Form -->
+    <div class="form-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2 style="color: #6f42c1; margin-bottom: 1.5rem;">➕ Add New School</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert" style="padding: 1rem; margin-bottom: 1rem; border-radius: 6px; border-left: 4px solid {{ '#28a745' if category == 'success' else '#dc3545' }}; background: {{ '#d4edda' if category == 'success' else '#f8d7da' }}; color: {{ '#155724' if category == 'success' else '#721c24' }};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                {{ form.name.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
+                {{ form.name(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
+                {% for error in form.name.errors %}
+                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                {{ form.email_domain.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
+                {{ form.email_domain(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
+                {% for error in form.email_domain.errors %}
+                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                {{ form.address.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
+                {{ form.address(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
+                {% for error in form.address.errors %}
+                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div style="margin-top: 1.5rem;">
+                {{ form.submit(class="submit-button", style="background: linear-gradient(135deg, #6f42c1, #28a745); color: white; padding: 0.75rem 2rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s;") }}
+            </div>
+        </form>
+    </div>
+
+    <!-- Schools List -->
+    <div class="schools-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="color: #6f42c1; margin-bottom: 1.5rem;">📋 Current Schools</h2>
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #6f42c1, #28a745); color: white;">
+                        <th style="padding: 1rem; text-align: left; border-radius: 6px 0 0 0;">🏫 School Name</th>
+                        <th style="padding: 1rem; text-align: left;">📧 Email Domain</th>
+                        <th style="padding: 1rem; text-align: left;">📍 Address</th>
+                        <th style="padding: 1rem; text-align: left;">📅 Date Joined</th>
+                        <th style="padding: 1rem; text-align: center; border-radius: 0 6px 0 0;">⚙️ Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for school in schools %}
+                    <tr style="border-bottom: 1px solid #e9ecef; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">
+                        <td style="padding: 1rem; font-weight: bold; color: #6f42c1;">{{ school.name }}</td>
+                        <td style="padding: 1rem; color: #666;">{{ school.email_domain or '—' }}</td>
+                        <td style="padding: 1rem; color: #666;">{{ school.address or '—' }}</td>
+                        <td style="padding: 1rem; color: #666;">{{ school.date_joined.strftime('%B %d, %Y') }}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                                <a href="{{ url_for('admin.edit_school', school_id=school.id) }}" style="background: #17a2b8; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.875rem; font-weight: bold; transition: background-color 0.2s;">
+                                    ✏️ Edit
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.delete_school', school_id=school.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ school.name }}? This action cannot be undone.');">
+                                    <button type="submit" style="background: #dc3545; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; font-size: 0.875rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s;">
+                                        🗑️ Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="padding: 2rem; text-align: center; color: #666; font-style: italic;">
+                            No schools added yet. Add the first school above! 🏫
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.submit-button:hover {
+    transform: translateY(-2px);
+}
+
+.form-control:focus {
+    border-color: #6f42c1 !important;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+@media (max-width: 768px) {
+    .form-container, .schools-container {
+        padding: 1rem !important;
+    }
+    
+    table {
+        font-size: 0.8rem !important;
+    }
+    
+    th, td {
+        padding: 0.5rem !important;
+    }
+    
+    .admin-hero h1 {
+        font-size: 1.5rem;
+    }
+    
+    .admin-hero p {
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}

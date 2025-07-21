@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Summer Competition 2025 Profile{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="summer-hero" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+        <h1>🏆 Summer Competition 2025</h1>
+        <p>Your Competition Profile & Progress</p>
+    </div>
+
+    <div class="profile-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2>Competitor Profile</h2>
+        
+        <div class="profile-info" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <div class="personal-info">
+                <h3 style="color: #ff6b6b; margin-bottom: 1rem;">Personal Information</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Name:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_user.full_name }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Email:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_user.email or 'Not provided' }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Year Group:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_user.year }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Key Stage:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_user.key_stage }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">School:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_user.school.name if current_user.school else 'Not specified' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">User Type:</td>
+                        <td style="padding: 0.5rem 0;">
+                            <span style="background: {{ '#ff6b6b' if current_user.user_type == 'competition' else '#28a745' }}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                {{ 'Competition Participant' if current_user.user_type == 'competition' else 'UCGS Student' }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="competition-stats">
+                <h3 style="color: #ffa500; margin-bottom: 1rem;">Competition Statistics</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Registration Status:</td>
+                        <td style="padding: 0.5rem 0;">
+                            <span style="background: {{ '#28a745' if current_user.is_competition_participant else '#6c757d' }}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                                {{ 'Registered' if current_user.is_competition_participant else 'Not Registered' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Challenges Completed:</td>
+                        <td style="padding: 0.5rem 0;">{{ challenges_completed or '0' }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Total Points:</td>
+                        <td style="padding: 0.5rem 0; font-size: 1.2rem; font-weight: bold; color: #ff6b6b;">{{ total_points or '0' }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Current Rank:</td>
+                        <td style="padding: 0.5rem 0;">{{ current_rank or 'Unranked' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0; font-weight: bold; color: #666;">Last Active:</td>
+                        <td style="padding: 0.5rem 0;">{{ last_activity or 'Never' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Progress Section -->
+    <div class="progress-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2>Competition Progress</h2>
+        
+        <div class="progress-bar-container" style="margin: 1rem 0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Overall Progress</span>
+                <span>{{ progress_percentage or '0' }}%</span>
+            </div>
+            <div style="background: #e9ecef; height: 20px; border-radius: 10px; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #ff6b6b, #ffa500); height: 100%; width: {{ progress_percentage or '0' }}%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        {% if recent_submissions %}
+        <div class="recent-activity" style="margin-top: 2rem;">
+            <h3 style="color: #ff6b6b; margin-bottom: 1rem;">Recent Activity</h3>
+            <div style="max-height: 200px; overflow-y: auto;">
+                {% for submission in recent_submissions %}
+                <div style="background: #f8f9fa; padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px; border-left: 4px solid {{ '#28a745' if submission.is_correct else '#dc3545' }};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><strong>{{ submission.challenge.title }}</strong></span>
+                        <span style="color: {{ '#28a745' if submission.is_correct else '#dc3545' }}; font-weight: bold;">
+                            {{ '✓ Correct' if submission.is_correct else '✗ Incorrect' }}
+                        </span>
+                    </div>
+                    <small style="color: #666;">{{ submission.date_submitted.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Achievements Section -->
+    <div class="achievements-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2>Achievements</h2>
+        <div class="achievements-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            
+            <!-- First Challenge Badge -->
+            <div style="border: 2px solid {{ '#ff6b6b' if challenges_completed and challenges_completed > 0 else '#e9ecef' }}; border-radius: 8px; padding: 1rem; text-align: center; background: {{ '#fff5f5' if challenges_completed and challenges_completed > 0 else '#f8f9fa' }};">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+                <h4 style="margin: 0.5rem 0; color: {{ '#ff6b6b' if challenges_completed and challenges_completed > 0 else '#6c757d' }};">First Challenge</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: #666;">Complete your first challenge</p>
+            </div>
+
+            <!-- Problem Solver Badge -->
+            <div style="border: 2px solid {{ '#ff6b6b' if challenges_completed and challenges_completed >= 5 else '#e9ecef' }}; border-radius: 8px; padding: 1rem; text-align: center; background: {{ '#fff5f5' if challenges_completed and challenges_completed >= 5 else '#f8f9fa' }};">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🧠</div>
+                <h4 style="margin: 0.5rem 0; color: {{ '#ff6b6b' if challenges_completed and challenges_completed >= 5 else '#6c757d' }};">Problem Solver</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: #666;">Complete 5 challenges</p>
+            </div>
+
+            <!-- Point Collector Badge -->
+            <div style="border: 2px solid {{ '#ffa500' if total_points and total_points >= 100 else '#e9ecef' }}; border-radius: 8px; padding: 1rem; text-align: center; background: {{ '#fff8e1' if total_points and total_points >= 100 else '#f8f9fa' }};">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">⭐</div>
+                <h4 style="margin: 0.5rem 0; color: {{ '#ffa500' if total_points and total_points >= 100 else '#6c757d' }};">Point Collector</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: #666;">Earn 100 points</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="profile-actions" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+        <a href="{{ url_for('main.challenges') }}" class="button" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold;">
+            🎯 View Challenges
+        </a>
+        <a href="{{ url_for('main.leaderboard') }}" class="button" style="background: #28a745; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold;">
+            🏆 Leaderboard
+        </a>
+        <a href="{{ url_for('profile.change_password') }}" class="button" style="background: #6c757d; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold;">
+            🔒 Change Password
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="button" style="background: #dc3545; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold;">
+            📤 Logout
+        </a>
+    </div>
+
+    <!-- Competition Info -->
+    <div class="competition-footer" style="background-color: #f8f9fa; border-left: 4px solid #ff6b6b; padding: 1.5rem; border-radius: 0 8px 8px 0;">
+        <h3 style="color: #ff6b6b; margin-bottom: 1rem;">Competition Information</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <strong>Competition Period:</strong><br>
+                July 21 - August 31, 2025
+            </div>
+            <div>
+                <strong>Registration Deadline:</strong><br>
+                July 25, 2025
+            </div>
+            <div>
+                <strong>New Challenges:</strong><br>
+                Released every Monday
+            </div>
+            <div>
+                <strong>Support:</strong><br>
+                <a href="mailto:competitions@mathssociety.org" style="color: #ff6b6b;">competitions@mathssociety.org</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    .profile-info {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .achievements-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}

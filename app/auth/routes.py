@@ -36,8 +36,8 @@ from flask import render_template, flash, redirect, url_for
 from flask_login import login_user, logout_user, current_user
 from app import db
 from app.auth import bp
-from app.auth.forms import LoginForm, RegistrationForm
-from app.models import User
+from app.auth.forms import LoginForm, RegistrationForm, SummerRegistrationForm, SummerLoginForm
+from app.models import User, School
 from better_profanity import profanity
 from config import Config
 
@@ -248,3 +248,91 @@ def logout():
     """
     logout_user()
     return redirect(url_for("main.home"))
+
+
+# ====================
+# Summer Competition Registration 
+# ====================
+
+@bp.route("/summer_register", methods=["GET", "POST"])
+def summer_register():
+    """
+    Handle user registration process for the summer competition.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("main.home"))
+    form = SummerRegistrationForm()
+    # Set school choices from the database
+    form.school_id.choices = [(s.id, s.name) for s in School.query.order_by(School.name).all()]
+    if form.validate_on_submit():
+        key_stage_map = {
+            "7": "KS3",
+            "8": "KS3",
+            "9": "KS4",
+            "10": "KS4",
+            "11": "KS4",
+            "12": "KS5",
+            "13": "KS5",
+        }
+        key_stage = key_stage_map.get(form.year.data, "Unknown")
+
+        first_name, last_name = (
+            form.first_name.data.strip(),
+            form.last_name.data.strip(),
+        )
+        if " " in first_name or " " in last_name:
+            flash("Please remove any whitespace from your name.")
+            return redirect(url_for("auth.register"))
+
+        full_name = f"{first_name} {last_name}"
+
+        if profanity.contains_profanity(full_name):
+            flash("Unauthorized content detected in your name. Please try again.")
+            return redirect(url_for("auth.register"))
+
+        existing_user = User.query.filter(
+            User.full_name == full_name, User.year == form.year.data, User.school_id == form.school_id.data
+        ).first()
+
+        if existing_user:
+            flash(
+                "A user with this name and year already exists in this school. Please use a different name or contact admin."
+            )
+            return redirect(url_for("auth.summer_register"))
+
+        user = User(
+            full_name=full_name,
+            year=form.year.data,
+            key_stage=key_stage,
+            school_id=form.school_id.data,
+            is_competition_participant=True,
+        )
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash("Congratulations, you are now a registered user!")
+        return redirect(url_for("auth.summer_login"))
+    return render_template("auth/summer_register.html", title="Register", form=form)
+
+@bp.route("/summer_login", methods=["GET", "POST"])
+def summer_login():
+    """
+    Handle user login process.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("main.home"))
+    form = SummerLoginForm()
+    # Set school choices from the database
+    form.school_id.choices = [(s.id, s.name) for s in School.query.order_by(School.name).all()]
+    if form.validate_on_submit():
+        full_name = f"{form.first_name.data} {form.last_name.data}".strip()
+        user = User.query.filter(
+            User.full_name == full_name, User.year == form.year.data, User.school_id == form.school_id.data
+        ).first()
+
+        if user is None or not user.check_password(form.password.data):
+            flash("Invalid name or password")
+            return redirect(url_for("auth.summer_login"))
+        login_user(user, remember=form.remember_me.data)
+        return redirect(url_for("main.home"))
+    return render_template("auth/summer_login.html", title="Sign In", form=form)

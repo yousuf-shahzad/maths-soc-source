@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="challenge-container">
+    <h1>Manage Summer Leaderboard</h1>
+    
+    <div class="admin-dashboard">
+        <ul>
+            <li>
+                <a href="{{ url_for('main.summer_leaderboard') }}">
+                    <h3>View Summer Leaderboard</h3>
+                    <p>See current summer competition rankings</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.add_summer_leaderboard_entry') }}">
+                    <h3>Add New Entry</h3>
+                    <p>Create a new summer leaderboard entry</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.manage_summer_challenges') }}">
+                    <h3>Manage Summer Challenges</h3>
+                    <p>Edit summer challenges</p>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.bulk_update_summer_leaderboard') }}">
+                    <h3>Bulk Update</h3>
+                    <p>Update multiple entries at once</p>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="leaderboard-sections">
+        <section class="recent-entries">
+            <h2>Recent Entries</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Key Stage</th>
+                        <th>School</th>
+                        <th>Points</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in summer_leaderboard[:15] %}
+                    <tr>
+                        <td data-label="User">{{ entry.user.full_name }}</td>
+                        <td data-label="Key Stage">{{ entry.user.key_stage }}</td>
+                        <td data-label="School">{{ entry.school.name }}</td>
+                        <td data-label="Points">{{ entry.score }}</td>
+                        <td data-label="Last Updated">{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="challenge-actions">
+                            <a href="{{ url_for('admin.edit_summer_leaderboard_entry', entry_id=entry.id) }}" 
+                               class="button">Edit</a>
+                            <form method="POST" action="{{ url_for('admin.delete_summer_leaderboard_entry', entry_id=entry.id) }}" style="display:inline;">
+                                <button type="submit" class="button delete-button"
+                                        onclick="return confirm('Are you sure you want to delete this summer leaderboard entry for {{ entry.user.full_name }}?');">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if summer_leaderboard|length > 15 %}
+            <p><em>Showing top 15 entries. Total: {{ stats.total_entries }} entries.</em></p>
+            {% endif %}
+        </section>
+
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div>
+                <form method="POST" action="{{ url_for('admin.reset_summer_leaderboard') }}" style="display:inline;">
+                    <button type="submit" class="button button-danger"
+                            onclick="return confirm('Are you sure you want to reset all summer leaderboard scores to zero? This action cannot be undone.');">
+                        Reset All Scores
+                    </button>
+                </form>
+                {% if export_enabled %}
+                <a href="{{ url_for('admin.export_summer_leaderboard') }}" class="button button-secondary">
+                    Export Summer Leaderboard
+                </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="leaderboard-stats">
+            <h2>Summer Competition Statistics</h2>
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h3>KS3 Participants</h3>
+                    <p>{{ ks3_count }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>KS4 Participants</h3>
+                    <p>{{ ks4_count }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>KS5 Participants</h3>
+                    <p>{{ ks5_count }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Total Participants</h3>
+                    <p>{{ stats.unique_participants }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Participating Schools</h3>
+                    <p>{{ stats.participating_schools }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Highest Score</h3>
+                    <p>{{ stats.highest_score }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Average Score</h3>
+                    <p>{{ stats.average_score|round(1) }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Total Points Awarded</h3>
+                    <p>{{ stats.total_points }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

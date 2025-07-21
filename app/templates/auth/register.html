@@ -2,6 +2,11 @@
 
 {% block content %}
     <h1>Register</h1>
+    <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>Note:</strong> This registration page is for UCGS students only.<br>
+        Looking to sign up for the <b>Summer Competition 2025</b>? 
+        <a href="{{ url_for('auth.summer_register') }}" style="color: #ff6b6b; font-weight: bold;">Click here</a>
+    </div>
     <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>

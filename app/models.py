@@ -17,7 +17,6 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     key_stage = db.Column(db.String(3), nullable=False, index=True)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=True, index=True)
-    user_type = db.Column(db.String(20), default='ucgs', nullable=False)
     is_competition_participant = db.Column(db.Boolean, default=False, nullable=False)
     
     # Relationships with proper lazy loading
@@ -203,8 +202,6 @@ class School(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True, index=True)
     email_domain = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(200), nullable=True)
-    contact_person = db.Column(db.String(100))
-    contact_email = db.Column(db.String(100))
     date_joined = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
@@ -221,11 +218,10 @@ class SummerChallenge(db.Model):
     title = db.Column(db.String(100), nullable=False, index=True)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    start_date = db.Column(db.DateTime, nullable=False, index=True)
-    end_date = db.Column(db.DateTime, nullable=False, index=True)
+    duration_hours = db.Column(db.Integer, default=24, nullable=False)
     file_url = db.Column(db.String(100))
-    difficulty = db.Column(db.String(20), default='medium', nullable=False)
-    points = db.Column(db.Integer, default=10, nullable=False)
+    key_stage = db.Column(db.String(3), nullable=False, index=True)
+    is_manually_locked = db.Column(db.Boolean, default=False, nullable=False)  # Add this field
     
     # Relationships
     answer_boxes = db.relationship(
@@ -241,13 +237,25 @@ class SummerChallenge(db.Model):
         lazy='dynamic'
     )
     
-    # Index for date range queries
-    __table_args__ = (
-        db.Index('ix_summer_challenge_dates', 'start_date', 'end_date'),
-    )
-    
     def __repr__(self):
-        return f'<SummerChallenge {self.title} ({self.difficulty})>'
+        return f'<SummerChallenge {self.title}>'
+
+    @property
+    def is_locked(self):
+        from datetime import datetime, timedelta
+        # Check manual lock first, then time-based lock
+        return (self.is_manually_locked or 
+                datetime.utcnow() > self.date_posted + timedelta(hours=self.duration_hours))
+
+    @property
+    def lock_reason(self):
+        from datetime import datetime, timedelta
+        """Returns the reason why the challenge is locked"""
+        if self.is_manually_locked:
+            return "manually_locked"
+        elif datetime.utcnow() > self.date_posted + timedelta(hours=self.duration_hours):
+            return "time_expired"
+        return None
 
 
 class SummerChallengeAnswerBox(db.Model):

@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-    <main>
         <div class="challenge-container">
             <article>
                 <h1 class="challenge-title">{{ challenge.title }}</h1>
@@ -29,7 +28,7 @@
                 </div>
                 {% endif %}
                 
-                {% for answer_box in challenge.answer_boxes %}
+                {% for answer_box in challenge.answer_boxes.all() %}
                     {% set form = forms[answer_box.id] %}
                     {% set box_submissions = submissions[answer_box.id] %}
                     {% set has_correct = box_submissions and box_submissions[0].is_correct %}
@@ -111,7 +110,6 @@
                 {% endfor %}
             </article>
         </div>
-    </main>
 
     <script defer src="//unpkg.com/mathlive"></script>
     <script>

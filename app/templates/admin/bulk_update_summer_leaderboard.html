@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="challenge-container">
+    <h1>Bulk Update Summer Leaderboard</h1>
+    
+    <div class="form-section">
+        <h2>Add Points to Multiple Entries</h2>
+        <p>Use this feature to award points to participants for special events, bonus challenges, or corrections.</p>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="points">Points to Add:</label>
+                <input type="number" id="points" name="points" class="form-control" 
+                       placeholder="Enter points (can be negative)" required>
+                <small class="form-text">Enter a positive number to add points, or negative to subtract.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="key_stage">Filter by Key Stage:</label>
+                <select id="key_stage" name="key_stage" class="form-control">
+                    <option value="all">All Key Stages</option>
+                    <option value="KS3">Key Stage 3 only</option>
+                    <option value="KS4">Key Stage 4 only</option>
+                    <option value="KS5">Key Stage 5 only</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="button" 
+                    onclick="return confirm('Are you sure you want to update the selected entries? This action cannot be undone.');">
+                Update Entries
+            </button>
+        </form>
+    </div>
+    
+    <div class="info-section">
+        <h3>Usage Examples:</h3>
+        <ul>
+            <li><strong>Bonus Event:</strong> Add 5 points to all participants for attending a special event</li>
+            <li><strong>Key Stage Bonus:</strong> Add 2 points to only KS3 students for participation</li>
+            <li><strong>Correction:</strong> Add -3 points to fix an error in scoring</li>
+            <li><strong>Holiday Bonus:</strong> Add 1 point to all participants for the holidays</li>
+        </ul>
+        
+        <div class="warning-box">
+            <h4>⚠️ Warning</h4>
+            <p>Bulk updates affect multiple entries at once and cannot be undone. Please double-check your settings before proceeding.</p>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('admin.manage_summer_leaderboard') }}" class="button button-secondary">
+        Back to Summer Leaderboard Management
+    </a>
+</div>
+
+<style>
+.form-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-text {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.info-section {
+    margin-top: 30px;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.warning-box h4 {
+    margin-top: 0;
+    color: #856404;
+}
+</style>
+{% endblock %}

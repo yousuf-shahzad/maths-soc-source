@@ -57,12 +57,12 @@ def profile():
     
     # Calculate total score across all key stages
     total_score = sum(entry.score for entry in leaderboard_entries)
-    
+
     return render_template(
-        "profile/main_profile.html", 
-        title="Profile", 
-        leaderboard_entries_count=length,
-        total_score=total_score
+            "profile/main_profile.html", 
+            title="Profile", 
+            leaderboard_entries_count=length,
+            total_score=total_score
     )
 
 
