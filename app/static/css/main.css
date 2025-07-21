@@ -173,6 +173,274 @@ p {
 }
 
 /*****************************************
+ * Modal Overlay
+ *****************************************/
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 1rem;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.9) translateY(20px);
+    animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    to {
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.modal-close-button:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+    padding: 2rem 2rem 1.5rem 2rem;
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    text-align: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.modal-body {
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+.modal-body p {
+    margin-bottom: 1rem;
+    color: #555;
+}
+
+.modal-body hr {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.modal-actions .button {
+    flex: 1;
+    max-width: 150px;
+    text-align: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    /* Ensure all table cells stack properly */
+    table td {
+        display: block;
+        width: 100%;
+        text-align: right; /* Align data to the right */
+        padding-left: 50%; /* Make space for the label */
+        position: relative;
+        border-bottom: 1px solid #eee;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: 45%;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    /* --- FIX FOR THE ACTIONS CELL --- */
+
+    /* Specifically target the last cell in a row, which holds the actions */
+    table tr td:last-child {
+        display: flex; /* Use flexbox for layout */
+        flex-direction: row; /* Arrange buttons in a row */
+        flex-wrap: wrap; /* Allow buttons to wrap onto the next line if needed */
+        gap: 0.5rem; /* Add space between buttons */
+        justify-content: flex-start; /* Align buttons to the start of the cell */
+        padding: 1rem; /* Reset padding for more space */
+        text-align: left; /* Reset text alignment */
+        border-bottom: none; /* Remove the bottom border for the last cell in a card */
+    }
+
+    /* Hide the data-label for the actions cell */
+    table tr td:last-child::before {
+        display: none;
+    }
+
+    /* Ensure forms and buttons inside the actions cell are flexible */
+    table tr td:last-child form,
+    table tr td:last-child .button {
+        flex: 1 1 auto; /* Allow buttons to grow and shrink as needed */
+        margin: 0; /* Remove default margins */
+    }
+
+    /* Make the form tag itself not interfere with the flex layout */
+    table tr td:last-child form {
+        display: contents;
+    }
+
+    /* Ensure buttons have a minimum width and appropriate padding */
+    table tr td:last-child .button {
+        min-width: 100px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Ensure all table cells stack properly */
+    table td {
+        display: block;
+        width: 100%;
+        text-align: right; /* Align data to the right */
+        padding-left: 50%; /* Make space for the label */
+        position: relative;
+        border-bottom: 1px solid #eee;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: 45%;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    /* --- FIX FOR THE ACTIONS CELL --- */
+
+    /* Specifically target the last cell in a row, which holds the actions */
+    table tr td:last-child {
+        display: flex; /* Use flexbox for layout */
+        flex-direction: row; /* Arrange buttons in a row */
+        flex-wrap: wrap; /* Allow buttons to wrap onto the next line if needed */
+        gap: 0.5rem; /* Add space between buttons */
+        justify-content: flex-start; /* Align buttons to the start of the cell */
+        padding: 1rem; /* Reset padding for more space */
+        text-align: left; /* Reset text alignment */
+        border-bottom: none; /* Remove the bottom border for the last cell in a card */
+    }
+
+    /* Hide the data-label for the actions cell */
+    table tr td:last-child::before {
+        display: none;
+    }
+
+    /* Ensure forms and buttons inside the actions cell are flexible */
+    table tr td:last-child form,
+    table tr td:last-child .button {
+        flex: 1 1 auto; /* Allow buttons to grow and shrink as needed */
+        margin: 0; /* Remove default margins */
+    }
+
+    /* Make the form tag itself not interfere with the flex layout */
+    table tr td:last-child form {
+        display: contents;
+    }
+
+    /* Ensure buttons have a minimum width and appropriate padding */
+    table tr td:last-child .button {
+        min-width: 100px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* Mobile modal adjustments */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 0.5rem;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+        max-height: 95vh;
+    }
+    
+    .modal-header {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .modal-actions .button {
+        max-width: none;
+    }
+}
+
+/*****************************************
  * Navigation
  *****************************************/
 .nav-container {
@@ -221,7 +489,7 @@ p {
 }
 
 .nav-menu li a {
-    color: #fff;
+    color: white;
     text-decoration: none;
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
@@ -232,6 +500,7 @@ p {
     align-items: center;
     gap: 0.5rem;
 }
+
 
 .nav-menu li a:hover,
 .nav-menu li a.active-link {
@@ -339,6 +608,8 @@ p {
     color: #ff6b6b;
     transform: translateY(0);
 }
+
+
 
 .summer-comp-button {
     background: linear-gradient(135deg, #ff6b6b, #ffa500);
@@ -657,29 +928,223 @@ textarea:focus {
     font-weight: 600;
     color: #2c3e50;
     font-size: 0.95rem;
+}
+
+/* Mobile form improvements */
+@media (max-width: 768px) {
+    form {
+        padding: 1.5rem;
+        margin: 0 0.5rem;
+        border-radius: 8px;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea,
+    .form-control {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        min-height: 48px; /* Larger touch target on mobile */
+    }
+    
+    label,
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    form {
+        padding: 1rem;
+        margin: 0 0.25rem;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea,
+    .form-control {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+    
+    label,
+    .form-label {
+        font-size: 0.85rem;
+    }
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #7e3641;
+    box-shadow: 0 0 0 3px rgba(126, 54, 65, 0.1);
+}
+
+/* Enhanced Select/Dropdown Styling */
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    appearance: none;
+    cursor: pointer;
+}
+
+select:hover {
+    border-color: #7e3641;
+}
+
+/* Checkbox Styling */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.checkbox-container input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+    margin-bottom: 0;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.checkbox-container input[type="checkbox"]:checked {
+    background-color: #7e3641;
+    border-color: #7e3641;
+}
+
+.checkbox-container input[type="checkbox"]:checked::before {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.checkbox-container input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(126, 54, 65, 0.1);
+}
+
+.checkbox-container label {
+    margin-bottom: 0;
+    cursor: pointer;
+    font-weight: normal;
+    user-select: none;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background-color: #fafafa;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #7e3641;
+    background-color: #f0f0f0;
+}
+
+input[type="submit"] {
+    background-color: #711924;
+    color: #fff;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #7e3641;
+    transform: translateY(-1px);
+}
+
+input[type="submit"]:active {
+    transform: translateY(0);
+}
+
+/*****************************************
+ * Tables
+ *****************************************/
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 1rem;
+    margin: 1.5rem 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 th, td {
-    padding: 0.75rem;
+    padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 th {
-    background-color: #f2f2f2;
-    font-weight: bold;
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.9), rgba(233, 236, 239, 0.9));
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tr:hover {
+    background: rgba(255, 107, 107, 0.02);
 }
 
 tr:nth-child(even) {
     background-color: #f8f8f8;
-}
-
-tr:hover {
-    background-color: #e8e8e8;
 }
 
 /* Mobile table improvements */
@@ -2615,13 +3080,11 @@ table tr:hover {
     background: rgba(255, 107, 107, 0.02);
 }
 
-table tr:last-child td {
-    border-bottom: none;
+table tr:nth-child(even) {
+    background-color: #f8f8f8;
 }
 
-/*****************************************
- * Pagination
- *****************************************/
+/* Pagination styles for tables */
 .pagination {
     display: flex;
     justify-content: center;
@@ -2629,10 +3092,6 @@ table tr:last-child td {
     gap: 0.5rem;
     margin: 2rem 0;
     list-style: none;
-}
-
-.pagination li {
-    margin: 0;
 }
 
 .pagination a,

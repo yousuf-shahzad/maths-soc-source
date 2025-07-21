@@ -103,10 +103,10 @@
                         <span class="dropdown-arrow"></span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('auth.summer_register') }}">📝 Register</a>
-                        <a href="{{ url_for('auth.summer_login') }}">🔑 Login</a>
-                        <a href="{{ url_for('main.summer_leaderboard') }}">🏆 Leaderboard</a>
-                        <a href="#" onclick="showCompetitionInfo(); return false;">ℹ️ About</a>
+                        <a href="{{ url_for('auth.summer_register') }}" style="color: #333">📝 Register</a>
+                        <a href="{{ url_for('auth.summer_login') }}" style="color: #333">🔑 Login</a>
+                        <a href="{{ url_for('main.summer_leaderboard') }}" style="color: #333">🏆 Leaderboard</a>
+                        <a href="#" onclick="showCompetitionInfo(); return false;" style="color: #333">ℹ️ About</a>
                     </div>
                 </li>
 
@@ -119,13 +119,12 @@
                     {% endif %}
                     <li class="dropdown">
                          <a href="#" class="dropdown-toggle">
-                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}" class="nav-avatar" alt="User Avatar">
                             {{ current_user.full_name }}
                             <span class="dropdown-arrow"></span>
                         </a>
                          <div class="dropdown-menu">
-                            <a href="{{ url_for('profile.profile') }}">My Profile</a>
-                            <a href="{{ url_for('auth.logout') }}">Logout</a>
+                            <a href="{{ url_for('profile.profile') }}" style="color: #333">My Profile</a>
+                            <a href="{{ url_for('auth.logout') }}" style="color: #333">Logout</a>
                         </div>
                     </li>
                 {% endif %}
