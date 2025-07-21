@@ -2,7 +2,31 @@
 
 {% block content %}
     <h1>Admin Dashboard</h1>
+    
+    {% if stats %}
+    <div class="dashboard-stats">
+        <h2>📊 Quick Statistics</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Challenges</h3>
+                <p><strong>{{ stats.released_challenges }}</strong> Released</p>
+                <p><strong>{{ stats.unreleased_challenges }}</strong> Unreleased</p>
+                <p>{{ stats.total_challenges }} Total</p>
+            </div>
+            <div class="stat-card">
+                <h3>Users</h3>
+                <p><strong>{{ stats.total_users }}</strong> Total</p>
+            </div>
+            <div class="stat-card">
+                <h3>Articles</h3>
+                <p><strong>{{ stats.total_articles }}</strong> Total</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <div class="admin-dashboard">
+    <h2>📋 Management Options</h2>
     <ul>
         <li><a href="{{ url_for('admin.manage_challenges') }}">Manage Challenges</a></li>
         <li><a href="{{ url_for('admin.manage_articles') }}">Manage Newsletters/Articles</a></li>

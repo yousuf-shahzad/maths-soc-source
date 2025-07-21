@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 1af01441d011
+Revision ID: f9b02cc34c88
 Revises: 
-Create Date: 2025-07-21 00:38:23.716767
+Create Date: 2025-07-21 20:09:37.189507
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1af01441d011'
+revision = 'f9b02cc34c88'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -36,11 +36,15 @@ def upgrade():
     sa.Column('file_url', sa.String(length=100), nullable=True),
     sa.Column('key_stage', sa.String(length=3), nullable=False),
     sa.Column('first_correct_submission', sa.DateTime(), nullable=True),
+    sa.Column('release_at', sa.DateTime(), nullable=True),
+    sa.Column('is_manually_locked', sa.Boolean(), nullable=False),
+    sa.Column('lock_after_hours', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_challenge'))
     )
     with op.batch_alter_table('challenge', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_challenge_date_posted'), ['date_posted'], unique=False)
         batch_op.create_index(batch_op.f('ix_challenge_key_stage'), ['key_stage'], unique=False)
+        batch_op.create_index(batch_op.f('ix_challenge_release_at'), ['release_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_challenge_title'), ['title'], unique=False)
 
     op.create_table('school',
@@ -63,10 +67,12 @@ def upgrade():
     sa.Column('file_url', sa.String(length=100), nullable=True),
     sa.Column('key_stage', sa.String(length=3), nullable=False),
     sa.Column('is_manually_locked', sa.Boolean(), nullable=False),
+    sa.Column('release_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_summer_challenge'))
     )
     with op.batch_alter_table('summer_challenge', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_summer_challenge_key_stage'), ['key_stage'], unique=False)
+        batch_op.create_index(batch_op.f('ix_summer_challenge_release_at'), ['release_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_summer_challenge_title'), ['title'], unique=False)
 
     op.create_table('challenge_answer_box',
@@ -273,6 +279,7 @@ def downgrade():
     op.drop_table('challenge_answer_box')
     with op.batch_alter_table('summer_challenge', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_summer_challenge_title'))
+        batch_op.drop_index(batch_op.f('ix_summer_challenge_release_at'))
         batch_op.drop_index(batch_op.f('ix_summer_challenge_key_stage'))
 
     op.drop_table('summer_challenge')
@@ -282,6 +289,7 @@ def downgrade():
     op.drop_table('school')
     with op.batch_alter_table('challenge', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_challenge_title'))
+        batch_op.drop_index(batch_op.f('ix_challenge_release_at'))
         batch_op.drop_index(batch_op.f('ix_challenge_key_stage'))
         batch_op.drop_index(batch_op.f('ix_challenge_date_posted'))
 

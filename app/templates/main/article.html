@@ -1,33 +1,170 @@
 {% extends "base.html" %}
 
 {% block content %}
-<article>
-    <header class="newsletter-header">
-        <h1>{{ article.title }}</h1>
-        <div class="meta-info">
-            <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }}</p>
-            <p class="author">Author: {{ article.named_creator }}</p>
+<div class="article-detail-container">
+    <!-- Article Header -->
+    <header class="article-detail-header">
+        <div class="article-breadcrumb">
+            <a href="{{ url_for('main.articles') }}">📚 Articles</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>{{ article.title }}</span>
+        </div>
+        
+        <div class="article-title-section">
+            <h1 class="article-detail-title">{{ article.title }}</h1>
+            
+            <div class="article-meta-info">
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span class="meta-label">Published:</span>
+                    <span class="meta-value">{{ article.date_posted.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">✍️</span>
+                    <span class="meta-label">Author:</span>
+                    <span class="meta-value">{{ article.named_creator }}</span>
+                </div>
+                {% if article.file_url %}
+                <div class="meta-item">
+                    <span class="meta-icon">📄</span>
+                    <span class="meta-label">Format:</span>
+                    <span class="meta-value">Article + PDF</span>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </header>
 
-    <div class="newsletter-content">
-        {{ article.content | safe }}
+    <!-- Article Content -->
+    <div class="article-detail-content">
+        <div class="article-body">
+            {{ article.content | safe }}
+        </div>
+
+        {% if article.file_url %}
+        <div class="pdf-section">
+            <div class="pdf-section-header">
+                <h2>📄 PDF Document</h2>
+                <p>View or download the complete article as a PDF document</p>
+            </div>
+            
+            <!-- PDF Viewer -->
+            <div class="pdf-viewer-container">
+                <div class="pdf-viewer-header">
+                    <h3>Article PDF Preview</h3>
+                    <div class="pdf-controls">
+                        <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+                           target="_blank" class="button button-secondary">
+                            <span>🔍</span> Full Screen
+                        </a>
+                        <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+                           download class="button">
+                            <span>💾</span> Download
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="pdf-viewer">
+                    <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
+                            width="100%" height="600" frameborder="0"
+                            title="Article PDF Preview"></iframe>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
-    {% if article.file_url %}
-    <section class="newsletter-attachments">
-        <h2>Newsletter PDF</h2>
-        <div class="pdf-viewer">
-            <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
-                    width="100%" height="1080" frameborder="0"></iframe>
-        </div>
-        <div class="pdf-actions">
+    <!-- Article Actions -->
+    <div class="article-detail-actions">
+        <div class="action-buttons">
+            <a href="{{ url_for('main.articles') }}" class="button button-secondary">
+                <span>← </span> Back to Articles
+            </a>
+            
+            {% if article.file_url %}
             <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
-               target="_blank" class="button download-btn">Download PDF</a>
-            <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
-               target="_blank" class="button view-btn">View Full PDF</a>
+               target="_blank" class="button">
+                <span>📄</span> Open PDF
+            </a>
+            {% endif %}
+            
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" 
+               class="button button-outline">
+                <span>✏️</span> Edit Article
+            </a>
+            {% endif %}
         </div>
-    </section>
-    {% endif %}
-</article>
+        
+        <!-- Share Section -->
+        <div class="share-section">
+            <h3>Share this Article</h3>
+            <div class="share-buttons">
+                <button onclick="copyToClipboard('{{ request.url }}')" class="share-btn copy-btn">
+                    <span>🔗</span> Copy Link
+                </button>
+                <a href="mailto:?subject={{ article.title | urlencode }}&body=Check out this article: {{ request.url | urlencode }}" 
+                   class="share-btn email-btn">
+                    <span>✉️</span> Share via Email
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Articles or Back Navigation -->
+    <div class="article-footer">
+        <div class="navigation-help">
+            <div class="nav-item">
+                <span class="nav-icon">📚</span>
+                <div class="nav-content">
+                    <h4>Explore More</h4>
+                    <p>Discover more mathematical insights and educational content</p>
+                    <a href="{{ url_for('main.articles') }}" class="nav-link">Browse All Articles →</a>
+                </div>
+            </div>
+            
+            <div class="nav-item">
+                <span class="nav-icon">🧮</span>
+                <div class="nav-content">
+                    <h4>Try Challenges</h4>
+                    <p>Put your mathematical knowledge to the test</p>
+                    <a href="{{ url_for('main.challenges') }}" class="nav-link">View Challenges →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show a temporary success message
+        const button = event.target.closest('.copy-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span>✅</span> Copied!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.style.background = '';
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const button = event.target.closest('.copy-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span>✅</span> Copied!';
+        setTimeout(() => {
+            button.innerHTML = originalText;
+        }, 2000);
+    });
+}
+</script>
 {% endblock %}

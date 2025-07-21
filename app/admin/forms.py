@@ -44,6 +44,7 @@ from wtforms import (
     FieldList,
     FormField,
 )
+from wtforms.fields import DateTimeLocalField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional
 from flask_ckeditor import CKEditorField
 
@@ -129,6 +130,8 @@ class ChallengeForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField("Content", validators=[DataRequired()])
     image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
+    release_at = DateTimeLocalField("Release Date & Time (leave blank for immediate release)", validators=[Optional()])
+    lock_after_hours = IntegerField("Lock after X hours (leave blank for no auto-lock)", validators=[Optional(), NumberRange(min=1, max=8760)])  # Max 1 year
     key_stage = SelectField(
         "Key Stage",
         choices=[
@@ -145,6 +148,7 @@ class SummerChallengeForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField("Content", validators=[DataRequired()])
     image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
+    release_at = DateTimeLocalField("Release Date & Time (leave blank for immediate release)", validators=[Optional()])
     key_stage = SelectField(
         "Key Stage",
         choices=[("KS3", "Key Stage 3"), ("KS4", "Key Stage 4"), ("KS5", "Key Stage 5")],

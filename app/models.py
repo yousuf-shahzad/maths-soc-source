@@ -55,6 +55,9 @@ class Challenge(db.Model):
     file_url = db.Column(db.String(100))
     key_stage = db.Column(db.String(3), nullable=False, index=True)
     first_correct_submission = db.Column(db.DateTime)
+    release_at = db.Column(db.DateTime, nullable=True, index=True)
+    is_manually_locked = db.Column(db.Boolean, default=False, nullable=False)
+    lock_after_hours = db.Column(db.Integer, nullable=True)
     
     # Relationships
     answer_boxes = db.relationship(
@@ -69,6 +72,22 @@ class Challenge(db.Model):
         back_populates="challenge", 
         lazy="dynamic"
     )
+    
+    @property
+    def is_locked(self):
+        """Check if challenge is locked (manually or by time) - exactly like summer challenges"""
+        from datetime import datetime, timedelta
+        
+        # Check manual lock first
+        if self.is_manually_locked:
+            return True
+            
+        # Check automatic time-based lock
+        if self.lock_after_hours and self.release_at:
+            lock_time = self.release_at + timedelta(hours=self.lock_after_hours)
+            return datetime.now() > lock_time
+            
+        return False
     
     def __repr__(self):
         return f'<Challenge {self.title} ({self.key_stage})>'
@@ -222,6 +241,7 @@ class SummerChallenge(db.Model):
     file_url = db.Column(db.String(100))
     key_stage = db.Column(db.String(3), nullable=False, index=True)
     is_manually_locked = db.Column(db.Boolean, default=False, nullable=False)  # Add this field
+    release_at = db.Column(db.DateTime, nullable=True, index=True)
     
     # Relationships
     answer_boxes = db.relationship(

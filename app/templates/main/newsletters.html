@@ -1,22 +1,136 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Newsletters</h1>
-    {% for article in articles %}
-        <article class="newsletter-article">
-            <h2><a href="{{ url_for('main.newsletter', id=article.id) }}">{{ article.title }}</a></h2>
-            <p class="meta">Posted on: {{ article.date_posted.strftime('%d/%m/%Y') }} by {{ article.named_creator }}</p>
-            <div class="">{{ article.content | truncate(200) | safe }}</div>
-            
-            {% if article.type == 'newsletter' and article.file_url %}
-                <div class="pdf-preview">
-                    <h3>Newsletter Preview</h3>
-                    <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
-                            width="100%" height="500" frameborder="0"></iframe>
+<div class="newsletters-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Newsletters</h1>
+        <p class="page-subtitle">Stay updated with our latest mathematical insights, achievements, and society news</p>
+    </div>
+
+    <!-- Newsletters Grid -->
+    <div class="newsletters-grid">
+        {% for article in articles %}
+        <article class="newsletter-card">
+            <!-- Newsletter Header -->
+            <div class="newsletter-header">
+                <div class="newsletter-meta">
+                    <span class="newsletter-date">
+                        <span class="meta-icon">📅</span>
+                        {{ article.date_posted.strftime('%B %d, %Y') }}
+                    </span>
+                    <span class="newsletter-author">
+                        <span class="meta-icon">✍️</span>
+                        {{ article.named_creator }}
+                    </span>
                 </div>
+                {% if article.type == 'newsletter' and article.file_url %}
+                <div class="newsletter-badge">
+                    <span class="pdf-badge">📄 PDF Newsletter</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Newsletter Content -->
+            <div class="newsletter-content">
+                <h2 class="newsletter-title">
+                    <a href="{{ url_for('main.newsletter', id=article.id) }}">
+                        {{ article.title }}
+                    </a>
+                </h2>
+                
+                <div class="newsletter-excerpt">
+                    {{ article.content | truncate(200) | striptags | safe }}...
+                </div>
+
+                {% if article.type == 'newsletter' and article.file_url %}
+                <div class="pdf-preview-card">
+                    <div class="pdf-icon">📑</div>
+                    <div class="pdf-info">
+                        <h3>PDF Newsletter Available</h3>
+                        <p>Complete edition with additional content and graphics</p>
+                    </div>
+                    <div class="pdf-preview-thumbnail">
+                        <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
+                                width="100%" height="120" frameborder="0"
+                                title="Newsletter preview"></iframe>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Newsletter Actions -->
+            <div class="newsletter-actions">
+                <a href="{{ url_for('main.newsletter', id=article.id) }}" class="button newsletter-read-btn">
+                    <span>📖</span> Read Newsletter
+                </a>
+                {% if article.type == 'newsletter' and article.file_url %}
                 <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
-                   target="_blank" class="button">View Full PDF</a>
-            {% endif %}
+                   target="_blank" class="button button-secondary">
+                    <span>📄</span> View PDF
+                </a>
+                <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+                   download class="button button-outline">
+                    <span>💾</span> Download
+                </a>
+                {% endif %}
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" 
+                   class="button button-outline">
+                    <span>✏️</span> Edit
+                </a>
+                {% endif %}
+            </div>
         </article>
-    {% endfor %}
+        {% else %}
+        <div class="no-newsletters">
+            <div class="no-content-icon">📰</div>
+            <h3>No Newsletters Available</h3>
+            <p>Stay tuned for upcoming newsletters featuring mathematical insights, society updates, and academic achievements!</p>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.create_article') }}" class="button">
+                <span>➕</span> Create Newsletter
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Newsletter Archive Info -->
+    {% if articles %}
+    <div class="newsletter-archive-info">
+        <div class="archive-header">
+            <h2>📚 Newsletter Archive</h2>
+            <p>Browse our complete collection of newsletters spanning mathematical discoveries, society events, and educational content.</p>
+        </div>
+        <div class="archive-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ articles|length if articles else 0 }}</span>
+                <span class="stat-label">Total Newsletters</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ articles|length if articles else 0 }}</span>
+                <span class="stat-label">PDF Editions</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions for Admins -->
+    {% if current_user.is_admin %}
+    <div class="admin-actions">
+        <div class="admin-section-header">
+            <h2>Admin Actions</h2>
+        </div>
+        <div class="admin-buttons">
+            <a href="{{ url_for('admin.create_article') }}" class="button">
+                <span>➕</span> Create New Newsletter
+            </a>
+            <a href="{{ url_for('admin.manage_articles') }}" class="button button-secondary">
+                <span>📋</span> Manage Newsletters
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

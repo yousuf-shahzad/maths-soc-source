@@ -59,6 +59,15 @@
             </div>
             
             <div class="form-group">
+                {{ form.release_at.label(class="form-label") }}
+                {{ form.release_at(class="form-control") }}
+                {% for error in form.release_at.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+                <div class="help-text">Leave blank to keep current release time</div>
+            </div>
+            
+            <div class="form-group">
                 <h2>Answer Boxes</h3>
                 <div id="answer-boxes-container">
                     {% for box in form.answer_boxes %}

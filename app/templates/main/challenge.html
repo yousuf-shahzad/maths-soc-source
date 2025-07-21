@@ -1,181 +1,378 @@
 {% extends "base.html" %}
+
 {% block content %}
-        <div class="challenge-container">
-            <article>
-                <h1 class="challenge-title">{{ challenge.title }}</h1>
-                
-                {% if all_correct %}
-                    <div class="alert alert-success">
-                        <h4>🎉 Challenge Completed! 🎉</h4>
-                        <p>You have successfully solved this challenge!</p>
-                    </div>
+<div class="challenge-detail-container">
+    <!-- Challenge Header -->
+    <div class="challenge-header-section">
+        <div class="challenge-breadcrumb">
+            <a href="{{ url_for('main.challenges') }}" class="breadcrumb-link">
+                <span>←</span> Back to Challenges
+            </a>
+        </div>
+        
+        <div class="challenge-title-area">
+            <h1 class="challenge-title">{{ challenge.title }}</h1>
+            
+            <div class="challenge-meta-info">
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span class="meta-label">Posted:</span>
+                    <span class="meta-value">{{ challenge.date_posted.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-icon">🎯</span>
+                    <span class="meta-label">Key Stage:</span>
+                    <span class="meta-value">{{ challenge.key_stage.upper() }}</span>
+                </div>
+                {% if challenge.lock_after_hours %}
+                <div class="meta-item">
+                    <span class="meta-icon">⏰</span>
+                    <span class="meta-label">Duration:</span>
+                    <span class="meta-value">{{ challenge.lock_after_hours }} hours</span>
+                </div>
                 {% endif %}
-                
-                <div class="challenge-meta">
-                    <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
-                    <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
+                {% if challenge.is_locked %}
+                <div class="meta-item">
+                    <span class="meta-icon">🔒</span>
+                    <span class="meta-label">Status:</span>
+                    <span class="meta-value locked-status">Locked</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    {% if all_correct %}
+    <div class="success-banner">
+        <div class="success-content">
+            <span class="success-icon">🎉</span>
+            <div class="success-text">
+                <h2>Challenge Completed!</h2>
+                <p>Congratulations! You have successfully solved this challenge!</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lock Notice - COPIED FROM SUMMER CHALLENGE -->
+    {% if challenge.is_locked %}
+        {% if challenge.is_manually_locked %}
+            <div class="alert alert-warning" style="background: #ffe066; color: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                🔒 This challenge has been manually locked by an admin. Answers are now revealed below.
+            </div>
+        {% else %}
+            <div class="alert alert-warning" style="background: #ffe066; color: #333; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                ⏰ This challenge has expired. Answers are now revealed below.
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Main Content Area -->
+    <div class="challenge-main-content">
+        <!-- Challenge Problem -->
+        <div class="challenge-problem-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>📋 Challenge Problem</h2>
                 </div>
                 
                 <div class="challenge-content">
                     {{ challenge.content | safe }}
                 </div>
-                
+
                 {% if challenge.file_url %}
-                <div class="challenge-image">
-                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" 
-                         alt="Challenge Image" 
-                         class="responsive-image">
+                <div class="challenge-image-section">
+                    <div class="image-container">
+                        <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}"
+                             alt="Challenge diagram or image"
+                             class="challenge-diagram">
+                    </div>
                 </div>
                 {% endif %}
-                
-                {% for answer_box in challenge.answer_boxes.all() %}
-                    {% set form = forms[answer_box.id] %}
-                    {% set box_submissions = submissions[answer_box.id] %}
-                    {% set has_correct = box_submissions and box_submissions[0].is_correct %}
-                    {% set submission_count = box_submissions|length %}
-                    {% set attempts_remaining = 3 - submission_count %}
-                    
-                    <div class="answer-box" id="answer-box-{{ answer_box.id }}">
-                        <h3>{{ answer_box.box_label }}</h3>
-                        
-                        {% if not has_correct and attempts_remaining > 0 %}
-                            <div class="meta">
-                                <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
-                            </div>
-                            
-                            <div class="answer-submission">
-                                {% if current_user.is_authenticated %}
-                                    <form method="POST" class="answer-form">
-                                        {{ form.hidden_tag() }}
-                                        <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
-                                        
-                                        <div class="form-group">
-                                            {{ form.answer.label(class="form-label") }}
-                                            <div class="pdf-viewer">
-                                                <math-field 
-                                                    id="formula-{{ answer_box.id }}"
-                                                    class="form-control"
-                                                    style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
-                                            </div>
-                                            {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
-                                            {% for error in form.answer.errors %}
-                                                <span class="error-message">{{ error }}</span>
-                                            {% endfor %}
-                                        </div>
-                                        
-                                        <div class="challenge-actions">
-                                            {{ form.submit(class="button") }}
-                                        </div>
-                                    </form>
-                                {% else %}
-                                    <p class="alert alert-warning">You need to <a href="{{ url_for('auth.login') }}">log in</a> to submit answers.</p>
-                                {% endif %}
-                            </div>
-                        {% elif not has_correct %}
-                            <div class="alert alert-error">
-                                <p>You have used all your attempts for this part.</p>
-                            </div>
-                        {% endif %}
-                        
-                        {% if box_submissions %}
-                            <div class="submissions-history">
-                                <h4>Your Submission History for {{ answer_box.box_label }}</h4>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Attempt</th>
-                                            <th>Answer</th>
-                                            <th>Result</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for submission in box_submissions %}
-                                        <tr class="{{ 'success' if submission.is_correct else 'error' }}">
-                                            <td>{{ loop.revindex }}</td>
-                                            <td>
-                                                <math-field 
-                                                    readonly 
-                                                    class="form-control submission-math">{{ submission.answer }}</math-field>
-                                            </td>
-                                            <td>{{ "✓ Correct" if submission.is_correct else "✗ Incorrect" }}</td>
-                                            <td>{{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </article>
+            </div>
         </div>
 
-    <script defer src="//unpkg.com/mathlive"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle all math fields in the document
-            document.querySelectorAll('math-field').forEach(formulaField => {
-                if (!formulaField.id.startsWith('formula-')) return;
-                
-                const boxId = formulaField.id.replace('formula-', '');
-                const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+        <!-- Answer Boxes - COPIED EXACT LOCKING LOGIC FROM SUMMER CHALLENGE -->
+        {% for answer_box in challenge.answer_boxes.all() %}
+            {% set form = forms[answer_box.id] if forms else None %}
+            {% set box_submissions = submissions[answer_box.id] if submissions else [] %}
+            {% set has_correct = box_submissions and box_submissions[0].is_correct %}
+            {% set submission_count = box_submissions|length %}
+            {% set attempts_remaining = 3 - submission_count %}
+            
+            <div class="answer-box-section">
+                <div class="answer-box" id="answer-box-{{ answer_box.id }}"{% if challenge.is_locked %} style="opacity:0.8;"{% endif %}>
+                    <h3>{{ answer_box.box_label }}</h3>
+                    
+                    {% if challenge.is_locked %}
+                        <!-- Show correct answer when locked - EXACT COPY FROM SUMMER CHALLENGE -->
+                        <div class="correct-answer-reveal" style="background: #d4edda; padding: 1rem; border-radius: 4px; border-left: 4px solid #28a745; margin: 1rem 0;">
+                            <h4 style="color: #155724; margin: 0 0 0.5rem 0;">✅ Correct Answer:</h4>
+                            <div style="background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #c3e6cb;">
+                                <math-field readonly class="form-control" style="font-size: 1.2rem; background: none; border: none;">{{ answer_box.correct_answer }}</math-field>
+                            </div>
+                        </div>
+                    {% elif not has_correct and attempts_remaining > 0 %}
+                        <div class="meta">
+                            <p>You have {{ attempts_remaining }} attempt{{ 's' if attempts_remaining != 1 }} remaining</p>
+                        </div>
+                        
+                        <div class="answer-submission">
+                            {% if current_user.is_authenticated %}
+                                <form method="POST" class="answer-form" id="answerForm{{ answer_box.id }}">
+                                    {{ form.hidden_tag() }}
+                                    <input type="hidden" name="answer_box_id" value="{{ answer_box.id }}">
+                                    
+                                    <div class="form-group">
+                                        <label for="formula-{{ answer_box.id }}" class="form-label">
+                                            Your Answer:
+                                        </label>
+                                        
+                                        <!-- MathLive Input -->
+                                        <div class="math-input-container">
+                                            <math-field 
+                                                id="formula-{{ answer_box.id }}"
+                                                class="form-control"
+                                                style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                        </div>
+                                        
+                                        <!-- Hidden field for form submission -->
+                                        {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
+                                        
+                                        {% if form.answer.errors %}
+                                            <div class="form-errors">
+                                                {% for error in form.answer.errors %}
+                                                    <span class="error-message">{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
 
-                // Initialize MathLive field with any existing value
-                if (hiddenInput.value) {
-                    formulaField.value = hiddenInput.value;
+                                    <div class="form-actions">
+                                        {{ form.submit(class="button submit-button") }}
+                                        <button type="button" class="button button-secondary" onclick="clearAnswer('{{ answer_box.id }}')">
+                                            <span>🔄</span> Clear
+                                        </button>
+                                    </div>
+                                </form>
+                            {% else %}
+                                <div class="login-prompt">
+                                    <div class="prompt-icon">🔐</div>
+                                    <p>Please <a href="{{ url_for('auth.login') }}" class="link">log in</a> to submit answers.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif not has_correct %}
+                        <!-- Attempts Exhausted -->
+                        <div class="alert alert-error">
+                            <p>You have used all your attempts for this part.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Submission History -->
+                    {% if box_submissions %}
+                    <div class="submissions-history">
+                        <h4>📊 Your Submission History for {{ answer_box.box_label }}</h4>
+                        <table class="submissions-table">
+                            <thead>
+                                <tr>
+                                    <th>Attempt</th>
+                                    <th>Your Answer</th>
+                                    <th>Result</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for submission in box_submissions %}
+                                <tr class="submission-row {{ 'success' if submission.is_correct else 'error' }}">
+                                    <td class="attempt-number">
+                                        <span class="attempt-badge">#{{ loop.revindex }}</span>
+                                    </td>
+                                    <td class="submission-answer">
+                                        <math-field 
+                                            readonly 
+                                            class="readonly-math submission-math">{{ submission.answer }}</math-field>
+                                    </td>
+                                    <td class="submission-result">
+                                        {% if submission.is_correct %}
+                                            <span class="status-correct">
+                                                <span class="status-icon">✅</span>
+                                                Correct
+                                            </span>
+                                        {% else %}
+                                            <span class="status-incorrect">
+                                                <span class="status-icon">❌</span>
+                                                Incorrect
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="submission-date">
+                                        {{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Admin Actions -->
+        {% if current_user.is_admin %}
+        <div class="admin-actions-section">
+            <div class="section-card admin-card">
+                <div class="section-header">
+                    <h2>⚙️ Admin Actions</h2>
+                </div>
+                <div class="admin-buttons">
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                       class="button">
+                        <span>✏️</span> Edit Challenge
+                    </a>
+                    <a href="{{ url_for('admin.manage_challenges') }}" 
+                       class="button button-outline">
+                        <span>📋</span> Manage All
+                    </a>
+                    {% if challenge.is_locked %}
+                    <span class="admin-note">⚠️ Challenge is locked - answers are visible to all users</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script defer src="//unpkg.com/mathlive"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle all math fields in the document
+        document.querySelectorAll('math-field').forEach(formulaField => {
+            if (!formulaField.id || !formulaField.id.startsWith('formula-')) return;
+            
+            const boxId = formulaField.id.replace('formula-', '');
+            const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+
+            // Initialize MathLive field with any existing value
+            if (hiddenInput && hiddenInput.value) {
+                formulaField.value = hiddenInput.value;
+            }
+
+            // Update hidden input whenever math field changes
+            formulaField.addEventListener('input', (evt) => {
+                if (hiddenInput) {
+                    hiddenInput.value = formulaField.value;
                 }
-
-                // Update hidden input whenever math field changes
-                formulaField.addEventListener('input', (evt) => {
-                    hiddenInput.value = formulaField.value;
-                });
-            });
-
-            // Update hidden inputs before form submission
-            document.querySelectorAll('.answer-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const boxId = this.querySelector('[name="answer_box_id"]').value;
-                    const formulaField = document.getElementById(`formula-${boxId}`);
-                    const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
-                    hiddenInput.value = formulaField.value;
-                });
             });
         });
-    </script>
 
-    <style>
-        .answer-box {
-            margin-bottom: 2rem;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+        // Update hidden inputs before form submission
+        document.querySelectorAll('.answer-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const boxId = this.querySelector('[name="answer_box_id"]').value;
+                const formulaField = document.getElementById(`formula-${boxId}`);
+                const hiddenInput = document.getElementById(`hidden-answer-${boxId}`);
+                
+                if (formulaField && hiddenInput) {
+                    hiddenInput.value = formulaField.value;
+                }
+                
+                // Add loading state
+                const submitButton = this.querySelector('.submit-button');
+                if (submitButton) {
+                    submitButton.innerHTML = '<span>⏳</span> Submitting...';
+                    submitButton.disabled = true;
+                }
+            });
+        });
+    });
+
+    // Clear answer function
+    function clearAnswer(boxId) {
+        const mathField = document.getElementById(`formula-${boxId}`);
+        const hiddenField = document.getElementById(`hidden-answer-${boxId}`);
         
-        .submissions-history {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #ddd;
+        if (mathField) {
+            mathField.value = '';
         }
-        
-        .submission-math {
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            background: none;
-            border: none;
+        if (hiddenField) {
+            hiddenField.value = '';
         }
-        
-        .submissions-history table td {
-            vertical-align: middle;
-        }
-        
-        .submissions-history .success {
-            background-color: #d4edda;
-        }
-        
-        .submissions-history .error {
-            background-color: #f8d7da;
-        }
-    </style>
+    }
+</script>
+
+<style>
+/* COPIED STYLES FROM SUMMER CHALLENGE */
+.answer-box {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+.answer-box[style*="opacity"] {
+    background: #f8f9fa;
+}
+
+.correct-answer-reveal {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.submissions-history {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #ddd;
+}
+
+.submission-math {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    background: none !important;
+    border: none !important;
+}
+
+.submissions-history table td {
+    vertical-align: middle;
+}
+
+.submissions-history .success {
+    background-color: #d4edda;
+}
+
+.submissions-history .error {
+    background-color: #f8d7da;
+}
+
+.locked-status {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.alert-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+</style>
 {% endblock %}
-```

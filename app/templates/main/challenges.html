@@ -6,71 +6,244 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    
-<h1>Challenges of the Week</h1>
 
-<div class="challenge-grid">
-    {% for summer in summer_challenges %}
-        <article class="challenge-card summer-challenge-card">
-            <h2>
-                <a href="{{ url_for('main.summer_challenge', challenge_id=summer.id) }}">
-                    {{ summer.title }}
+<div class="challenges-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        {% if current_user.is_authenticated and current_user.is_competition_participant %}
+            <h1>🏆 Summer Competition Challenges</h1>
+            <p class="page-subtitle">Exclusive challenges for Summer Mathematics Competition 2025 participants</p>
+        {% else %}
+            <h1>Mathematical Challenges</h1>
+            <p class="page-subtitle">Test your mathematical skills with our collection of challenging problems and puzzles</p>
+        {% endif %}
+    </div>
+
+    <!-- Check if user is authenticated -->
+    {% if not current_user.is_authenticated %}
+    <div class="login-required-notice">
+        <div class="notice-content">
+            <div class="notice-icon">🔐</div>
+            <h2>Login Required</h2>
+            <p>Please log in to access mathematical challenges and track your progress.</p>
+            <div class="notice-actions">
+                <a href="{{ url_for('auth.login') }}" class="button">
+                    <span>🚀</span> Login to View Challenges
                 </a>
-            </h2>
-            <p class="meta">Posted on: {{ summer.date_posted.strftime('%d/%m/%Y') }}</p>
-            <p class="meta">Key Stage: {{ summer.key_stage.upper() }}</p>
-            <div class="challenge-content">
-                {{ summer.content | safe | truncate(200) }}
+                <a href="{{ url_for('auth.register') }}" class="button button-outline">
+                    <span>📝</span> Create Account
+                </a>
             </div>
-            {% if summer.file_url %}
-                <div class="image-preview">
-                    <img src="{{ url_for('admin.uploaded_files', id=summer.id) }}"
-                         alt="Challenge Image"
-                         class="challenge-image">
-                </div>
-            {% endif %}
-            {% if summer.is_locked %}
-                <div class="alert alert-warning">This challenge is now locked.</div>
-            {% endif %}
-        </article>
-    {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
-    {% for challenge in challenges.items %}
-        <article class="challenge-card">
-            <h2><a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}">{{ challenge.title }}</a></h2>
-            <p class="meta">Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
-            <p class="meta">Key Stage: {{ challenge.key_stage.upper() }}</p>
-            <div class="challenge-content">
-                {{ challenge.content | safe | truncate(200) }}
+    <!-- Summer Competition Challenges (only for summer participants) -->
+    {% if current_user.is_authenticated and current_user.is_competition_participant and summer_challenges %}
+    <div class="summer-challenges-section">
+        <div class="section-header">
+            <h2>🏆 Your Competition Challenges ({{ current_user.key_stage.upper() }})</h2>
+            <p>Challenges specifically designed for your key stage in the Summer Mathematics Competition</p>
+        </div>
+        
+        <div class="challenges-grid summer-grid">
+            {% for summer in summer_challenges %}
+            <article class="challenge-card summer-challenge-card">
+                <!-- Challenge Header -->
+                <div class="challenge-header">
+                    <div class="challenge-meta">
+                        <span class="challenge-date">
+                            <span class="meta-icon">📅</span>
+                            {{ summer.date_posted.strftime('%B %d, %Y') }}
+                        </span>
+                        <span class="challenge-keystage">
+                            <span class="meta-icon">🎯</span>
+                            {{ summer.key_stage.upper() }}
+                        </span>
+                    </div>
+                    <div class="summer-badge">
+                        <span class="competition-badge">🏆 Summer Competition</span>
+                    </div>
+                    {% if summer.is_locked %}
+                    <div class="challenge-status locked">
+                        <span class="status-icon">🔒</span>
+                        <span>Locked</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Challenge Content -->
+                <div class="challenge-content">
+                    <h2 class="challenge-title">
+                        <a href="{{ url_for('main.summer_challenge', challenge_id=summer.id) }}">
+                            {{ summer.title }}
+                        </a>
+                    </h2>
+                    
+                    <div class="challenge-excerpt">
+                        {{ summer.content | safe | striptags | truncate(200) }}...
+                    </div>
+
+                    {% if summer.file_url %}
+                    <div class="challenge-image-preview">
+                        <img src="{{ url_for('admin.uploaded_files', id=summer.id) }}"
+                             alt="Challenge Image"
+                             class="challenge-image">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Challenge Actions -->
+                <div class="challenge-actions">
+                    <a href="{{ url_for('main.summer_challenge', challenge_id=summer.id) }}" 
+                       class="button challenge-attempt-btn {{ 'disabled' if summer.is_locked else '' }}">
+                        <span>{% if summer.is_locked %}🔒{% else %}🚀{% endif %}</span> 
+                        {% if summer.is_locked %}View Challenge{% else %}Attempt Challenge{% endif %}
+                    </a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=summer.id) }}" 
+                       class="button button-outline">
+                        <span>✏️</span> Edit
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% else %}
+            <div class="no-challenges">
+                <div class="no-content-icon">🏆</div>
+                <h3>No Summer Challenges Available</h3>
+                <p>Check back soon for new competition challenges for {{ current_user.key_stage.upper() }} students!</p>
             </div>
-            {% if challenge.file_url %}
-                <div class="image-preview">
-                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}"
-                         alt="Challenge Image"
-                         class="challenge-image">
-                </div>
-            {% endif %}
-        </article>
-    {% endfor %}
-</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
-{% if challenges.pages > 1 %}
-    <nav aria-label="Challenge pages">
-        <ul class="pagination">
+    <!-- Regular Challenges (only for non-summer participants) -->
+    {% if current_user.is_authenticated and not current_user.is_competition_participant %}
+    <div class="regular-challenges-section">
+        <div class="section-header">
+            <h2>📚 Weekly Challenges</h2>
+            <p>Regular mathematical challenges to sharpen your problem-solving skills</p>
+        </div>
+        
+        <div class="challenges-grid">
+            {% for challenge in challenges.items %}
+            <article class="challenge-card">
+                <!-- Challenge Header -->
+                <div class="challenge-header">
+                    <div class="challenge-meta">
+                        <span class="challenge-date">
+                            <span class="meta-icon">📅</span>
+                            {{ challenge.date_posted.strftime('%B %d, %Y') }}
+                        </span>
+                        <span class="challenge-keystage">
+                            <span class="meta-icon">🎯</span>
+                            {{ challenge.key_stage.upper() }}
+                        </span>
+                    </div>
+                    <div class="challenge-type-badge">
+                        <span class="weekly-badge">📚 Weekly Challenge</span>
+                    </div>
+                    {% if challenge.is_locked %}
+                    <div class="challenge-status locked">
+                        <span class="status-icon">🔒</span>
+                        <span>Locked</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Challenge Content -->
+                <div class="challenge-content">
+                    <h2 class="challenge-title">
+                        <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}">
+                            {{ challenge.title }}
+                        </a>
+                    </h2>
+                    
+                    <div class="challenge-excerpt">
+                        {{ challenge.content | safe | striptags | truncate(200) }}...
+                    </div>
+
+                    {% if challenge.file_url %}
+                    <div class="challenge-image-preview">
+                        <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}"
+                             alt="Challenge Image"
+                             class="challenge-image">
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Challenge Actions -->
+                <div class="challenge-actions">
+                    <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" 
+                       class="button challenge-attempt-btn">
+                        <span>🚀</span> Attempt Challenge
+                    </a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                       class="button button-outline">
+                        <span>✏️</span> Edit
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% else %}
+            <div class="no-challenges">
+                <div class="no-content-icon">🧮</div>
+                <h3>No Challenges Available</h3>
+                <p>Check back soon for new mathematical challenges and problem-solving opportunities!</p>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.create_challenge') }}" class="button">
+                    <span>➕</span> Create Challenge
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Account Type Information (if logged in) -->
+    {% if current_user.is_authenticated %}
+    <div class="account-info-section">
+        <div class="account-info-card">
+            <div class="account-type-display">
+                {% if current_user.is_competition_participant %}
+                    <span class="account-badge summer">🏆 Summer Competition Account</span>
+                    <p>You're registered for the Summer Mathematics Competition 2025. You have access to exclusive competition challenges for {{ current_user.key_stage.upper() }} students.</p>
+                    <div class="account-actions">
+                        <a href="{{ url_for('main.summer_leaderboard') }}" class="button button-outline">
+                            <span>📊</span> View Competition Leaderboard
+                        </a>
+                    </div>
+                {% else %}
+                    <span class="account-badge regular">📚 Regular Account</span>
+                    <p>You have access to our regular weekly mathematical challenges. Track your progress and compete on the overall leaderboard.</p>
+                    <div class="account-actions">
+                        <a href="{{ url_for('main.leaderboard') }}" class="button button-outline">
+                            <span>📊</span> View Leaderboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pagination (only for regular challenges) -->
+    {% if current_user.is_authenticated and not current_user.is_competition_participant and challenges.pages > 1 %}
+    <div class="pagination-container">
+        <nav aria-label="Challenge pages" class="pagination-nav">
+            <ul class="pagination">
                 <!-- Previous page -->
                 {% if challenges.has_prev %}
-                    <li>
+                    <li class="pagination-item">
                         <a href="{{ url_for('main.challenges', page=challenges.prev_num) }}" 
-                           class="pagination-link" 
+                           class="pagination-link prev-link" 
                            aria-label="Previous page">
-                            &laquo;
+                            <span>←</span> Previous
                         </a>
-                    </li>
-                {% else %}
-                    <li>
-                        <span class="pagination-link disabled" aria-label="Previous page">
-                            &laquo;
-                        </span>
                     </li>
                 {% endif %}
 
@@ -78,13 +251,13 @@
                 {% for page_num in challenges.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
                     {% if page_num %}
                         {% if page_num == challenges.page %}
-                            <li>
+                            <li class="pagination-item">
                                 <span class="pagination-link active">
                                     {{ page_num }}
                                 </span>
                             </li>
                         {% else %}
-                            <li>
+                            <li class="pagination-item">
                                 <a href="{{ url_for('main.challenges', page=page_num) }}" 
                                    class="pagination-link">
                                     {{ page_num }}
@@ -92,29 +265,154 @@
                             </li>
                         {% endif %}
                     {% else %}
-                        <li>
-                            <span class="pagination-ellipsis">&hellip;</span>
+                        <li class="pagination-item">
+                            <span class="pagination-ellipsis">…</span>
                         </li>
                     {% endif %}
                 {% endfor %}
 
                 <!-- Next page -->
                 {% if challenges.has_next %}
-                    <li>
+                    <li class="pagination-item">
                         <a href="{{ url_for('main.challenges', page=challenges.next_num) }}" 
-                           class="pagination-link" 
+                           class="pagination-link next-link" 
                            aria-label="Next page">
-                            &raquo;
+                            Next <span>→</span>
                         </a>
-                    </li>
-                {% else %}
-                    <li>
-                        <span class="pagination-link disabled" aria-label="Next page">
-                            &raquo;
-                        </span>
                     </li>
                 {% endif %}
             </ul>
         </nav>
+    </div>
     {% endif %}
+
+    <!-- Quick Actions for Admins -->
+    {% if current_user.is_admin %}
+    <div class="admin-actions">
+        <div class="admin-section-header">
+            <h2>Admin Actions</h2>
+        </div>
+        <div class="admin-buttons">
+            <a href="{{ url_for('admin.create_challenge') }}" class="button">
+                <span>➕</span> Create New Challenge
+            </a>
+            <a href="{{ url_for('admin.manage_challenges') }}" class="button button-secondary">
+                <span>📋</span> Manage Challenges
+            </a>
+            <a href="{{ url_for('admin.create_summer_challenge') }}" class="button">
+                <span>🏆</span> Create Summer Challenge
+            </a>
+            <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button button-secondary">
+                <span>📋</span> Manage Summer Challenges
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Login Required Notice */
+.login-required-notice {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    margin: 2rem 0;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 2px solid #f1f3f4;
+}
+
+.notice-content {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.notice-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.notice-content h2 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+    font-size: 1.75rem;
+}
+
+.notice-content p {
+    margin: 0 0 2rem 0;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.notice-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Account Info Section */
+.account-info-section {
+    margin-top: 3rem;
+}
+
+.account-info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-left: 4px solid #962835;
+}
+
+.account-type-display {
+    text-align: center;
+}
+
+.account-badge {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.account-badge.summer {
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+}
+
+.account-badge.regular {
+    background: linear-gradient(135deg, #962835, #7e3641);
+    color: white;
+}
+
+.account-info-card p {
+    margin: 0 0 1.5rem 0;
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.account-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .notice-actions,
+    .account-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .notice-actions .button,
+    .account-actions .button {
+        width: 100%;
+        max-width: 250px;
+    }
+}
+</style>
 {% endblock %}

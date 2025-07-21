@@ -1,60 +1,154 @@
 {% extends "base.html" %}
 {% block content %}
-<main>
-    <h1 class="challenge-title">Profile</h1>
-    
-    <div class="challenge-card">
-        <div class="challenge-content">
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <td>{{ current_user.full_name }} </td>
-                </tr>
-                <tr>
-                    <th>Year Group</th>
-                    <td>{{ current_user.year }}</td>
-                </tr>
-                <tr>
-                    <th>Key Stage</th>
-                    <td>{{ current_user.key_stage }}</td>
-                </tr>
-                <tr>
-                    <th>Class</th>
-                    <td>{{ current_user.maths_class }}</td>
-                </tr>
-                <tr>
-                    <th>Role</th>
-                    <td>{{ 'Admin' if current_user.is_admin else 'User' }}</td>
-                </tr>
-                <tr>
-                    <th>Challenges Answered</th>
-                    <td>{{ leaderboard_entries_count if leaderboard_entries_count else '0' }}</td>
-                </tr>
-                <tr>
-                    <th>Total Points</th>
-                    <td>{{ total_score }}</td>
-                </tr>
-            </table>
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <div class="avatar-icon">
+                <span>{{ current_user.full_name[0].upper() }}</span>
+            </div>
+        </div>
+        <div class="profile-info">
+            <h1>{{ current_user.full_name }}</h1>
+            <p class="profile-role">{{ 'Administrator' if current_user.is_admin else 'Student' }}</p>
+            <p class="profile-school">{{ current_user.school.name if current_user.school else 'UCGS Mathematics Society' }}</p>
         </div>
     </div>
 
-    <div class="challenge-actions">
-        <a href="{{ url_for('profile.change_password') }}" class="button">
-            Change Password
-        </a>
-        <a href="{{ url_for('auth.logout') }}" class="button button-secondary">
-            Logout
-        </a>
-        <a href="{{ url_for('profile.delete_account') }}" class="button button-danger" onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
-            Delete Account
-            
-        </a>
+    <!-- Profile Stats -->
+    <div class="profile-stats">
+        <div class="stats-card">
+            <div class="stats-icon">🏆</div>
+            <div class="stats-info">
+                <h3>{{ total_score }}</h3>
+                <p>Total Points</p>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">📝</div>
+            <div class="stats-info">
+                <h3>{{ leaderboard_entries_count if leaderboard_entries_count else '0' }}</h3>
+                <p>Challenges Completed</p>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">📚</div>
+            <div class="stats-info">
+                <h3>{{ current_user.year }}</h3>
+                <p>Year Group</p>
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🎯</div>
+            <div class="stats-info">
+                <h3>{{ current_user.key_stage }}</h3>
+                <p>Key Stage</p>
+            </div>
+        </div>
     </div>
-    <br>
-    <div class="privacy-policy">
-        <p>
-            <strong>Privacy Policy:</strong> We take your privacy seriously. We do not share your data with third parties. To learn more, please read our <a href="{{ url_for('main.privacy_policy') }}">privacy policy</a>.
-        </p>
-</main>
 
+    <!-- Profile Details -->
+    <div class="profile-section">
+        <div class="section-header">
+            <h2>Profile Details</h2>
+        </div>
+        <div class="profile-details-grid">
+            <div class="detail-item">
+                <div class="detail-label">Full Name</div>
+                <div class="detail-value">{{ current_user.full_name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Year Group</div>
+                <div class="detail-value">{{ current_user.year }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Key Stage</div>
+                <div class="detail-value">{{ current_user.key_stage }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Mathematics Class</div>
+                <div class="detail-value">{{ current_user.maths_class }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Account Type</div>
+                <div class="detail-value">
+                    <span class="role-badge {{ 'admin' if current_user.is_admin else 'user' }}">
+                        {{ 'Administrator' if current_user.is_admin else 'Student' }}
+                    </span>
+                </div>
+            </div>
+            {% if current_user.school %}
+            <div class="detail-item">
+                <div class="detail-label">School</div>
+                <div class="detail-value">{{ current_user.school.name }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="profile-section">
+        <div class="section-header">
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="profile-actions">
+            <a href="{{ url_for('profile.change_password') }}" class="action-card">
+                <div class="action-icon">🔒</div>
+                <div class="action-content">
+                    <h3>Change Password</h3>
+                    <p>Update your account security</p>
+                </div>
+            </a>
+            <a href="{{ url_for('main.challenges') }}" class="action-card">
+                <div class="action-icon">🧮</div>
+                <div class="action-content">
+                    <h3>Browse Challenges</h3>
+                    <p>Explore mathematical problems</p>
+                </div>
+            </a>
+            <a href="{{ url_for('main.leaderboard') }}" class="action-card">
+                <div class="action-icon">🏆</div>
+                <div class="action-content">
+                    <h3>View Leaderboard</h3>
+                    <p>See your ranking</p>
+                </div>
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.admin_index') }}" class="action-card admin">
+                <div class="action-icon">⚙️</div>
+                <div class="action-content">
+                    <h3>Admin Panel</h3>
+                    <p>Manage site content</p>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Account Management -->
+    <div class="profile-section">
+        <div class="section-header">
+            <h2>Account Management</h2>
+        </div>
+        <div class="account-actions">
+            <a href="{{ url_for('auth.logout') }}" class="button button-secondary">
+                <span>🚪</span> Logout
+            </a>
+            <a href="{{ url_for('profile.delete_account') }}" 
+               class="button button-danger" 
+               onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                <span>🗑️</span> Delete Account
+            </a>
+        </div>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="privacy-notice">
+        <div class="privacy-icon">🔒</div>
+        <div class="privacy-content">
+            <p><strong>Privacy Policy:</strong> We take your privacy seriously. We do not share your data with third parties. 
+            <a href="{{ url_for('main.privacy_policy') }}">Learn more about our privacy practices</a>.</p>
+        </div>
+    </div>
+</div>
 {% endblock %}

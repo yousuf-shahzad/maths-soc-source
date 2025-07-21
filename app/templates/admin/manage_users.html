@@ -3,40 +3,108 @@
 {% block content %}
 <div class="container">
     <!-- Admin Header -->
-    <div class="admin-hero" style="background: linear-gradient(135deg, #6f42c1, #007bff); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+    <div class="user-management-header">
         <h1>👥 User Management</h1>
         <p>Manage student and admin accounts for Summer Competition 2025</p>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #6f42c1;">
-            <h3 style="margin: 0; color: #6f42c1; font-size: 2rem;">{{ users|length }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Total Users</p>
+    <!-- Stats Dashboard -->
+    <div class="user-stats-grid">
+        <div class="stat-card total-users">
+            <h3>{{ total_users }}</h3>
+            <p>Total Users</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #28a745;">
-            <h3 style="margin: 0; color: #28a745; font-size: 2rem;">{{ users|selectattr('is_admin')|list|length }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Admin Users</p>
+        <div class="stat-card admin-users">
+            <h3>{{ admin_users }}</h3>
+            <p>Admin Users</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #17a2b8;">
-            <h3 style="margin: 0; color: #17a2b8; font-size: 2rem;">{{ users|rejectattr('is_admin')|list|length }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Student Users</p>
+        <div class="stat-card competition-users">
+            <h3>{{ competition_users }}</h3>
+            <p>Competition Users</p>
+        </div>
+        <div class="stat-card regular-users">
+            <h3>{{ regular_users }}</h3>
+            <p>Regular Users</p>
         </div>
     </div>
 
-    <!-- Actions Bar -->
-    <div class="actions-container" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <h2 style="margin: 0; color: #6f42c1;">👤 All Users</h2>
-        <a href="{{ url_for('admin.create_user') }}" style="background: linear-gradient(135deg, #6f42c1, #007bff); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;">
-            ➕ Create New User
-        </a>
+    <!-- Search and Filter Controls -->
+    <div class="user-controls-panel">
+        <form method="GET" id="userFiltersForm" class="user-filters-form">
+            <div class="filter-row">
+                <div class="search-group">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ current_filters.search }}" 
+                           placeholder="Search by name, class, or ID..." 
+                           class="search-input"
+                           id="searchInput">
+                    <button type="submit" class="search-btn">🔍 Search</button>
+                </div>
+                
+                <div class="filter-group">
+                    <select name="key_stage" class="filter-select">
+                        <option value="">All Key Stages</option>
+                        {% for ks in available_key_stages %}
+                            <option value="{{ ks }}" {% if current_filters.key_stage == ks %}selected{% endif %}>{{ ks }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="year" class="filter-select">
+                        <option value="">All Years</option>
+                        {% for year in available_years %}
+                            <option value="{{ year }}" {% if current_filters.year == year|string %}selected{% endif %}>Year {{ year }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="user_type" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="competition" {% if current_filters.user_type == 'competition' %}selected{% endif %}>Competition</option>
+                        <option value="regular" {% if current_filters.user_type == 'regular' %}selected{% endif %}>Regular</option>
+                    </select>
+                    
+                    <select name="admin_status" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="admin" {% if current_filters.admin_status == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="user" {% if current_filters.admin_status == 'user' %}selected{% endif %}>User</option>
+                    </select>
+                    
+                    <select name="per_page" class="filter-select">
+                        <option value="25" {% if current_filters.per_page == 25 %}selected{% endif %}>25 per page</option>
+                        <option value="50" {% if current_filters.per_page == 50 %}selected{% endif %}>50 per page</option>
+                        <option value="100" {% if current_filters.per_page == 100 %}selected{% endif %}>100 per page</option>
+                    </select>
+                </div>
+                
+                <div class="action-group">
+                    <button type="submit" class="filter-btn">Apply Filters</button>
+                    <a href="{{ url_for('admin.manage_users') }}" class="clear-btn">Clear All</a>
+                    <a href="{{ url_for('admin.create_user') }}" class="create-user-btn">➕ Create New User</a>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Bulk Actions -->
+        <div class="bulk-actions-panel" id="bulkActionsPanel" style="display: none;">
+            <div class="bulk-info">
+                <span id="selectedCount">0</span> users selected
+            </div>
+            <div class="bulk-buttons">
+                <button onclick="performBulkAction('promote_admin')" class="bulk-btn admin-btn">👑 Make Admin</button>
+                <button onclick="performBulkAction('demote_admin')" class="bulk-btn demote-btn">👤 Remove Admin</button>
+                <button onclick="performBulkAction('mark_competition')" class="bulk-btn competition-btn">🏆 Mark Competition</button>
+                <button onclick="performBulkAction('unmark_competition')" class="bulk-btn regular-btn">🎓 Mark Regular</button>
+                <button onclick="performBulkAction('delete')" class="bulk-btn delete-btn">🗑️ Delete Selected</button>
+                <button onclick="clearSelection()" class="bulk-btn cancel-btn">✖️ Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert" style="padding: 1rem; margin-bottom: 1rem; border-radius: 6px; border-left: 4px solid {{ '#28a745' if category == 'success' else '#dc3545' }}; background: {{ '#d4edda' if category == 'success' else '#f8d7da' }}; color: {{ '#155724' if category == 'success' else '#721c24' }};">
+                <div class="alert alert-{{ category }}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -44,172 +112,270 @@
     {% endwith %}
 
     <!-- Users Table -->
-    <div class="users-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div class="table-responsive" style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+    <div class="users-table-container">
+        <div class="table-header">
+            <h2>Users ({{ pagination.total }} total)</h2>
+            <div class="table-controls">
+                <button onclick="selectAll()" class="select-all-btn">Select All</button>
+                <button onclick="clearSelection()" class="clear-selection-btn">Clear Selection</button>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="users-table">
                 <thead>
-                    <tr style="background: linear-gradient(135deg, #6f42c1, #007bff);">
-                        <th style="padding: 1rem; text-align: left; border-radius: 6px 0 0 0;">👤 Name</th>
-                        <th style="padding: 1rem; text-align: center;">#️⃣ ID</th>
-                        <th style="padding: 1rem; text-align: center;">📚 Year</th>
-                        <th style="padding: 1rem; text-align: center;">🔢 Class/School</th>
-                        <th style="padding: 1rem; text-align: center;">📊 Key Stage</th>
-                        <th style="padding: 1rem; text-align: center;">🏆 Type</th>
-                        <th style="padding: 1rem; text-align: center;">⭐ Status</th>
-                        <th style="padding: 1rem; text-align: center; border-radius: 0 6px 0 0;">⚙️ Actions</th>
+                    <tr>
+                        <th class="select-col">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllSelection(this)">
+                        </th>
+                        <th>👤 Name</th>
+                        <th>#️⃣ ID</th>
+                        <th>📚 Year</th>
+                        <th>🔢 Class/School</th>
+                        <th>📊 Key Stage</th>
+                        <th>🏆 Type</th>
+                        <th>⭐ Status</th>
+                        <th>📅 Joined</th>
+                        <th>⚙️ Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
-                        <tr style="border-bottom: 1px solid #e9ecef; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">
-                            <td style="padding: 1rem; font-weight: bold; color: #6f42c1;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    {% if user.is_admin %}👑{% elif user.is_competition_participant %}�{% else %}�🎓{% endif %}
-                                    {{ user.full_name }}
+                        <tr class="user-row" data-user-id="{{ user.id }}">
+                            <td class="select-col">
+                                <input type="checkbox" class="user-checkbox" value="{{ user.id }}" onchange="updateBulkActions()">
+                            </td>
+                            <td class="user-name">
+                                <div class="user-info">
+                                    <span class="user-icon">
+                                        {% if user.is_admin %}👑{% elif user.is_competition_participant %}🏆{% else %}🎓{% endif %}
+                                    </span>
+                                    <span class="name">{{ user.full_name }}</span>
                                 </div>
                             </td>
-                            <td style="padding: 1rem; text-align: center; color: #666; font-family: monospace;">{{ user.id }}</td>
-                            <td style="padding: 1rem; text-align: center; color: #666;">
-                                <span style="background: #e9ecef; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
-                                    Year {{ user.year }}
-                                </span>
+                            <td class="user-id">{{ user.id }}</td>
+                            <td class="user-year">
+                                <span class="year-badge">Year {{ user.year }}</span>
                             </td>
-                            <td style="padding: 1rem; text-align: center; color: #666;">
+                            <td class="user-class">
                                 {% if user.is_competition_participant and user.school %}
-                                    <span style="background: #e7f3ff; color: #0056b3; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">
-                                        🏫 {{ user.school.name }}
-                                    </span>
+                                    <span class="school-badge">🏫 {{ user.school.name }}</span>
                                 {% else %}
                                     {{ user.maths_class or '—' }}
                                 {% endif %}
                             </td>
-                            <td style="padding: 1rem; text-align: center;">
-                                <span style="background: {% if user.key_stage == 'KS3' %}#fff8e1{% elif user.key_stage == 'KS4' %}#fff3cd{% else %}#d4edda{% endif %}; color: {% if user.key_stage == 'KS3' %}#ff6b6b{% elif user.key_stage == 'KS4' %}#ffa500{% else %}#28a745{% endif %}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">
+                            <td class="user-key-stage">
+                                <span class="key-stage-badge ks-{{ user.key_stage.lower() if user.key_stage }}">
                                     {{ user.key_stage }}
                                 </span>
                             </td>
-                            <td style="padding: 1rem; text-align: center;">
+                            <td class="user-type">
                                 {% if user.is_competition_participant %}
-                                    <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
-                                        🏆 Summer
-                                    </span>
+                                    <span class="type-badge competition">🏆 Summer</span>
                                 {% else %}
-                                    <span style="background: #e9ecef; color: #495057; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
-                                        🎓 Regular
-                                    </span>
+                                    <span class="type-badge regular">🎓 Regular</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 1rem; text-align: center;">
-                                <span style="background: {% if user.is_admin %}#d4edda{% else %}#e2e3e5{% endif %}; color: {% if user.is_admin %}#155724{% else %}#495057{% endif %}; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.875rem; font-weight: bold;">
+                            <td class="user-status">
+                                <span class="status-badge {% if user.is_admin %}admin{% else %}user{% endif %}">
                                     {% if user.is_admin %}👑 Admin{% else %}👤 User{% endif %}
                                 </span>
                             </td>
-                            <td style="padding: 1rem; text-align: center;">
-                                <div style="display: flex; gap: 0.25rem; justify-content: center; flex-wrap: wrap;">
-                                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
-                                       style="background: #17a2b8; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;">
-                                        ✏️ Edit
-                                    </a>
+                            <td class="user-joined">
+                                {{ user.date_joined.strftime('%Y-%m-%d') if user.date_joined else '—' }}
+                            </td>
+                            <td class="user-actions">
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="action-btn edit-btn" title="Edit User">✏️</a>
                                     <a href="{{ url_for('admin.toggle_admin', user_id=user.id) }}" 
-                                       style="background: #ffc107; color: #212529; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
-                                       onclick="return confirm('Are you sure you want to toggle admin status for {{ user.full_name }}?');">
-                                        👑 Toggle
-                                    </a>
+                                       class="action-btn admin-btn" 
+                                       title="Toggle Admin Status"
+                                       onclick="return confirm('Toggle admin status for {{ user.full_name }}?');">👑</a>
                                     <a href="{{ url_for('admin.reset_password', user_id=user.id) }}" 
-                                       style="background: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
-                                       onclick="return confirm('Are you sure you want to reset the password for {{ user.full_name }}?');">
-                                        🔑 Reset
-                                    </a>
+                                       class="action-btn reset-btn" 
+                                       title="Reset Password"
+                                       onclick="return confirm('Reset password for {{ user.full_name }}?');">🔑</a>
                                     {% if current_user.id != user.id %}
                                         <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
-                                           style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; font-weight: bold; transition: background-color 0.2s;"
-                                           onclick="return confirm('Are you sure you want to delete {{ user.full_name }}? This action cannot be undone.');">
-                                            🗑️ Delete
-                                        </a>
+                                           class="action-btn delete-btn" 
+                                           title="Delete User"
+                                           onclick="return confirm('Delete {{ user.full_name }}? This cannot be undone.');">🗑️</a>
                                     {% endif %}
                                 </div>
                             </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="7" style="padding: 2rem; text-align: center; color: #666; font-style: italic;">
-                                No users found. Create the first user! 👤
+                            <td colspan="10" class="no-users">
+                                <div class="empty-state">
+                                    <h3>👤 No users found</h3>
+                                    <p>No users match your current filters.</p>
+                                    <a href="{{ url_for('admin.create_user') }}" class="create-user-btn">Create First User</a>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Help Section -->
-    <div class="help-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #007bff; margin-top: 2rem;">
-        <h3 style="color: #007bff; margin: 0 0 1rem 0;">💡 User Management Tips</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; color: #666;">
-            <div>
-                <strong>👑 Admin Users:</strong> Can access admin panel and manage content
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+            <div class="pagination-container">
+                <div class="pagination">
+                    {% if pagination.has_prev %}
+                        <a href="{{ url_for('admin.manage_users', page=pagination.prev_num, **current_filters) }}" 
+                           class="page-btn prev-btn">« Previous</a>
+                    {% endif %}
+                    
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                                <a href="{{ url_for('admin.manage_users', page=page_num, **current_filters) }}" 
+                                   class="page-btn">{{ page_num }}</a>
+                            {% else %}
+                                <span class="page-btn current">{{ page_num }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="page-btn ellipsis">…</span>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                        <a href="{{ url_for('admin.manage_users', page=pagination.next_num, **current_filters) }}" 
+                           class="page-btn next-btn">Next »</a>
+                    {% endif %}
+                </div>
+                
+                <div class="pagination-info">
+                    Showing {{ pagination.per_page * (pagination.page - 1) + 1 }}-{{ pagination.per_page * (pagination.page - 1) + users|length }} of {{ pagination.total }} users
+                </div>
             </div>
-            <div>
-                <strong>� Summer Participants:</strong> Represent schools in summer competition
-            </div>
-            <div>
-                <strong>🎓 Regular Students:</strong> Can participate in general challenges
-            </div>
-            <div>
-                <strong>🏫 School Assignment:</strong> Required for summer participants only
-            </div>
-            <div>
-                <strong>🔑 Password Reset:</strong> Generates a new random password for the user
-            </div>
-            <div>
-                <strong>🗑️ Delete User:</strong> Permanently removes user and all associated data
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
-<style>
-.actions-container a:hover {
-    transform: translateY(-2px);
+<script>
+// User selection and bulk actions
+let selectedUsers = new Set();
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    selectedUsers.clear();
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            selectedUsers.add(checkbox.value);
+        }
+    });
+    
+    const bulkPanel = document.getElementById('bulkActionsPanel');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (selectedUsers.size > 0) {
+        bulkPanel.style.display = 'flex';
+        selectedCount.textContent = selectedUsers.size;
+    } else {
+        bulkPanel.style.display = 'none';
+    }
+    
+    // Update select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectedUsers.size === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (selectedUsers.size === checkboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
 }
 
-.table-responsive a:hover {
-    opacity: 0.8;
+function toggleAllSelection(selectAllCheckbox) {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    updateBulkActions();
 }
 
-@media (max-width: 768px) {
-    .stats-container {
-        grid-template-columns: repeat(2, 1fr) !important;
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateBulkActions();
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    selectedUsers.clear();
+    document.getElementById('bulkActionsPanel').style.display = 'none';
+    document.getElementById('selectAllCheckbox').checked = false;
+}
+
+async function performBulkAction(action) {
+    if (selectedUsers.size === 0) {
+        alert('Please select users first.');
+        return;
     }
     
-    .actions-container {
-        flex-direction: column !important;
-        text-align: center;
+    const actionNames = {
+        'promote_admin': 'promote to admin',
+        'demote_admin': 'remove admin privileges from',
+        'mark_competition': 'mark as competition participants',
+        'unmark_competition': 'mark as regular users',
+        'delete': 'delete'
+    };
+    
+    const actionName = actionNames[action] || action;
+    if (!confirm(`Are you sure you want to ${actionName} ${selectedUsers.size} user(s)?`)) {
+        return;
     }
     
-    .users-container {
-        padding: 1rem !important;
-    }
-    
-    table {
-        font-size: 0.8rem !important;
-    }
-    
-    th, td {
-        padding: 0.5rem !important;
-    }
-    
-    .admin-hero h1 {
-        font-size: 1.5rem;
-    }
-    
-    .admin-hero p {
-        font-size: 0.9rem;
-    }
-    
-    .help-section {
-        padding: 1rem !important;
+    try {
+        const response = await fetch('/admin/users/bulk-action', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: action,
+                user_ids: Array.from(selectedUsers)
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Network error: ' + error.message);
     }
 }
-</style>
+
+// Auto-submit filters on change
+document.querySelectorAll('.filter-select').forEach(select => {
+    select.addEventListener('change', function() {
+        document.getElementById('userFiltersForm').submit();
+    });
+});
+
+// Real-time search
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        document.getElementById('userFiltersForm').submit();
+    }, 500);
+});
+</script>
 {% endblock %}

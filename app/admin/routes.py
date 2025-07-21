@@ -35,6 +35,7 @@ Maintenance Notes:
 
 import os
 import datetime
+from datetime import timedelta
 import string
 import random
 from functools import wraps
@@ -49,6 +50,7 @@ from flask import (
     send_from_directory,
     current_app,
     send_file,
+    jsonify,
 )
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
@@ -80,7 +82,8 @@ from app.admin.forms import (
     AnnouncementForm,
     SchoolForm,
     SummerChallengeForm,
-    SummerLeaderboardEntryForm
+    SummerLeaderboardEntryForm,
+    AnswerBoxForm
 )
 
 # ============================================================================
@@ -175,7 +178,22 @@ def get_key_stage(year):
 @admin_required
 def admin_index():
     """Admin dashboard homepage"""
-    return render_template("admin/index.html", title="Admin Dashboard")
+    now = datetime.datetime.now()
+    
+    # Get statistics for dashboard
+    total_challenges = Challenge.query.count()
+    released_challenges = Challenge.query.filter(Challenge.release_at <= now).count()
+    unreleased_challenges = Challenge.query.filter(Challenge.release_at > now).count()
+    
+    stats = {
+        'total_challenges': total_challenges,
+        'released_challenges': released_challenges,
+        'unreleased_challenges': unreleased_challenges,
+        'total_users': User.query.count(),
+        'total_articles': Article.query.count()
+    }
+    
+    return render_template("admin/index.html", title="Admin Dashboard", stats=stats)
 
 
 # ============================================================================
@@ -354,50 +372,90 @@ def delete_article(article_id):
 def view_challenge(challenge_id):
     """
     Displays a challenge and handles answer submissions
-
-    Args:
-        challenge_id: int ID of challenge to view
+    Only shows challenges that have been released or if user is admin
     """
     challenge = Challenge.query.get_or_404(challenge_id)
+    
+    # Check if challenge is released (unless user is admin)
+    if not current_user.is_admin and challenge.release_at and challenge.release_at > datetime.datetime.now():
+        flash("This challenge is not yet available.")
+        return redirect(url_for("main.challenges"))
+    
     form = AnswerSubmissionForm()
 
+    # Handle form submission - COPY EXACT LOGIC FROM SUMMER CHALLENGES
     if form.validate_on_submit():
+        # Check if challenge is locked - if so, don't allow submissions
+        if challenge.is_locked and not current_user.is_admin:
+            flash("This challenge is locked. No more submissions are allowed.")
+            return redirect(url_for("admin.view_challenge", challenge_id=challenge_id))
+            
         try:
+            answer_box_id = request.form.get("answer_box_id")
+            answer_box = ChallengeAnswerBox.query.get_or_404(answer_box_id)
+            
+            # Check if user already has a correct submission for this box
+            existing_correct = AnswerSubmission.query.filter_by(
+                user_id=current_user.id,
+                answer_box_id=answer_box_id,
+                is_correct=True
+            ).first()
+            
+            if existing_correct:
+                flash("You have already correctly answered this part.")
+                return redirect(url_for("admin.view_challenge", challenge_id=challenge_id))
+            
+            # Create new submission
             submission = AnswerSubmission(
                 user_id=current_user.id,
-                challenge_id=challenge.id,
+                challenge_id=challenge_id,
+                answer_box_id=answer_box_id,
                 answer=form.answer.data,
+                is_correct=(form.answer.data.strip() == answer_box.correct_answer.strip())
             )
-
+            
             db.session.add(submission)
             db.session.commit()
-
-            is_correct = (
-                form.answer.data.lower().strip()
-                == challenge.correct_answer.lower().strip()
-            )
-            flash(
-                f'Your answer is {"correct" if is_correct else "incorrect"}!',
-                "success" if is_correct else "error",
-            )
+            
+            if submission.is_correct:
+                flash("Correct! Well done!")
+            else:
+                flash("Incorrect. Try again!")
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error(f"Database error: {str(e)}")
-            flash("Error submitting answer. Please try again.", "error")
+            current_app.logger.error(f"Error submitting answer: {str(e)}")
+            flash("Error submitting answer. Please try again.")
 
         return redirect(url_for("admin.view_challenge", challenge_id=challenge_id))
 
-    # Get previous submissions
-    previous_submission = AnswerSubmission.query.filter_by(
-        user_id=current_user.id, challenge_id=challenge_id
-    ).first()
+    # Get user's previous submissions and organize by answer box
+    submissions = {}
+    forms = {}
+    
+    for answer_box in challenge.answer_boxes:
+        user_submissions = AnswerSubmission.query.filter_by(
+            user_id=current_user.id,
+            answer_box_id=answer_box.id
+        ).order_by(AnswerSubmission.submitted_at.desc()).all()
+        
+        submissions[answer_box.id] = user_submissions
+        forms[answer_box.id] = AnswerSubmissionForm()
 
-    if previous_submission:
-        form.answer.data = previous_submission.answer
+    # Check if all parts are correct
+    all_correct = all(
+        any(sub.is_correct for sub in submissions.get(box.id, []))
+        for box in challenge.answer_boxes
+    )
 
     return render_template(
-        "admin/challenge.html", title=challenge.title, challenge=challenge, form=form
+        "main/challenge.html", 
+        title=challenge.title, 
+        challenge=challenge, 
+        form=form,
+        forms=forms,
+        submissions=submissions,
+        all_correct=all_correct
     )
 
 
@@ -405,78 +463,95 @@ def view_challenge(challenge_id):
 @login_required
 @admin_required
 def create_challenge():
-    """Creates a new challenge with associated answer boxes"""
     form = ChallengeForm()
-
     if form.validate_on_submit():
         try:
+            # Set release_at to now if not specified
+            release_at = form.release_at.data if form.release_at.data else datetime.datetime.now()
+            
             challenge = Challenge(
                 title=form.title.data,
                 content=form.content.data,
-                date_posted=datetime.datetime.now(),
                 key_stage=form.key_stage.data,
+                date_posted=datetime.datetime.now(),
+                release_at=release_at,
+                lock_after_hours=form.lock_after_hours.data  # Add this
             )
 
             # Handle image upload
-            challenge_folder = create_challenge_folder(challenge.date_posted)
             if form.image.data:
-                try:
-                    filename = handle_file_upload(
-                        form.image.data, challenge_folder, form.image.data.filename
-                    )
-                    challenge.file_url = filename
-                except IOError as e:
-                    current_app.logger.error(f"File save error: {str(e)}")
-                    flash("Error saving the image file. Please try again.", "error")
-                    return render_template(
-                        "admin/create_challenge.html",
-                        title="Create Challenge",
-                        form=form,
-                    )
-
-            # Add challenge to get ID
-            db.session.add(challenge)
-            db.session.flush()
-
-            # Create answer boxes
-            for box_form in form.answer_boxes:
-                answer_box = ChallengeAnswerBox(
-                    challenge_id=challenge.id,
-                    box_label=box_form.box_label.data,
-                    correct_answer=box_form.correct_answer.data,
-                    order=int(box_form.order.data) if box_form.order.data else None,
+                folder_path = create_challenge_folder(challenge.date_posted)
+                filename = handle_file_upload(
+                    form.image.data, folder_path, form.image.data.filename
                 )
-                db.session.add(answer_box)
+                challenge.file_url = filename
+
+            db.session.add(challenge)
+            db.session.flush()  # Get the ID
+
+            # Handle answer boxes
+            for box_data in form.answer_boxes.data:
+                if box_data["box_label"] and box_data["correct_answer"]:
+                    answer_box = ChallengeAnswerBox(
+                        challenge_id=challenge.id,
+                        box_label=box_data["box_label"],
+                        correct_answer=box_data["correct_answer"],
+                        order=int(box_data["order"]) if box_data["order"] else 1,
+                    )
+                    db.session.add(answer_box)
 
             db.session.commit()
-            flash("Challenge created successfully.", "success")
+            
+            # Provide feedback about release and lock timing
+            if release_at <= datetime.datetime.now():
+                if form.lock_after_hours.data:
+                    flash(f"Challenge created and published! It will automatically lock after {form.lock_after_hours.data} hours.")
+                else:
+                    flash("Challenge created and published immediately!")
+            else:
+                if form.lock_after_hours.data:
+                    flash(f"Challenge scheduled for release on {release_at.strftime('%B %d, %Y at %I:%M %p')} and will lock after {form.lock_after_hours.data} hours!")
+                else:
+                    flash(f"Challenge scheduled for release on {release_at.strftime('%B %d, %Y at %I:%M %p')}!")
+            
             return redirect(url_for("admin.manage_challenges"))
 
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error creating challenge: {str(e)}")
-            flash("Error creating challenge. Please try again.", "error")
+            flash("Error creating challenge. Please try again.")
 
     return render_template(
         "admin/create_challenge.html", title="Create Challenge", form=form
     )
 
+@bp.route("/admin/challenges/toggle_lock/<int:challenge_id>", methods=["POST"])
+@login_required
+@admin_required
+def toggle_challenge_lock(challenge_id):
+    """Toggle manual lock status for a challenge"""
+    challenge = Challenge.query.get_or_404(challenge_id)
+    
+    try:
+        challenge.is_manually_locked = not challenge.is_manually_locked
+        db.session.commit()
+        
+        if challenge.is_manually_locked:
+            flash(f"Challenge '{challenge.title}' has been manually locked. Answers are now revealed.")
+        else:
+            flash(f"Challenge '{challenge.title}' has been unlocked. Students can submit answers again.")
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error toggling challenge lock: {str(e)}")
+        flash("Error updating challenge lock status.")
+    
+    return redirect(url_for("admin.manage_challenges"))
 
 @bp.route("/admin/challenges/edit/<int:challenge_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
 def edit_challenge(challenge_id):
-    """
-    Edits an existing challenge and its answer boxes
-
-    Args:
-        challenge_id: int ID of challenge to edit
-
-    Notes:
-        - Handles image upload
-        - Manages answer boxes (create/update/archive)
-        - Preserves boxes with existing submissions
-    """
     challenge = Challenge.query.get_or_404(challenge_id)
     form = ChallengeForm(obj=challenge)
 
@@ -485,42 +560,40 @@ def edit_challenge(challenge_id):
             challenge.title = form.title.data
             challenge.content = form.content.data
             challenge.key_stage = form.key_stage.data
+            
+            # Update release time and lock settings
+            if form.release_at.data:
+                challenge.release_at = form.release_at.data
+            challenge.lock_after_hours = form.lock_after_hours.data
 
             # Handle image upload
             if form.image.data:
-                challenge_folder = create_challenge_folder(challenge.date_posted)
+                folder_path = create_challenge_folder(challenge.date_posted)
                 filename = handle_file_upload(
-                    form.image.data, challenge_folder, form.image.data.filename
+                    form.image.data, folder_path, form.image.data.filename
                 )
                 challenge.file_url = filename
 
-            # Manage answer boxes
+            # Handle answer boxes (existing logic)
             existing_boxes = {box.order: box for box in challenge.answer_boxes}
             used_box_ids = set()
 
             for index, box_form in enumerate(form.answer_boxes):
                 if index in existing_boxes:
-                    # Update existing box
                     box = existing_boxes[index]
                     box.box_label = box_form.box_label.data
                     box.correct_answer = box_form.correct_answer.data
-                    box.order = (
-                        int(box_form.order.data) if box_form.order.data else index
-                    )
+                    box.order = int(box_form.order.data) if box_form.order.data else index
                     used_box_ids.add(box.id)
                 else:
-                    # Create new box
                     new_box = ChallengeAnswerBox(
                         challenge_id=challenge.id,
                         box_label=box_form.box_label.data,
                         correct_answer=box_form.correct_answer.data,
-                        order=int(box_form.order.data)
-                        if box_form.order.data
-                        else index,
+                        order=int(box_form.order.data) if box_form.order.data else index,
                     )
                     db.session.add(new_box)
 
-            # Archive unused boxes with submissions, delete ones without
             for box in challenge.answer_boxes:
                 if box.id not in used_box_ids:
                     if box.submissions:
@@ -535,27 +608,27 @@ def edit_challenge(challenge_id):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error updating challenge: {str(e)}")
-            flash("Error updating challenge. Please try again.", "error")
+            flash("Error updating challenge. Please try again.")
 
     # Pre-populate form
     if request.method == "GET":
         form.title.data = challenge.title
         form.content.data = challenge.content
         form.key_stage.data = challenge.key_stage
+        form.release_at.data = challenge.release_at
+        form.lock_after_hours.data = challenge.lock_after_hours
 
         # Add current answer boxes
         form.answer_boxes.entries = []
         for box in sorted(challenge.answer_boxes, key=lambda x: x.order or 0):
-            form.answer_boxes.append_entry(
-                {
-                    "box_label": box.box_label,
-                    "correct_answer": box.correct_answer,
-                    "order": str(box.order) if box.order is not None else "",
-                }
-            )
+            box_form = AnswerBoxForm()
+            box_form.box_label.data = box.box_label
+            box_form.correct_answer.data = box.correct_answer
+            box_form.order.data = str(box.order or 1)
+            form.answer_boxes.append_entry(box_form)
 
     return render_template(
-        "admin/edit_challenge.html", title="Edit Challenge", form=form
+        "admin/edit_challenge.html", title="Edit Challenge", form=form, challenge=challenge
     )
 
 
@@ -608,10 +681,15 @@ def upload():
 @login_required
 @admin_required
 def manage_challenges():
-    """Lists all challenges for management"""
-    challenges = Challenge.query.order_by(Challenge.date_posted.desc()).all()
+    """Lists all challenges for management, showing both released and unreleased"""
+    now = datetime.datetime.now()
+    released_challenges = Challenge.query.filter(Challenge.release_at <= now).order_by(Challenge.date_posted.desc()).all()
+    unreleased_challenges = Challenge.query.filter(Challenge.release_at > now).order_by(Challenge.release_at.asc()).all()
     return render_template(
-        "admin/manage_challenges.html", title="Manage Challenges", challenges=challenges
+        "admin/manage_challenges.html", 
+        title="Manage Challenges", 
+        released_challenges=released_challenges,
+        unreleased_challenges=unreleased_challenges
     )
 
 
@@ -685,9 +763,234 @@ def delete_challenge(challenge_id):
 @login_required
 @admin_required
 def manage_users():
-    """Lists all users for management"""
-    users = User.query.all()
-    return render_template("admin/manage_users.html", title="Manage Users", users=users)
+    """Enhanced user management with search, filtering, and pagination"""
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search = request.args.get('search', '', type=str)
+    key_stage_filter = request.args.get('key_stage', '', type=str)
+    year_filter = request.args.get('year', '', type=str)
+    user_type_filter = request.args.get('user_type', '', type=str)
+    admin_filter = request.args.get('admin_status', '', type=str)
+    
+    # Ensure per_page is within reasonable limits
+    per_page = min(per_page, 100)  # Max 100 users per page
+    
+    # Start with base query
+    query = User.query
+    
+    # Apply search filter
+    if search:
+        search_term = f"%{search.strip()}%"
+        query = query.filter(
+            db.or_(
+                User.full_name.ilike(search_term),
+                User.maths_class.ilike(search_term),
+                User.id.like(search_term)
+            )
+        )
+    
+    # Apply key stage filter
+    if key_stage_filter and key_stage_filter != 'all':
+        query = query.filter(User.key_stage == key_stage_filter)
+    
+    # Apply year filter
+    if year_filter and year_filter != 'all':
+        try:
+            year_int = int(year_filter)
+            query = query.filter(User.year == year_int)
+        except ValueError:
+            pass
+    
+    # Apply user type filter
+    if user_type_filter and user_type_filter != 'all':
+        if user_type_filter == 'competition':
+            query = query.filter(User.is_competition_participant == True)
+        elif user_type_filter == 'regular':
+            query = query.filter(User.is_competition_participant == False)
+    
+    # Apply admin status filter
+    if admin_filter and admin_filter != 'all':
+        if admin_filter == 'admin':
+            query = query.filter(User.is_admin == True)
+        elif admin_filter == 'user':
+            query = query.filter(User.is_admin == False)
+    
+    # Add ordering
+    query = query.order_by(User.full_name.asc())
+    
+    # Execute paginated query
+    users_pagination = query.paginate(
+        page=page, 
+        per_page=per_page, 
+        error_out=False
+    )
+    
+    # Get statistics for dashboard
+    total_users = User.query.count()
+    admin_users = User.query.filter(User.is_admin == True).count()
+    competition_users = User.query.filter(User.is_competition_participant == True).count()
+    
+    # Get unique values for filter dropdowns
+    available_years = db.session.query(User.year).distinct().filter(User.year.isnot(None)).order_by(User.year).all()
+    available_years = [year[0] for year in available_years]
+    
+    available_key_stages = db.session.query(User.key_stage).distinct().order_by(User.key_stage).all()
+    available_key_stages = [ks[0] for ks in available_key_stages]
+    
+    return render_template(
+        "admin/manage_users.html", 
+        title="Manage Users",
+        users=users_pagination.items,
+        pagination=users_pagination,
+        total_users=total_users,
+        admin_users=admin_users,
+        competition_users=competition_users,
+        regular_users=total_users - competition_users,
+        available_years=available_years,
+        available_key_stages=available_key_stages,
+        current_filters={
+            'search': search,
+            'key_stage': key_stage_filter,
+            'year': year_filter,
+            'user_type': user_type_filter,
+            'admin_status': admin_filter,
+            'per_page': per_page
+        }
+    )
+
+@bp.route("/admin/users/search")
+@login_required
+@admin_required
+def users_search():
+    """AJAX endpoint for dynamic user search"""
+    query = request.args.get('q', '', type=str)
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'users': []})
+    
+    search_term = f"%{query.strip()}%"
+    users = User.query.filter(
+        db.or_(
+            User.full_name.ilike(search_term),
+            User.maths_class.ilike(search_term),
+            User.id.like(search_term)
+        )
+    ).limit(limit).all()
+    
+    user_data = []
+    for user in users:
+        user_data.append({
+            'id': user.id,
+            'full_name': user.full_name,
+            'maths_class': user.maths_class,
+            'key_stage': user.key_stage,
+            'year': user.year,
+            'is_admin': user.is_admin,
+            'is_competition_participant': user.is_competition_participant,
+            'date_joined': user.date_joined.strftime('%Y-%m-%d') if user.date_joined else None
+        })
+    
+    return jsonify({'users': user_data})
+
+@bp.route("/admin/users/bulk-action", methods=["POST"])
+@login_required
+@admin_required
+def users_bulk_action():
+    """Handle bulk actions on users"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    action = data.get('action')
+    user_ids = data.get('user_ids', [])
+    
+    if not action or not user_ids:
+        return jsonify({'success': False, 'error': 'Action and user IDs required'}), 400
+    
+    try:
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        
+        if action == 'promote_admin':
+            for user in users:
+                if not user.is_admin:  # Don't demote current admin accidentally
+                    user.is_admin = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Promoted {len(users)} users to admin'})
+        
+        elif action == 'demote_admin':
+            # Prevent demoting the current user
+            current_user_id = current_user.id
+            users_to_demote = [user for user in users if user.id != current_user_id and user.is_admin]
+            
+            for user in users_to_demote:
+                user.is_admin = False
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Demoted {len(users_to_demote)} users from admin'})
+        
+        elif action == 'mark_competition':
+            for user in users:
+                user.is_competition_participant = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Marked {len(users)} users as competition participants'})
+        
+        elif action == 'unmark_competition':
+            for user in users:
+                user.is_competition_participant = False
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Unmarked {len(users)} users from competition'})
+        
+        elif action == 'delete':
+            # Safety check - don't delete current user
+            users_to_delete = [user for user in users if user.id != current_user.id]
+            
+            for user in users_to_delete:
+                db.session.delete(user)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Deleted {len(users_to_delete)} users'})
+        
+        else:
+            return jsonify({'success': False, 'error': 'Invalid action'}), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route("/admin/users/stats")
+@login_required  
+@admin_required
+def users_stats():
+    """Get user statistics for dashboard widgets"""
+    total_users = User.query.count()
+    admin_users = User.query.filter(User.is_admin == True).count()
+    competition_users = User.query.filter(User.is_competition_participant == True).count()
+    
+    # Users by key stage
+    key_stage_stats = db.session.query(
+        User.key_stage, 
+        db.func.count(User.id)
+    ).group_by(User.key_stage).all()
+    
+    # Users by year
+    year_stats = db.session.query(
+        User.year,
+        db.func.count(User.id)
+    ).group_by(User.year).order_by(User.year).all()
+    
+    # Recent registrations (last 30 days)
+    thirty_days_ago = datetime.datetime.now() - timedelta(days=30)
+    recent_users = User.query.filter(User.date_joined >= thirty_days_ago).count()
+    
+    return jsonify({
+        'total_users': total_users,
+        'admin_users': admin_users,
+        'competition_users': competition_users,
+        'regular_users': total_users - competition_users,
+        'recent_users': recent_users,
+        'key_stage_breakdown': dict(key_stage_stats),
+        'year_breakdown': dict(year_stats)
+    })
 
 
 @bp.route("/admin/manage_users/create", methods=["GET", "POST"])
@@ -836,6 +1139,8 @@ def delete_user(user_id):
         LeaderboardEntry.query.filter_by(user_id=user.id).delete()
         Article.query.filter_by(user_id=user.id).delete()
         AnswerSubmission.query.filter_by(user_id=user.id).delete()
+        SummerLeaderboard.query.filter_by(user_id=user.id).delete()
+        SummerSubmission.query.filter_by(user_id=user.id).delete()
 
         # Delete user
         db.session.delete(user)
@@ -1039,7 +1344,7 @@ def edit_leaderboard_entry(entry_id):
             entry.user_id = form.user_id.data
             entry.score = form.score.data
             entry.key_stage = form.key_stage.data
-            entry.last_updated = datetime.datetime.utcnow()
+            entry.last_updated = datetime.datetime.now()
             
             db.session.commit()
             flash('Leaderboard entry updated successfully!', 'success')
@@ -1088,7 +1393,7 @@ def create_leaderboard_entry():
                 user_id=form.user_id.data,
                 score=form.score.data,
                 key_stage=form.key_stage.data,
-                last_updated=datetime.datetime.utcnow()
+                last_updated=datetime.datetime.now()
             )
             
             db.session.add(entry)
@@ -1191,7 +1496,7 @@ def update_leaderboard():
                         user_id=user.id, 
                         score=score, 
                         key_stage=key_stage,
-                        last_updated=datetime.datetime.utcnow()
+                        last_updated=datetime.datetime.now()
                     )
                     db.session.add(entry)
         
@@ -1318,8 +1623,15 @@ def manage_summer_competition():
 @login_required
 @admin_required
 def manage_summer_challenges():
-    challenges = SummerChallenge.query.order_by(SummerChallenge.date_posted.desc()).all()
-    return render_template("admin/manage_summer_challenges.html", challenges=challenges)
+    """Lists all summer challenges for management, showing both released and unreleased"""
+    now = datetime.datetime.now()
+    released_challenges = SummerChallenge.query.filter(SummerChallenge.release_at <= now).order_by(SummerChallenge.date_posted.desc()).all()
+    unreleased_challenges = SummerChallenge.query.filter(SummerChallenge.release_at > now).order_by(SummerChallenge.release_at.asc()).all()
+    return render_template(
+        "admin/manage_summer_challenges.html", 
+        released_challenges=released_challenges,
+        unreleased_challenges=unreleased_challenges
+    )
 
 @bp.route("/admin/summer_challenges/toggle_lock/<int:challenge_id>", methods=["POST"])
 @login_required
@@ -1349,12 +1661,15 @@ def create_summer_challenge():
     form = SummerChallengeForm()
     if form.validate_on_submit():
         try:
+            # Use the datetime from the form, or current time if blank
+            release_at = form.release_at.data or datetime.datetime.now()
             challenge = SummerChallenge(
                 title=form.title.data,
                 content=form.content.data,
                 key_stage=form.key_stage.data,
                 duration_hours=form.duration_hours.data,
-                date_posted=datetime.datetime.now()
+                date_posted=datetime.datetime.now(),
+                release_at=release_at,
             )
             
             # Handle image upload if provided
@@ -1538,95 +1853,397 @@ def delete_school(school_id):
 @login_required
 @admin_required
 def manage_summer_leaderboard():
-    """
-    Displays summer leaderboard management interface with key stage and school statistics
-    """
-    try:
-        # Get summer leaderboard entries with user and school information
-        summer_leaderboard = (
-            SummerLeaderboard.query
-            .join(User)
-            .join(School)
-            .order_by(User.key_stage, SummerLeaderboard.score.desc())
-            .all()
+    """Enhanced summer leaderboard management with search, filtering, and pagination"""
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    search = request.args.get('search', '', type=str)
+    key_stage_filter = request.args.get('key_stage', '', type=str)
+    school_filter = request.args.get('school_id', '', type=str)
+    sort_by = request.args.get('sort_by', 'score', type=str)
+    sort_order = request.args.get('sort_order', 'desc', type=str)
+    
+    # Ensure per_page is within reasonable limits
+    per_page = min(per_page, 100)
+    
+    # Start with base query
+    query = SummerLeaderboard.query.join(User).join(School)
+    
+    # Apply search filter
+    if search:
+        search_term = f"%{search.strip()}%"
+        query = query.filter(
+            db.or_(
+                User.full_name.ilike(search_term),
+                School.name.ilike(search_term),
+                User.id.like(search_term)
+            )
         )
+    
+    # Apply key stage filter
+    if key_stage_filter and key_stage_filter != 'all':
+        query = query.filter(User.key_stage == key_stage_filter)
+    
+    # Apply school filter
+    if school_filter and school_filter != 'all':
+        try:
+            school_id = int(school_filter)
+            query = query.filter(SummerLeaderboard.school_id == school_id)
+        except ValueError:
+            pass
+    
+    # Apply sorting
+    if sort_by == 'name':
+        if sort_order == 'asc':
+            query = query.order_by(User.full_name.asc())
+        else:
+            query = query.order_by(User.full_name.desc())
+    elif sort_by == 'school':
+        if sort_order == 'asc':
+            query = query.order_by(School.name.asc())
+        else:
+            query = query.order_by(School.name.desc())
+    elif sort_by == 'key_stage':
+        if sort_order == 'asc':
+            query = query.order_by(User.key_stage.asc())
+        else:
+            query = query.order_by(User.key_stage.desc())
+    else:  # Default to score
+        if sort_order == 'asc':
+            query = query.order_by(SummerLeaderboard.score.asc())
+        else:
+            query = query.order_by(SummerLeaderboard.score.desc())
+    
+    # Execute paginated query
+    leaderboard_pagination = query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+    
+    # Calculate comprehensive statistics
+    stats = calculate_summer_leaderboard_stats()
+    
+    # Ensure stats has all required keys with default values
+    if not stats:
+        stats = {
+            'total_entries': 0,
+            'unique_participants': 0,
+            'participating_schools': 0,
+            'max_score': 0,
+            'min_score': 0,
+            'avg_score': 0,
+            'average_score': 0,
+            'total_score': 0,
+            'key_stage_breakdown': {},
+            'school_performance': [],
+            'top_performers': []
+        }
+    
+    # Get available schools and key stages for filters
+    available_schools = db.session.query(School).order_by(School.name).all()
+    available_key_stages = db.session.query(User.key_stage).join(SummerLeaderboard).distinct().order_by(User.key_stage).all()
+    available_key_stages = [ks[0] for ks in available_key_stages if ks[0]]
+    
+    return render_template(
+        "admin/manage_summer_leaderboard.html",
+        title="Manage Summer Leaderboard",
+        summer_leaderboard=leaderboard_pagination.items,
+        pagination=leaderboard_pagination,
+        stats=stats,
+        available_schools=available_schools,
+        available_key_stages=available_key_stages,
+        current_filters={
+            'search': search,
+            'key_stage': key_stage_filter,
+            'school_id': school_filter,
+            'sort_by': sort_by,
+            'sort_order': sort_order,
+            'per_page': per_page
+        }
+    )
 
-        # Statistics by key stage
-        ks3_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS3').count()
-        ks4_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS4').count()
-        ks5_count = SummerLeaderboard.query.join(User).filter(User.key_stage == 'KS5').count()
 
-        # General statistics
+def calculate_summer_leaderboard_stats():
+    """Calculate comprehensive summer leaderboard statistics"""
+    try:
+        # Basic counts
+        total_entries = SummerLeaderboard.query.count()
         unique_users = db.session.query(SummerLeaderboard.user_id).distinct().count()
         unique_schools = db.session.query(SummerLeaderboard.school_id).distinct().count()
-
-        stats = {
-            "total_entries": SummerLeaderboard.query.count(),
-            "unique_participants": unique_users,
-            "participating_schools": unique_schools,
-            "highest_score": db.session.query(
-                db.func.max(SummerLeaderboard.score)
-            ).scalar() or 0,
-            "average_score": db.session.query(
-                db.func.avg(SummerLeaderboard.score)
-            ).scalar() or 0,
-            "total_points": db.session.query(
-                db.func.sum(SummerLeaderboard.score)
-            ).scalar() or 0,
+        
+        # Score statistics
+        score_stats = db.session.query(
+            db.func.max(SummerLeaderboard.score).label('max_score'),
+            db.func.min(SummerLeaderboard.score).label('min_score'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.sum(SummerLeaderboard.score).label('total_score')
+        ).first()
+        
+        # Key stage breakdown
+        ks_stats = db.session.query(
+            User.key_stage,
+            db.func.count(SummerLeaderboard.id).label('count'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.max(SummerLeaderboard.score).label('max_score')
+        ).join(SummerLeaderboard).group_by(User.key_stage).all()
+        
+        # School performance
+        school_stats = db.session.query(
+            School.name,
+            School.id,
+            db.func.count(SummerLeaderboard.id).label('participant_count'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.sum(SummerLeaderboard.score).label('total_score'),
+            db.func.max(SummerLeaderboard.score).label('best_score')
+        ).join(SummerLeaderboard).group_by(School.id).order_by(db.func.sum(SummerLeaderboard.score).desc()).all()
+        
+        # Top performers
+        top_performers = db.session.query(
+            User.full_name,
+            User.key_stage,
+            School.name.label('school_name'),
+            SummerLeaderboard.score
+        ).join(SummerLeaderboard).join(School).order_by(SummerLeaderboard.score.desc()).limit(10).all()
+        
+        return {
+            'total_entries': total_entries,
+            'unique_participants': unique_users,
+            'participating_schools': unique_schools,
+            'max_score': score_stats.max_score or 0,
+            'min_score': score_stats.min_score or 0,
+            'avg_score': round(score_stats.avg_score, 2) if score_stats.avg_score else 0,
+            'average_score': round(score_stats.avg_score, 2) if score_stats.avg_score else 0,  # Template compatibility
+            'total_score': score_stats.total_score or 0,
+            'key_stage_breakdown': {ks.key_stage: {
+                'count': ks.count,
+                'avg_score': round(ks.avg_score, 2) if ks.avg_score else 0,
+                'max_score': ks.max_score or 0
+            } for ks in ks_stats},
+            'school_performance': [{
+                'name': school.name,
+                'id': school.id,
+                'participants': school.participant_count,
+                'avg_score': round(school.avg_score, 2) if school.avg_score else 0,
+                'total_score': school.total_score or 0,
+                'best_score': school.best_score or 0
+            } for school in school_stats],
+            'top_performers': [{
+                'name': performer.full_name,
+                'key_stage': performer.key_stage,
+                'school': performer.school_name,
+                'score': performer.score
+            } for performer in top_performers]
         }
-
-        export_enabled = current_app.config.get("ENABLE_SUMMER_LEADERBOARD_EXPORT", True)
-
-        return render_template(
-            "admin/manage_summer_leaderboard.html",
-            title="Manage Summer Leaderboard",
-            summer_leaderboard=summer_leaderboard,
-            stats=stats,
-            ks3_count=ks3_count,
-            ks4_count=ks4_count,
-            ks5_count=ks5_count,
-            export_enabled=export_enabled,
-        )
-
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Error loading summer leaderboard: {str(e)}")
-        flash("Error loading summer leaderboard data.", "error")
-        return redirect(url_for("admin.admin_index"))
+        current_app.logger.error(f"Error calculating stats: {str(e)}")
+        return {}
+
+
+@bp.route("/admin/summer_leaderboard/search")
+@login_required
+@admin_required
+def summer_leaderboard_search():
+    """AJAX endpoint for dynamic summer leaderboard search"""
+    query = request.args.get('q', '', type=str)
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'entries': []})
+    
+    search_term = f"%{query.strip()}%"
+    entries = db.session.query(
+        SummerLeaderboard,
+        User.full_name,
+        School.name.label('school_name')
+    ).join(User).join(School).filter(
+        db.or_(
+            User.full_name.ilike(search_term),
+            School.name.ilike(search_term),
+            User.id.like(search_term)
+        )
+    ).limit(limit).all()
+    
+    entry_data = []
+    for entry, user_name, school_name in entries:
+        entry_data.append({
+            'id': entry.id,
+            'user_name': user_name,
+            'school_name': school_name,
+            'score': entry.score,
+            'last_updated': entry.last_updated.strftime('%Y-%m-%d %H:%M') if entry.last_updated else None
+        })
+    
+    return jsonify({'entries': entry_data})
+
+
+@bp.route("/admin/summer_leaderboard/bulk-action", methods=["POST"])
+@login_required
+@admin_required
+def summer_leaderboard_bulk_action():
+    """Handle bulk actions on summer leaderboard entries"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    action = data.get('action')
+    entry_ids = data.get('entry_ids', [])
+    
+    if not action or not entry_ids:
+        return jsonify({'success': False, 'error': 'Action and entry IDs required'}), 400
+    
+    try:
+        entries = SummerLeaderboard.query.filter(SummerLeaderboard.id.in_(entry_ids)).all()
+        
+        if action == 'delete':
+            for entry in entries:
+                db.session.delete(entry)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Deleted {len(entries)} entries'})
+        
+        elif action == 'recalculate':
+            updated_count = 0
+            for entry in entries:
+                # Recalculate score based on summer challenge submissions
+                user_id = entry.user_id
+                total_score = calculate_user_summer_score(user_id)
+                if entry.score != total_score:
+                    entry.score = total_score
+                    entry.last_updated = datetime.datetime.now()
+                    updated_count += 1
+            
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Recalculated scores for {updated_count} entries'})
+        
+        elif action == 'reset_scores':
+            for entry in entries:
+                entry.score = 0
+                entry.last_updated = datetime.datetime.now()
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Reset scores for {len(entries)} entries'})
+        
+        else:
+            return jsonify({'success': False, 'error': 'Invalid action'}), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def calculate_user_summer_score(user_id):
+    """Calculate a user's total score from summer challenge submissions"""
+    try:
+        # This would calculate based on SummerSubmission model
+        # Placeholder implementation - adjust based on your scoring system
+        from app.models import SummerSubmission, SummerChallenge
+        
+        total_score = 0
+        submissions = SummerSubmission.query.filter_by(user_id=user_id).all()
+        
+        for submission in submissions:
+            if submission.is_correct:
+                # Add points based on challenge difficulty or static points
+                challenge = SummerChallenge.query.get(submission.challenge_id)
+                if challenge:
+                    # Assume each correct answer gives 10 points
+                    total_score += 10
+        
+        return total_score
+    except Exception as e:
+        current_app.logger.error(f"Error calculating user score: {str(e)}")
+        return 0
+
+
+@bp.route("/admin/summer_leaderboard/stats")
+@login_required
+@admin_required
+def summer_leaderboard_stats():
+    """Get detailed summer leaderboard statistics for dashboard widgets"""
+    try:
+        stats = calculate_summer_leaderboard_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @bp.route("/admin/summer_leaderboard/export")
 @login_required
 @admin_required
 def export_summer_leaderboard():
-    """
-    Exports summer leaderboard data to CSV file
-    """
+    """Enhanced export with filtering options"""
+    # Get filter parameters
+    format_type = request.args.get('format', 'csv', type=str)
+    key_stage_filter = request.args.get('key_stage', '', type=str)
+    school_filter = request.args.get('school_id', '', type=str)
+    min_score = request.args.get('min_score', type=int)
+    max_score = request.args.get('max_score', type=int)
+    
     try:
-        # Get sorted summer leaderboard entries grouped by key stage
-        summer_leaderboard = (
-            SummerLeaderboard.query
-            .join(User)
-            .join(School)
-            .order_by(User.key_stage, SummerLeaderboard.score.desc())
-            .all()
-        )
-
-        # Create CSV data
-        csv_data = "User ID,Name,Year,Class,Key Stage,School,Score,Last Updated\n"
-        for entry in summer_leaderboard:
-            csv_data += f"{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.maths_class},{entry.user.key_stage},{entry.school.name},{entry.score},{entry.last_updated}\n"
-
-        # Create file
-        file = BytesIO()
-        file.write(csv_data.encode())
-        file.seek(0)
-
-        return send_file(
-            file,
-            as_attachment=True,
-            attachment_filename="summer_leaderboard_export.csv",
-            mimetype="text/csv",
-        )
+        # Build query with filters
+        query = SummerLeaderboard.query.join(User).join(School)
+        
+        if key_stage_filter and key_stage_filter != 'all':
+            query = query.filter(User.key_stage == key_stage_filter)
+        
+        if school_filter and school_filter != 'all':
+            try:
+                school_id = int(school_filter)
+                query = query.filter(SummerLeaderboard.school_id == school_id)
+            except ValueError:
+                pass
+        
+        if min_score is not None:
+            query = query.filter(SummerLeaderboard.score >= min_score)
+        
+        if max_score is not None:
+            query = query.filter(SummerLeaderboard.score <= max_score)
+        
+        # Order by score (highest first)
+        entries = query.order_by(SummerLeaderboard.score.desc()).all()
+        
+        if format_type == 'json':
+            # Export as JSON
+            data = []
+            for entry in entries:
+                data.append({
+                    'user_id': entry.user_id,
+                    'name': entry.user.full_name,
+                    'year': entry.user.year,
+                    'key_stage': entry.user.key_stage,
+                    'school': entry.school.name,
+                    'school_id': entry.school_id,
+                    'score': entry.score,
+                    'last_updated': entry.last_updated.isoformat() if entry.last_updated else None,
+                    'rank': data.__len__() + 1
+                })
+            
+            file = BytesIO()
+            file.write(jsonify(data).get_data())
+            file.seek(0)
+            
+            return send_file(
+                file,
+                as_attachment=True,
+                attachment_filename=f"summer_leaderboard_export_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mimetype="application/json",
+            )
+        
+        else:
+            # Export as CSV (default)
+            csv_data = "Rank,User ID,Name,Year,Key Stage,School,Score,Last Updated,Date Exported\n"
+            for rank, entry in enumerate(entries, 1):
+                csv_data += f"{rank},{entry.user_id},{entry.user.full_name},{entry.user.year},{entry.user.key_stage},{entry.school.name},{entry.score},{entry.last_updated},{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            
+            file = BytesIO()
+            file.write(csv_data.encode())
+            file.seek(0)
+            
+            return send_file(
+                file,
+                as_attachment=True,
+                attachment_filename=f"summer_leaderboard_export_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mimetype="text/csv",
+            )
 
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error exporting summer leaderboard: {str(e)}")
@@ -1634,44 +2251,187 @@ def export_summer_leaderboard():
         return redirect(url_for("admin.manage_summer_leaderboard"))
 
 
+@bp.route("/admin/summer_leaderboard/update_all")
+@login_required
+@admin_required
+def update_summer_leaderboard():
+    """Update entire summer leaderboard based on challenge submissions"""
+    try:
+        updated_count = 0
+        created_count = 0
+        
+        # Get all summer competition participants
+        participants = User.query.filter(User.is_competition_participant == True).all()
+        
+        for user in participants:
+            # Calculate user's score from summer challenge submissions
+            total_score = calculate_user_summer_score(user.id)
+            
+            # Check if user already has an entry
+            existing_entry = SummerLeaderboard.query.filter_by(user_id=user.id).first()
+            
+            if existing_entry:
+                if existing_entry.score != total_score:
+                    existing_entry.score = total_score
+                    existing_entry.last_updated = datetime.datetime.now()
+                    updated_count += 1
+            else:
+                # Create new entry if user has a score > 0
+                if total_score > 0:
+                    new_entry = SummerLeaderboard(
+                        user_id=user.id,
+                        school_id=user.school_id,
+                        score=total_score,
+                        last_updated=datetime.datetime.now()
+                    )
+                    db.session.add(new_entry)
+                    created_count += 1
+        
+        db.session.commit()
+        flash(f"Summer leaderboard updated: {updated_count} entries updated, {created_count} entries created.", "success")
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating summer leaderboard: {str(e)}")
+        flash("Error updating summer leaderboard.", "error")
+    
+    return redirect(url_for("admin.manage_summer_leaderboard"))
+
+
+@bp.route("/admin/summer_leaderboard/school_rankings")
+@login_required
+@admin_required
+def summer_school_rankings():
+    """Display school rankings and performance analytics"""
+    try:
+        # Calculate school rankings
+        school_rankings = db.session.query(
+            School.id,
+            School.name,
+            db.func.count(SummerLeaderboard.id).label('participant_count'),
+            db.func.sum(SummerLeaderboard.score).label('total_score'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.max(SummerLeaderboard.score).label('best_score'),
+            db.func.min(SummerLeaderboard.score).label('lowest_score')
+        ).join(SummerLeaderboard).group_by(School.id).order_by(
+            db.func.sum(SummerLeaderboard.score).desc()
+        ).all()
+        
+        # Key stage performance by school
+        ks_performance = db.session.query(
+            School.name,
+            User.key_stage,
+            db.func.count(SummerLeaderboard.id).label('count'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score')
+        ).join(SummerLeaderboard).join(User).group_by(
+            School.id, User.key_stage
+        ).order_by(School.name, User.key_stage).all()
+        
+        # Participation rates
+        total_participants = db.session.query(
+            School.name,
+            db.func.count(User.id).label('total_students'),
+            db.func.count(SummerLeaderboard.id).label('participants')
+        ).outerjoin(User).outerjoin(SummerLeaderboard).group_by(School.id).all()
+        
+        return render_template(
+            "admin/summer_school_rankings.html",
+            title="Summer Competition School Rankings",
+            school_rankings=school_rankings,
+            ks_performance=ks_performance,
+            participation_rates=total_participants
+        )
+        
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error loading school rankings: {str(e)}")
+        flash("Error loading school rankings.", "error")
+        return redirect(url_for("admin.manage_summer_leaderboard"))
+
+
+@bp.route("/admin/summer_leaderboard/analytics")
+@login_required
+@admin_required
+def summer_leaderboard_analytics():
+    """Advanced analytics and insights for summer competition"""
+    try:
+        # Performance trends
+        score_distribution = db.session.query(
+            db.func.count(SummerLeaderboard.id).label('count'),
+            SummerLeaderboard.score
+        ).group_by(SummerLeaderboard.score).order_by(SummerLeaderboard.score).all()
+        
+        # Top performers analysis
+        top_10_percent = db.session.query(SummerLeaderboard).order_by(
+            SummerLeaderboard.score.desc()
+        ).limit(max(1, SummerLeaderboard.query.count() // 10)).all()
+        
+        # Participation by key stage
+        ks_participation = db.session.query(
+            User.key_stage,
+            db.func.count(SummerLeaderboard.id).label('participants'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.stddev(SummerLeaderboard.score).label('score_stddev')
+        ).join(SummerLeaderboard).group_by(User.key_stage).all()
+        
+        # Recent activity
+        recent_updates = db.session.query(SummerLeaderboard, User, School).join(User).join(School).filter(
+            SummerLeaderboard.last_updated >= datetime.datetime.now() - timedelta(days=7)
+        ).order_by(SummerLeaderboard.last_updated.desc()).limit(20).all()
+        
+        return render_template(
+            "admin/summer_leaderboard_analytics.html",
+            title="Summer Competition Analytics",
+            score_distribution=score_distribution,
+            top_performers=top_10_percent,
+            ks_participation=ks_participation,
+            recent_updates=recent_updates
+        )
+        
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Error loading analytics: {str(e)}")
+        flash("Error loading analytics.", "error")
+        return redirect(url_for("admin.manage_summer_leaderboard"))
+
+
 @bp.route("/admin/summer_leaderboard/add", methods=["GET", "POST"])
 @login_required
 @admin_required
 def add_summer_leaderboard_entry():
-    """
-    Add a new summer leaderboard entry
-    """
+    """Enhanced add summer leaderboard entry with validation"""
     form = SummerLeaderboardEntryForm()
     
-    # Populate form choices
-    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage})") for user in User.query.order_by(User.full_name).all()]
+    # Only show competition participants in the dropdown
+    competition_users = User.query.filter(User.is_competition_participant == True).order_by(User.full_name).all()
+    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage}) - {user.school.name if user.school else 'No School'}") for user in competition_users]
     form.school_id.choices = [(school.id, school.name) for school in School.query.order_by(School.name).all()]
 
     if form.validate_on_submit():
         try:
             # Check if user already has a summer leaderboard entry
-            existing_entry = SummerLeaderboard.query.filter_by(
-                user_id=form.user_id.data
-            ).first()
+            existing_entry = SummerLeaderboard.query.filter_by(user_id=form.user_id.data).first()
             
             if existing_entry:
-                flash(f'User already has a summer leaderboard entry. Please edit the existing entry instead.', 'error')
-                return render_template(
-                    "admin/add_summer_leaderboard_entry.html",
-                    title="Add Summer Leaderboard Entry",
-                    form=form,
-                )
+                flash(f'User already has a summer leaderboard entry with score {existing_entry.score}. Please edit the existing entry instead.', 'error')
+                return redirect(url_for('admin.edit_summer_leaderboard_entry', entry_id=existing_entry.id))
+
+            # Validate that user is actually assigned to the selected school
+            user = User.query.get(form.user_id.data)
+            if user.school_id != form.school_id.data:
+                flash(f'Warning: User {user.full_name} is assigned to {user.school.name if user.school else "No School"} but you selected {School.query.get(form.school_id.data).name}', 'warning')
 
             entry = SummerLeaderboard(
                 user_id=form.user_id.data,
                 school_id=form.school_id.data,
                 score=form.score.data,
-                last_updated=datetime.datetime.utcnow()
+                last_updated=datetime.datetime.now()
             )
             
             db.session.add(entry)
             db.session.commit()
-            flash('Summer leaderboard entry added successfully!', 'success')
+            
+            # Log the action
+            current_app.logger.info(f"Admin {current_user.full_name} added summer leaderboard entry for user {user.full_name} with score {form.score.data}")
+            flash(f'Summer leaderboard entry added successfully for {user.full_name}!', 'success')
             return redirect(url_for('admin.manage_summer_leaderboard'))
 
         except SQLAlchemyError as e:
@@ -1690,43 +2450,57 @@ def add_summer_leaderboard_entry():
 @login_required
 @admin_required
 def edit_summer_leaderboard_entry(entry_id):
-    """
-    Edit a summer leaderboard entry
-
-    Args:
-        entry_id: int ID of entry to edit
-    """
+    """Enhanced edit summer leaderboard entry with history tracking"""
     entry = SummerLeaderboard.query.get_or_404(entry_id)
+    original_score = entry.score
     form = SummerLeaderboardEntryForm(obj=entry)
     
-    # Populate form choices
-    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage})") for user in User.query.order_by(User.full_name).all()]
+    # Only show competition participants
+    competition_users = User.query.filter(User.is_competition_participant == True).order_by(User.full_name).all()
+    form.user_id.choices = [(user.id, f"{user.full_name} ({user.key_stage}) - {user.school.name if user.school else 'No School'}") for user in competition_users]
     form.school_id.choices = [(school.id, school.name) for school in School.query.order_by(School.name).all()]
 
     if form.validate_on_submit():
         try:
             # Check if changing user would create duplicate
             if entry.user_id != form.user_id.data:
-                existing_entry = SummerLeaderboard.query.filter_by(
-                    user_id=form.user_id.data
-                ).first()
+                existing_entry = SummerLeaderboard.query.filter_by(user_id=form.user_id.data).first()
                 
                 if existing_entry and existing_entry.id != entry.id:
                     flash(f'User already has a summer leaderboard entry. Please edit that entry instead.', 'error')
-                    return render_template(
-                        "admin/edit_summer_leaderboard_entry.html",
-                        title="Edit Summer Leaderboard Entry",
-                        form=form,
-                        entry=entry,
-                    )
+                    return redirect(url_for('admin.edit_summer_leaderboard_entry', entry_id=existing_entry.id))
 
+            # Track changes for logging
+            changes = []
+            if entry.user_id != form.user_id.data:
+                old_user = User.query.get(entry.user_id)
+                new_user = User.query.get(form.user_id.data)
+                changes.append(f"User: {old_user.full_name} → {new_user.full_name}")
+            
+            if entry.school_id != form.school_id.data:
+                old_school = School.query.get(entry.school_id)
+                new_school = School.query.get(form.school_id.data)
+                changes.append(f"School: {old_school.name} → {new_school.name}")
+            
+            if entry.score != form.score.data:
+                changes.append(f"Score: {entry.score} → {form.score.data}")
+
+            # Update entry
             entry.user_id = form.user_id.data
             entry.school_id = form.school_id.data
             entry.score = form.score.data
-            entry.last_updated = datetime.datetime.utcnow()
+            entry.last_updated = datetime.datetime.now()
             
             db.session.commit()
-            flash('Summer leaderboard entry updated successfully!', 'success')
+            
+            # Log the changes
+            if changes:
+                change_log = ", ".join(changes)
+                current_app.logger.info(f"Admin {current_user.full_name} updated summer leaderboard entry {entry_id}: {change_log}")
+                flash(f'Summer leaderboard entry updated successfully! Changes: {change_log}', 'success')
+            else:
+                flash('No changes detected.', 'info')
+                
             return redirect(url_for('admin.manage_summer_leaderboard'))
 
         except SQLAlchemyError as e:
@@ -1779,7 +2553,7 @@ def reset_summer_leaderboard():
         # Update all entries to score 0
         updated_count = SummerLeaderboard.query.update({
             SummerLeaderboard.score: 0,
-            SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+            SummerLeaderboard.last_updated: datetime.datetime.now()
         })
         
         db.session.commit()
@@ -1817,7 +2591,7 @@ def bulk_update_summer_leaderboard():
             if key_stage_filter == "all":
                 updated_count = SummerLeaderboard.query.update({
                     SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
-                    SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+                    SummerLeaderboard.last_updated: datetime.datetime.now()
                 })
             else:
                 # For filtered updates, we need to get IDs first
@@ -1826,7 +2600,7 @@ def bulk_update_summer_leaderboard():
                     SummerLeaderboard.id.in_(entry_ids)
                 ).update({
                     SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
-                    SummerLeaderboard.last_updated: datetime.datetime.utcnow()
+                    SummerLeaderboard.last_updated: datetime.datetime.now()
                 }, synchronize_session=False)
             
             db.session.commit()

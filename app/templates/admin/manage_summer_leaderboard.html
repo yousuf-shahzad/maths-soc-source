@@ -3,111 +3,228 @@
 <div class="challenge-container">
     <h1>Manage Summer Leaderboard</h1>
     
-    <div class="admin-dashboard">
-        <ul>
-            <li>
-                <a href="{{ url_for('main.summer_leaderboard') }}">
-                    <h3>View Summer Leaderboard</h3>
-                    <p>See current summer competition rankings</p>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin.add_summer_leaderboard_entry') }}">
-                    <h3>Add New Entry</h3>
-                    <p>Create a new summer leaderboard entry</p>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin.manage_summer_challenges') }}">
-                    <h3>Manage Summer Challenges</h3>
-                    <p>Edit summer challenges</p>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin.bulk_update_summer_leaderboard') }}">
-                    <h3>Bulk Update</h3>
-                    <p>Update multiple entries at once</p>
-                </a>
-            </li>
-        </ul>
+    <!-- Quick Stats Overview -->
+    <div class="leaderboard-overview">
+        <div class="stats-summary">
+            <div class="stat-item">
+                <span class="stat-number">{{ stats.total_entries }}</span>
+                <span class="stat-label">Total Entries</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ stats.unique_participants }}</span>
+                <span class="stat-label">Participants</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ stats.participating_schools }}</span>
+                <span class="stat-label">Schools</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ stats.max_score }}</span>
+                <span class="stat-label">Highest Score</span>
+            </div>
+        </div>
     </div>
 
-    <div class="leaderboard-sections">
-        <section class="recent-entries">
-            <h2>Recent Entries</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Key Stage</th>
-                        <th>School</th>
-                        <th>Points</th>
-                        <th>Last Updated</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for entry in summer_leaderboard[:15] %}
-                    <tr>
-                        <td data-label="User">{{ entry.user.full_name }}</td>
-                        <td data-label="Key Stage">{{ entry.user.key_stage }}</td>
-                        <td data-label="School">{{ entry.school.name }}</td>
-                        <td data-label="Points">{{ entry.score }}</td>
-                        <td data-label="Last Updated">{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
-                        <td class="challenge-actions">
-                            <a href="{{ url_for('admin.edit_summer_leaderboard_entry', entry_id=entry.id) }}" 
-                               class="button">Edit</a>
-                            <form method="POST" action="{{ url_for('admin.delete_summer_leaderboard_entry', entry_id=entry.id) }}" style="display:inline;">
-                                <button type="submit" class="button delete-button"
-                                        onclick="return confirm('Are you sure you want to delete this summer leaderboard entry for {{ entry.user.full_name }}?');">
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            
-            {% if summer_leaderboard|length > 15 %}
-            <p><em>Showing top 15 entries. Total: {{ stats.total_entries }} entries.</em></p>
-            {% endif %}
-        </section>
-
-        <section class="quick-actions">
-            <h2>Quick Actions</h2>
-            <div>
-                <form method="POST" action="{{ url_for('admin.reset_summer_leaderboard') }}" style="display:inline;">
-                    <button type="submit" class="button button-danger"
-                            onclick="return confirm('Are you sure you want to reset all summer leaderboard scores to zero? This action cannot be undone.');">
-                        Reset All Scores
-                    </button>
-                </form>
-                {% if export_enabled %}
-                <a href="{{ url_for('admin.export_summer_leaderboard') }}" class="button button-secondary">
-                    Export Summer Leaderboard
-                </a>
-                {% endif %}
+    <!-- Search and Filter Controls -->
+    <div class="leaderboard-controls">
+        <form method="GET" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" value="{{ current_filters.search }}" 
+                           placeholder="Search by name, school, or ID...">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="key_stage">Key Stage:</label>
+                    <select id="key_stage" name="key_stage">
+                        <option value="">All Key Stages</option>
+                        {% for ks in available_key_stages %}
+                        <option value="{{ ks }}" {% if current_filters.key_stage == ks %}selected{% endif %}>{{ ks }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="school_id">School:</label>
+                    <select id="school_id" name="school_id">
+                        <option value="">All Schools</option>
+                        {% for school in available_schools %}
+                        <option value="{{ school.id }}" {% if current_filters.school_id == school.id|string %}selected{% endif %}>{{ school.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sort_by">Sort by:</label>
+                    <select id="sort_by" name="sort_by">
+                        <option value="score" {% if current_filters.sort_by == 'score' %}selected{% endif %}>Score</option>
+                        <option value="name" {% if current_filters.sort_by == 'name' %}selected{% endif %}>Name</option>
+                        <option value="school" {% if current_filters.sort_by == 'school' %}selected{% endif %}>School</option>
+                        <option value="key_stage" {% if current_filters.sort_by == 'key_stage' %}selected{% endif %}>Key Stage</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="sort_order">Order:</label>
+                    <select id="sort_order" name="sort_order">
+                        <option value="desc" {% if current_filters.sort_order == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" {% if current_filters.sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="per_page">Per Page:</label>
+                    <select id="per_page" name="per_page">
+                        <option value="25" {% if current_filters.per_page == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if current_filters.per_page == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if current_filters.per_page == 100 %}selected{% endif %}>100</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="button">Apply Filters</button>
+                    <a href="{{ url_for('admin.manage_summer_leaderboard') }}" class="button button-secondary">Clear</a>
+                </div>
             </div>
-        </section>
+        </form>
+    </div>
 
+    <!-- Admin Actions -->
+    <div class="admin-actions">
+        <div class="action-group">
+            <a href="{{ url_for('admin.add_summer_leaderboard_entry') }}" class="button button-primary">
+                Add New Entry
+            </a>
+            <a href="{{ url_for('admin.update_summer_leaderboard') }}" class="button button-secondary">
+                Update All Scores
+            </a>
+            <a href="{{ url_for('admin.export_summer_leaderboard') }}" class="button button-secondary">
+                Export Data
+            </a>
+        </div>
+        
+        <div class="bulk-actions" style="display:none;" id="bulkActions">
+            <span class="bulk-info">
+                <span id="selectedCount">0</span> entries selected
+            </span>
+            <button class="button button-warning" onclick="bulkAction('recalculate')">
+                Recalculate Scores
+            </button>
+            <button class="button button-danger" onclick="bulkAction('reset_scores')">
+                Reset to Zero
+            </button>
+            <button class="button button-danger" onclick="bulkAction('delete')">
+                Delete Selected
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Leaderboard Table -->
+    <div class="leaderboard-table-container">
+        {% if summer_leaderboard %}
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    </th>
+                    <th>Rank</th>
+                    <th>User</th>
+                    <th>Key Stage</th>
+                    <th>School</th>
+                    <th>Score</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in summer_leaderboard %}
+                {% set rank = ((pagination.page - 1) * pagination.per_page) + loop.index %}
+                <tr>
+                    <td>
+                        <input type="checkbox" class="entry-checkbox" value="{{ entry.id }}" onchange="updateBulkActions()">
+                    </td>
+                    <td data-label="Rank">{{ rank }}</td>
+                    <td data-label="User">{{ entry.user.full_name }}</td>
+                    <td data-label="Key Stage">{{ entry.user.key_stage }}</td>
+                    <td data-label="School">{{ entry.school.name }}</td>
+                    <td data-label="Score">{{ entry.score }}</td>
+                    <td data-label="Last Updated">
+                        {% if entry.last_updated %}
+                        {{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                        Never
+                        {% endif %}
+                    </td>
+                    <td class="challenge-actions">
+                        <a href="{{ url_for('admin.edit_summer_leaderboard_entry', entry_id=entry.id) }}" 
+                           class="button button-sm">Edit</a>
+                        <form method="POST" action="{{ url_for('admin.delete_summer_leaderboard_entry', entry_id=entry.id) }}" style="display:inline;">
+                            <button type="submit" class="button button-sm button-danger"
+                                    onclick="return confirm('Are you sure you want to delete this entry for {{ entry.user.full_name }}?');">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('admin.manage_summer_leaderboard', page=pagination.prev_num, **current_filters) }}" class="pagination-link">« Previous</a>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                        <a href="{{ url_for('admin.manage_summer_leaderboard', page=page_num, **current_filters) }}" class="pagination-link">{{ page_num }}</a>
+                    {% else %}
+                        <span class="pagination-current">{{ page_num }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="pagination-ellipsis">…</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('admin.manage_summer_leaderboard', page=pagination.next_num, **current_filters) }}" class="pagination-link">Next »</a>
+            {% endif %}
+        </div>
+        
+        <div class="pagination-info">
+            Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to 
+            {{ ((pagination.page - 1) * pagination.per_page) + summer_leaderboard|length }} 
+            of {{ pagination.total }} entries
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <h3>No leaderboard entries found</h3>
+            <p>No entries match your current filters, or no entries exist yet.</p>
+            <a href="{{ url_for('admin.add_summer_leaderboard_entry') }}" class="button button-primary">
+                Add First Entry
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="leaderboard-sections">
         <section class="leaderboard-stats">
-            <h2>Summer Competition Statistics</h2>
+            <h2>Detailed Statistics</h2>
             <div class="stats-grid">
                 <div class="stats-card">
-                    <h3>KS3 Participants</h3>
-                    <p>{{ ks3_count }}</p>
+                    <h3>Total Entries</h3>
+                    <p>{{ stats.total_entries }}</p>
                 </div>
                 <div class="stats-card">
-                    <h3>KS4 Participants</h3>
-                    <p>{{ ks4_count }}</p>
-                </div>
-                <div class="stats-card">
-                    <h3>KS5 Participants</h3>
-                    <p>{{ ks5_count }}</p>
-                </div>
-                <div class="stats-card">
-                    <h3>Total Participants</h3>
+                    <h3>Unique Participants</h3>
                     <p>{{ stats.unique_participants }}</p>
                 </div>
                 <div class="stats-card">
@@ -116,18 +233,168 @@
                 </div>
                 <div class="stats-card">
                     <h3>Highest Score</h3>
-                    <p>{{ stats.highest_score }}</p>
+                    <p>{{ stats.max_score }}</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Lowest Score</h3>
+                    <p>{{ stats.min_score }}</p>
                 </div>
                 <div class="stats-card">
                     <h3>Average Score</h3>
-                    <p>{{ stats.average_score|round(1) }}</p>
+                    <p>{{ stats.average_score }}</p>
                 </div>
                 <div class="stats-card">
-                    <h3>Total Points Awarded</h3>
-                    <p>{{ stats.total_points }}</p>
+                    <h3>Total Points</h3>
+                    <p>{{ stats.total_score }}</p>
                 </div>
+            </div>
+        </section>
+
+        <!-- Key Stage Breakdown -->
+        {% if stats.key_stage_breakdown %}
+        <section class="key-stage-stats">
+            <h2>Key Stage Performance</h2>
+            <div class="stats-grid">
+                {% for ks, data in stats.key_stage_breakdown.items() %}
+                <div class="stats-card">
+                    <h3>{{ ks }}</h3>
+                    <p><strong>{{ data.count }}</strong> participants</p>
+                    <p>Avg: {{ data.avg_score }}</p>
+                    <p>Max: {{ data.max_score }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Top Performers -->
+        {% if stats.top_performers %}
+        <section class="top-performers">
+            <h2>Top 10 Performers</h2>
+            <div class="top-performers-list">
+                {% for performer in stats.top_performers %}
+                <div class="performer-card">
+                    <span class="rank">#{{ loop.index }}</span>
+                    <span class="name">{{ performer.name }}</span>
+                    <span class="school">{{ performer.school }}</span>
+                    <span class="ks">{{ performer.key_stage }}</span>
+                    <span class="score">{{ performer.score }} pts</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="action-grid">
+                <a href="{{ url_for('admin.summer_school_rankings') }}" class="action-card">
+                    <h3>School Rankings</h3>
+                    <p>View performance by school</p>
+                </a>
+                <a href="{{ url_for('admin.summer_leaderboard_analytics') }}" class="action-card">
+                    <h3>Advanced Analytics</h3>
+                    <p>Detailed insights and trends</p>
+                </a>
+                <a href="{{ url_for('admin.manage_summer_challenges') }}" class="action-card">
+                    <h3>Manage Challenges</h3>
+                    <p>Edit summer challenges</p>
+                </a>
+                <form method="POST" action="{{ url_for('admin.reset_summer_leaderboard') }}" style="display:inline;">
+                    <button type="submit" class="action-card action-danger"
+                            onclick="return confirm('Are you sure you want to reset all scores to zero? This cannot be undone.');">
+                        <h3>Reset All Scores</h3>
+                        <p>Set all scores to 0</p>
+                    </button>
+                </form>
             </div>
         </section>
     </div>
 </div>
+
+<!-- JavaScript for bulk actions and interactivity -->
+<script>
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.entry-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.entry-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    selectedCount.textContent = checkboxes.length;
+    
+    if (checkboxes.length > 0) {
+        bulkActions.style.display = 'block';
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+function bulkAction(action) {
+    const checkboxes = document.querySelectorAll('.entry-checkbox:checked');
+    const entryIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (entryIds.length === 0) {
+        alert('Please select at least one entry.');
+        return;
+    }
+    
+    let confirmMessage = '';
+    switch(action) {
+        case 'delete':
+            confirmMessage = `Are you sure you want to delete ${entryIds.length} entries? This cannot be undone.`;
+            break;
+        case 'recalculate':
+            confirmMessage = `Recalculate scores for ${entryIds.length} entries based on their submissions?`;
+            break;
+        case 'reset_scores':
+            confirmMessage = `Reset scores to 0 for ${entryIds.length} entries?`;
+            break;
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    fetch('{{ url_for("admin.summer_leaderboard_bulk_action") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: action,
+            entry_ids: entryIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error);
+    });
+}
+
+// Auto-submit filters when changed
+document.querySelectorAll('select[name="key_stage"], select[name="school_id"], select[name="sort_by"], select[name="sort_order"], select[name="per_page"]').forEach(select => {
+    select.addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
 {% endblock %}

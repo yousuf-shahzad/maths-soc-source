@@ -2,23 +2,62 @@
 {% block content %}
 <h2>Manage Summer Challenges</h2>
 <a href="{{ url_for('admin.create_summer_challenge') }}" class="button">Create New Summer Challenge</a>
+
+<!-- Unreleased Summer Challenges -->
+{% if unreleased_challenges %}
+<h3>📅 Unreleased Summer Challenges</h3>
 <table>
     <thead>
         <tr>
             <th>Title</th>
             <th>Key Stage</th>
             <th>Date Posted</th>
+            <th>Release Date</th>
+            <th>Duration (hours)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for challenge in unreleased_challenges %}
+        <tr style="background-color: #fff3cd;">
+            <td>{{ challenge.title }} <span style="color: #856404; font-weight: bold;">[UNRELEASED]</span></td>
+            <td>{{ challenge.key_stage }}</td>
+            <td>{{ challenge.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</td>
+            <td>{{ challenge.duration_hours }}</td>
+            <td>
+                <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" class="button">Edit</a>
+                <form style="display:inline;" method="POST" action="{{ url_for('admin.delete_summer_challenge', challenge_id=challenge.id) }}">
+                    <button type="submit" class="button delete-button" onclick="return confirm('Are you sure?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<!-- Released Summer Challenges -->
+<h3>✅ Released Summer Challenges</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Key Stage</th>
+            <th>Date Posted</th>
+            <th>Release Date</th>
             <th>Duration (hours)</th>
             <th>Status</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-    {% for challenge in challenges %}
+    {% for challenge in released_challenges %}
         <tr>
             <td>{{ challenge.title }}</td>
             <td>{{ challenge.key_stage }}</td>
             <td>{{ challenge.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</td>
             <td>{{ challenge.duration_hours }}</td>
             <td>
                 {% if challenge.is_manually_locked %}
@@ -28,6 +67,7 @@
                 {% else %}
                     <span style="color: green;">🔓 Open</span>
                 {% endif %}
+            </td>
             </td>
             <td>
                 <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" class="button">Edit</a>

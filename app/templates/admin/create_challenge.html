@@ -43,6 +43,24 @@
                 </div>
             </div>
             
+            <div class="form-group">
+                {{ form.release_at.label(class="form-label") }}
+                {{ form.release_at(class="form-control") }}
+                {% for error in form.release_at.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+                <small class="form-help">Leave blank to release immediately. Format: YYYY-MM-DD HH:MM</small>
+            </div>
+            
+            <div class="form-group">
+                {{ form.lock_after_hours.label(class="form-label") }}
+                {{ form.lock_after_hours(class="form-control", placeholder="24") }}
+                {% for error in form.lock_after_hours.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+                <small class="form-help">Challenge will automatically lock after this many hours from release time. Leave blank for no auto-lock.</small>
+            </div>
+
             <div class="answer-boxes-container">
                 <h2>Answer Boxes</h2>
                 <div id="answer-boxes">

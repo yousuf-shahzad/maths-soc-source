@@ -5,28 +5,108 @@
     <h1>Manage Challenges</h1>
     <a href="{{ url_for('admin.create_challenge') }}" class="button">Create New Challenge</a>
 
-    <div class="challenge-grid">
-        {% for challenge in challenges %}
-        <div class="challenge-card">
-            <h2>{{ challenge.title }}</h2>
-            <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
-            
-            {% if challenge.file_url %}
-            <div class="image-preview">
-                <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+    <!-- Unreleased Challenges Section -->
+    {% if unreleased_challenges %}
+    <div class="unreleased-section">
+        <h2>📅 Unreleased Challenges</h2>
+        <div class="challenge-grid">
+            {% for challenge in unreleased_challenges %}
+            <div class="challenge-card unreleased-challenge">
+                <div class="unreleased-badge">Unreleased</div>
+                <h2>{{ challenge.title }}</h2>
+                <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+                <p><strong>Release Date:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</p>
+                {% if challenge.lock_after_hours %}
+                <p><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours }} hours</p>
+                {% endif %}
+                
+                {% if challenge.file_url %}
+                <div class="image-preview">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+                </div>
+                {% endif %}
+                
+                <div class="challenge-actions">
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                       class="action-button edit-button">
+                        <span class="button-icon">✏️</span>
+                        <span class="button-text">Edit</span>
+                    </a>
+                    <button class="action-button delete-button" 
+                            onclick="confirmDelete({{ challenge.id }})">
+                        <span class="button-icon">🗑️</span>
+                        <span class="button-text">Delete</span>
+                    </button>
+                </div>
             </div>
-            {% endif %}
-            
-            <div class="challenge-actions">
-                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
-                   class="button">Edit</a>
-                <button class="button delete-button" 
-                        onclick="confirmDelete({{ challenge.id }})">
-                    Delete
-                </button>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Released Challenges Section -->
+    <div class="released-section">
+        <h2>✅ Released Challenges</h2>
+        <div class="challenge-grid">
+            {% for challenge in released_challenges %}
+            <div class="challenge-card">
+                <h2>{{ challenge.title }}</h2>
+                <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+                <p><strong>Released:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</p>
+                {% if challenge.lock_after_hours %}
+                <p><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours }} hours</p>
+                {% endif %}
+                
+                <!-- Lock Status Display -->
+                <div class="challenge-status">
+                    {% if challenge.is_manually_locked %}
+                        <span class="status-badge locked-manual">🔒 Manually Locked</span>
+                    {% elif challenge.lock_reason == 'time_expired' %}
+                        <span class="status-badge locked-time">⏰ Time Expired</span>
+                    {% else %}
+                        <span class="status-badge unlocked">🔓 Open</span>
+                    {% endif %}
+                </div>
+                
+                {% if challenge.file_url %}
+                <div class="image-preview">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+                </div>
+                {% endif %}
+                
+                <div class="challenge-actions">
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                       class="action-button edit-button">
+                        <span class="button-icon">✏️</span>
+                        <span class="button-text">Edit</span>
+                    </a>
+                    
+                    <!-- Lock/Unlock Button -->
+                    <form method="POST" action="{{ url_for('admin.toggle_challenge_lock', challenge_id=challenge.id) }}" class="inline-form">
+                        {% if challenge.is_manually_locked %}
+                            <button type="submit" class="action-button unlock-button" 
+                                    onclick="return confirm('Unlock this challenge? Students will be able to submit answers again.');">
+                                <span class="button-icon">🔓</span>
+                                <span class="button-text">Unlock</span>
+                            </button>
+                        {% else %}
+                            <button type="submit" class="action-button lock-button" 
+                                    onclick="return confirm('Lock this challenge? Students will no longer be able to submit answers and answers will be revealed.');">
+                                <span class="button-icon">🔒</span>
+                                <span class="button-text">Lock</span>
+                            </button>
+                        {% endif %}
+                    </form>
+                    
+                    <button class="action-button delete-button" 
+                            onclick="confirmDelete({{ challenge.id }})">
+                        <span class="button-icon">🗑️</span>
+                        <span class="button-text">Delete</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 
@@ -37,4 +117,159 @@
         }
     }
 </script>
+
+<style>
+    /* Challenge Actions Styling */
+    .challenge-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .action-button {
+        flex: 1;
+        min-width: 100px;
+        max-width: 120px;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+    }
+    
+    .action-button:active {
+        transform: translateY(0);
+    }
+    
+    .button-icon {
+        font-size: 1rem;
+    }
+    
+    .button-text {
+        font-size: 0.875rem;
+    }
+    
+    /* Button Color Variations */
+    .edit-button {
+        background: #007bff;
+        color: white;
+    }
+    
+    .edit-button:hover {
+        background: #0056b3;
+        color: white;
+    }
+    
+    .lock-button {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .lock-button:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    .unlock-button {
+        background: #28a745;
+        color: white;
+    }
+    
+    .unlock-button:hover {
+        background: #218838;
+        color: white;
+    }
+    
+    .delete-button {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .delete-button:hover {
+        background: #545b62;
+        color: white;
+    }
+    
+    /* Inline form for lock/unlock buttons */
+    .inline-form {
+        display: contents;
+    }
+    
+    /* Challenge Status Styling */
+    .challenge-status {
+        margin: 1rem 0;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+    
+    .status-badge.locked-manual {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .status-badge.locked-time {
+        background: #fd7e14;
+        color: white;
+    }
+    
+    .status-badge.unlocked {
+        background: #28a745;
+        color: white;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .challenge-actions {
+            flex-direction: column;
+        }
+        
+        .action-button {
+            flex: none;
+            max-width: none;
+            min-width: auto;
+        }
+        
+        .button-text {
+            display: inline;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .action-button {
+            padding: 0.6rem 0.8rem;
+        }
+        
+        .button-icon {
+            font-size: 0.9rem;
+        }
+        
+        .button-text {
+            font-size: 0.8rem;
+        }
+    }
+</style>
 {% endblock %}

@@ -1,114 +1,263 @@
 {% extends "base.html" %}
+{% block title %}Overall Leaderboard{% endblock %}
 
 {% block content %}
 <div class="leaderboard-container">
-    <h1>Leaderboards</h1>
-    
-    <div class="key-stage-leaderboards">
-        <div class="key-stage-section">
-            <div class="key-stage-header">
-                <h2>Key Stage 3</h2>
-                <p>Years 7-8</p>
-            </div>
-            <div class="leaderboard-content">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Name</th>
-                            <th>Score</th>
-                            <th>Year</th>
-                            <th>Class</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in ks3_entries %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ entry.user.full_name }}</td>
-                            <td>{{ entry.score }}</td>
-                            <td>{{ entry.user.year }}</td>
-                            <td>{{ entry.user.maths_class }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <!-- Leaderboard Header -->
+    <div class="leaderboard-hero">
+        <h1>🏆 Overall Mathematics Leaderboard</h1>
+        <p>See how students rank across all mathematical challenges and activities</p>
+    </div>
+
+    <!-- Competition Statistics -->
+    <div class="stats-container">
+        <div class="stat-card ks3-stats">
+            <h3>{{ stats.ks3_participants or 0 }}</h3>
+            <p>KS3 Participants</p>
+        </div>
+        <div class="stat-card ks4-stats">
+            <h3>{{ stats.ks4_participants or 0 }}</h3>
+            <p>KS4 Participants</p>
+        </div>
+        <div class="stat-card ks5-stats">
+            <h3>{{ stats.ks5_participants or 0 }}</h3>
+            <p>KS5 Participants</p>
+        </div>
+        <div class="stat-card points-stats">
+            <h3>{{ stats.total_points_awarded or 0 }}</h3>
+            <p>Points Awarded</p>
+        </div>
+        <div class="stat-card challenges-stats">
+            <h3>{{ stats.total_challenges or 0 }}</h3>
+            <p>Total Challenges</p>
+        </div>
+        <div class="stat-card submissions-stats">
+            <h3>{{ stats.total_submissions or 0 }}</h3>
+            <p>Total Submissions</p>
+        </div>
+    </div>
+
+    <!-- Leaderboard Tabs -->
+    <div class="leaderboard-tabs">
+        <div class="tab-buttons">
+            <button onclick="showTab('ks3')" id="ks3-tab" class="tab-button active">
+                🎓 Key Stage 3
+            </button>
+            <button onclick="showTab('ks4')" id="ks4-tab" class="tab-button">
+                📐 Key Stage 4
+            </button>
+            <button onclick="showTab('ks5')" id="ks5-tab" class="tab-button">
+                🎯 Key Stage 5
+            </button>
+            <button onclick="showTab('activity')" id="activity-tab" class="tab-button">
+                ⚡ Recent Activity
+            </button>
         </div>
 
-        <div class="key-stage-section">
-            <div class="key-stage-header">
-                <h2>Key Stage 4</h2>
-                <p>Years 9-11</p>
-            </div>
-            <div class="leaderboard-content">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Name</th>
-                            <th>Score</th>
-                            <th>Year</th>
-                            <th>Class</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in ks4_entries %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ entry.user.full_name }}</td>
-                            <td>{{ entry.score }}</td>
-                            <td>{{ entry.user.year }}</td>
-                            <td>{{ entry.user.maths_class }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <!-- Key Stage 3 Leaderboard -->
+        <div id="ks3-content" class="tab-content">
+            <h2 class="tab-title ks3-title">🥇 Key Stage 3 Leaders (Years 7-8)</h2>
+            {% if ks3_entries %}
+                <div class="leaderboard-table">
+                    {% for entry in ks3_entries %}
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
+                                {% if loop.index == 1 %}🥇
+                                {% elif loop.index == 2 %}🥈
+                                {% elif loop.index == 3 %}🥉
+                                {% else %}{{ loop.index }}
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
+                                    Year {{ entry.user.year }}
+                                    {% if entry.user.maths_class %} • {{ entry.user.maths_class }}{% endif %}
+                                    • Key Stage: {{ entry.key_stage.upper() }}
+                                </div>
+                            </div>
+                            <div class="score ks3-score">
+                                {{ entry.score }} pts
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-participants">
+                    <div class="no-participants-icon">🎓</div>
+                    <p>No KS3 participants yet. Be the first to join!</p>
+                    {% if current_user.is_authenticated and current_user.key_stage == 'ks3' %}
+                        <a href="{{ url_for('main.challenges') }}" class="button">Start Solving Challenges</a>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
 
-        <div class="key-stage-section">
-            <div class="key-stage-header">
-                <h2>Key Stage 5</h2>
-                <p>Years 12-13</p>
-            </div>
-            <div class="leaderboard-content">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Name</th>
-                            <th>Score</th>
-                            <th>Year</th>
-                            <th>Class</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in ks5_entries %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ entry.user.full_name }}</td>
-                            <td>{{ entry.score }}</td>
-                            <td>{{ entry.user.year }}</td>
-                            <td>{{ entry.user.maths_class }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #666;">No entries yet</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <!-- Key Stage 4 Leaderboard -->
+        <div id="ks4-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title ks4-title">🥇 Key Stage 4 Leaders (Years 9-11)</h2>
+            {% if ks4_entries %}
+                <div class="leaderboard-table">
+                    {% for entry in ks4_entries %}
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
+                                {% if loop.index == 1 %}🥇
+                                {% elif loop.index == 2 %}🥈
+                                {% elif loop.index == 3 %}🥉
+                                {% else %}{{ loop.index }}
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
+                                    Year {{ entry.user.year }}
+                                    {% if entry.user.maths_class %} • {{ entry.user.maths_class }}{% endif %}
+                                    • Key Stage: {{ entry.key_stage.upper() }}
+                                </div>
+                            </div>
+                            <div class="score ks4-score">
+                                {{ entry.score }} pts
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-participants">
+                    <div class="no-participants-icon">📐</div>
+                    <p>No KS4 participants yet. Be the first to join!</p>
+                    {% if current_user.is_authenticated and current_user.key_stage == 'ks4' %}
+                        <a href="{{ url_for('main.challenges') }}" class="button">Start Solving Challenges</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Key Stage 5 Leaderboard -->
+       <div id="ks5-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title ks5-title">🥇 Key Stage 5 Leaders (Years 12-13)</h2>
+            {% if ks5_entries %}
+                <div class="leaderboard-table">
+                    {% for entry in ks5_entries %}
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
+                                {% if loop.index == 1 %}🥇
+                                {% elif loop.index == 2 %}🥈
+                                {% elif loop.index == 3 %}🥉
+                                {% else %}{{ loop.index }}
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
+                                    Year {{ entry.user.year }}
+                                    {% if entry.user.maths_class %} • {{ entry.user.maths_class }}{% endif %}
+                                    • Key Stage: {{ entry.key_stage.upper() }}
+                                </div>
+                            </div>
+                            <div class="score ks5-score">
+                                {{ entry.score }} pts
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-participants">
+                    <div class="no-participants-icon">🎯</div>
+                    <p>No KS5 participants yet. Be the first to join!</p>
+                    {% if current_user.is_authenticated and current_user.key_stage == 'ks5' %}
+                        <a href="{{ url_for('main.challenges') }}" class="button">Start Solving Challenges</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity -->
+        <div id="activity-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title activity-title">⚡ Recent Activity</h2>
+            {% if recent_activity %}
+                <div class="activity-feed">
+                    {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                {% if activity.type == 'challenge_completed' %}✅
+                                {% elif activity.type == 'points_awarded' %}🏆
+                                {% elif activity.type == 'new_user' %}👋
+                                {% else %}📝
+                                {% endif %}
+                            </div>
+                            <div class="activity-info">
+                                <div class="activity-title">{{ activity.title }}</div>
+                                <div class="activity-details">
+                                    {{ activity.description }}
+                                </div>
+                                <div class="activity-time">
+                                    {{ activity.timestamp.strftime('%B %d, %Y at %I:%M %p') if activity.timestamp else 'Recently' }}
+                                </div>
+                            </div>
+                            {% if activity.points %}
+                            <div class="activity-points">
+                                +{{ activity.points }} pts
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-participants">
+                    <div class="no-participants-icon">⚡</div>
+                    <p>No recent activity to display.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cta-section">
+        <h2>Ready to Join the Competition?</h2>
+        <p>Start solving challenges and climb the leaderboard today!</p>
+        <div class="cta-buttons">
+            {% if current_user.is_anonymous %}
+                <a href="{{ url_for('auth.register') }}" class="cta-button primary">
+                    Register Now
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="cta-button secondary">
+                    Login
+                </a>
+            {% else %}
+                <a href="{{ url_for('main.challenges') }}" class="cta-button primary">
+                    View Challenges
+                </a>
+                <a href="{{ url_for('profile.profile') }}" class="cta-button secondary">
+                    My Profile
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-content').style.display = 'block';
+    
+    // Activate selected tab button
+    document.getElementById(tabName + '-tab').classList.add('active');
+}
+
+// Auto-refresh leaderboard every 60 seconds
+setInterval(() => {
+    if (document.hidden) return; // Don't refresh if tab is hidden
+    location.reload();
+}, 60000);
+</script>
 {% endblock %}
