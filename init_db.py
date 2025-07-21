@@ -67,16 +67,14 @@ def init_admin_user():
     # Create default admin user
     admin = User(
         full_name="Admin User",
-        email="admin@ucgs.ac.uk",
         year=13,
         key_stage="KS5",
         maths_class="A-Level",
-        user_type="ucgs",
         school_id=1,  # UCGS
         is_admin=True,
         is_competition_participant=False
     )
-    admin.set_password("admin123")  # Change this in production!
+    admin.set_password("admin123")
     
     db.session.add(admin)
     

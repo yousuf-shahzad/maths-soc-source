@@ -111,8 +111,8 @@
                 </li>
 
                 {% if current_user.is_anonymous %}
-                    <li class="nav-auth"><a href="{{ url_for('auth.login') }}" class="button button-secondary">Login</a></li>
-                    <li class="nav-auth"><a href="{{ url_for('auth.register') }}" class="button">Register</a></li>
+                    <li class="nav-auth"><a href="{{ url_for('auth.login') }}" class="" style="margin-top: 0">Login</a></li>
+                    <li class="nav-auth"><a href="{{ url_for('auth.register') }}" class="">Register</a></li>
                 {% else %}
                     {% if current_user.is_admin %}
                         <li><a href="{{ url_for('admin.admin_index') }}">Admin</a></li>
