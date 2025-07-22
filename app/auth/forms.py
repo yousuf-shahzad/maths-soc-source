@@ -33,7 +33,7 @@ Maintenance Notes:
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional, ValidationError
-from app.models import User
+from app.models import User, School
 
 
 class LoginForm(FlaskForm):
@@ -128,7 +128,7 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, email):
         """Custom validation to ensure email is from UCGS"""
         if not email.data.endswith('@uptoncourtgrammar.org.uk'):
-            raise ValidationError('You must use your school email address')
+            raise ValidationError('You must use your school email address.')
         
         user = User.query.filter_by(email=email.data).first()
         if user:
@@ -212,6 +212,12 @@ class SummerRegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('This email address is already registered.')
+        
+        # check if email ends with school domain associated with school they pick
+        if self.school_id.data != 0:  # If a school is selected
+            school = School.query.get(self.school_id.data)
+            if school and not email.data.endswith(school.email_domain):
+                raise ValidationError(f'Must be a school domain associated with {school.name}.')
 
 class SummerLoginForm(FlaskForm):
     """
