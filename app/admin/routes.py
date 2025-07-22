@@ -574,18 +574,20 @@ def edit_challenge(challenge_id):
                 )
                 challenge.file_url = filename
 
-            # Handle answer boxes (existing logic)
+            # Manage answer boxes
             existing_boxes = {box.order: box for box in challenge.answer_boxes}
             used_box_ids = set()
 
             for index, box_form in enumerate(form.answer_boxes):
                 if index in existing_boxes:
+                    # Update existing box
                     box = existing_boxes[index]
                     box.box_label = box_form.box_label.data
                     box.correct_answer = box_form.correct_answer.data
                     box.order = int(box_form.order.data) if box_form.order.data else index
                     used_box_ids.add(box.id)
                 else:
+                    # Create new box
                     new_box = ChallengeAnswerBox(
                         challenge_id=challenge.id,
                         box_label=box_form.box_label.data,
@@ -594,12 +596,12 @@ def edit_challenge(challenge_id):
                     )
                     db.session.add(new_box)
 
+            # Delete unused boxes (those without submissions)
             for box in challenge.answer_boxes:
                 if box.id not in used_box_ids:
-                    if box.submissions:
-                        box.is_active = False
-                    else:
+                    if box.submissions.count() == 0:
                         db.session.delete(box)
+                    # Note: Boxes with submissions are preserved to maintain data integrity
 
             db.session.commit()
             flash("Challenge updated successfully.")
@@ -610,22 +612,24 @@ def edit_challenge(challenge_id):
             current_app.logger.error(f"Error updating challenge: {str(e)}")
             flash("Error updating challenge. Please try again.")
 
-    # Pre-populate form
+    # Pre-populate form with existing answer boxes on GET request
     if request.method == "GET":
         form.title.data = challenge.title
         form.content.data = challenge.content
         form.key_stage.data = challenge.key_stage
         form.release_at.data = challenge.release_at
         form.lock_after_hours.data = challenge.lock_after_hours
-
+        
         # Add current answer boxes
         form.answer_boxes.entries = []
         for box in sorted(challenge.answer_boxes, key=lambda x: x.order or 0):
-            box_form = AnswerBoxForm()
-            box_form.box_label.data = box.box_label
-            box_form.correct_answer.data = box.correct_answer
-            box_form.order.data = str(box.order or 1)
-            form.answer_boxes.append_entry(box_form)
+            form.answer_boxes.append_entry(
+                {
+                    "box_label": box.box_label,
+                    "correct_answer": box.correct_answer,
+                    "order": str(box.order) if box.order is not None else "",
+                }
+            )
 
     return render_template(
         "admin/edit_challenge.html", title="Edit Challenge", form=form, challenge=challenge
@@ -2100,21 +2104,7 @@ def summer_leaderboard_bulk_action():
                 db.session.delete(entry)
             db.session.commit()
             return jsonify({'success': True, 'message': f'Deleted {len(entries)} entries'})
-        
-        elif action == 'recalculate':
-            updated_count = 0
-            for entry in entries:
-                # Recalculate score based on summer challenge submissions
-                user_id = entry.user_id
-                total_score = calculate_user_summer_score(user_id)
-                if entry.score != total_score:
-                    entry.score = total_score
-                    entry.last_updated = datetime.datetime.now()
-                    updated_count += 1
-            
-            db.session.commit()
-            return jsonify({'success': True, 'message': f'Recalculated scores for {updated_count} entries'})
-        
+              
         elif action == 'reset_scores':
             for entry in entries:
                 entry.score = 0
@@ -2249,53 +2239,6 @@ def export_summer_leaderboard():
         current_app.logger.error(f"Error exporting summer leaderboard: {str(e)}")
         flash("Error exporting summer leaderboard data.", "error")
         return redirect(url_for("admin.manage_summer_leaderboard"))
-
-
-@bp.route("/admin/summer_leaderboard/update_all")
-@login_required
-@admin_required
-def update_summer_leaderboard():
-    """Update entire summer leaderboard based on challenge submissions"""
-    try:
-        updated_count = 0
-        created_count = 0
-        
-        # Get all summer competition participants
-        participants = User.query.filter(User.is_competition_participant == True).all()
-        
-        for user in participants:
-            # Calculate user's score from summer challenge submissions
-            total_score = calculate_user_summer_score(user.id)
-            
-            # Check if user already has an entry
-            existing_entry = SummerLeaderboard.query.filter_by(user_id=user.id).first()
-            
-            if existing_entry:
-                if existing_entry.score != total_score:
-                    existing_entry.score = total_score
-                    existing_entry.last_updated = datetime.datetime.now()
-                    updated_count += 1
-            else:
-                # Create new entry if user has a score > 0
-                if total_score > 0:
-                    new_entry = SummerLeaderboard(
-                        user_id=user.id,
-                        school_id=user.school_id,
-                        score=total_score,
-                        last_updated=datetime.datetime.now()
-                    )
-                    db.session.add(new_entry)
-                    created_count += 1
-        
-        db.session.commit()
-        flash(f"Summer leaderboard updated: {updated_count} entries updated, {created_count} entries created.", "success")
-        
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error updating summer leaderboard: {str(e)}")
-        flash("Error updating summer leaderboard.", "error")
-    
-    return redirect(url_for("admin.manage_summer_leaderboard"))
 
 
 @bp.route("/admin/summer_leaderboard/school_rankings")
