@@ -58,6 +58,10 @@
                 <div class="detail-value">{{ current_user.full_name }}</div>
             </div>
             <div class="detail-item">
+                <div class="detail-label">Email Address</div>
+                <div class="detail-value">{{ current_user.email or 'Not provided' }}</div>
+            </div>
+            <div class="detail-item">
                 <div class="detail-label">Year Group</div>
                 <div class="detail-value">{{ current_user.year }}</div>
             </div>

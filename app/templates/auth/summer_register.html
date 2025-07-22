@@ -43,15 +43,21 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control") }}
+                    {% for error in form.email.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
                     {{ form.year.label(class="form-label") }}
                     {{ form.year(class="form-control") }}
                     {% for error in form.year.errors %}
                         <div class="error-message">{{ error }}</div>
                     {% endfor %}
                 </div>
-
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     {{ form.school_id.label(class="form-label") }}
                     {{ form.school_id(class="form-control") }}
