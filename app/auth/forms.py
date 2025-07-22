@@ -32,7 +32,7 @@ Maintenance Notes:
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
-from wtforms.validators import DataRequired, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional, ValidationError
 from app.models import User
 
 
@@ -56,8 +56,7 @@ class LoginForm(FlaskForm):
         Button to submit login credentials
     """
 
-    first_name = StringField("First Name", validators=[DataRequired()])
-    last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
     year = SelectField(
         "Year",
@@ -105,6 +104,7 @@ class RegistrationForm(FlaskForm):
 
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField('School Email', validators=[DataRequired(), Email()])
     year = SelectField(
         "Year",
         choices=[
@@ -125,27 +125,14 @@ class RegistrationForm(FlaskForm):
     maths_class = StringField("Maths Class", validators=[DataRequired()])
     submit = SubmitField("Register")
 
-    def validate_username(self, first_name, last_name):
-        """
-        Validate that the username (first name + last name) is unique.
-
-        Args:
-        -----
-        first_name : StringField
-            First name field to validate
-        last_name : StringField
-            Last name field to validate
-
-        Raises:
-        -------
-        ValidationError
-            If a user with the same first and last name already exists
-        """
-        user = User.query.filter(
-            first_name == first_name.data, last_name == last_name.data
-        ).first()
-        if user is not None:
-            raise ValidationError("Please use a different username.")
+    def validate_email(self, email):
+        """Custom validation to ensure email is from UCGS"""
+        if not email.data.endswith('@uptoncourtgrammar.org.uk'):
+            raise ValidationError('You must use your school email address')
+        
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError('This email address is already registered.')
 
 class SummerRegistrationForm(FlaskForm):
     """
@@ -178,6 +165,7 @@ class SummerRegistrationForm(FlaskForm):
 
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     year = SelectField(
         "Year",
         choices=[
@@ -219,27 +207,11 @@ class SummerRegistrationForm(FlaskForm):
             (school.id, school.name) for school in School.query.order_by(School.name).all()
         ]
 
-    def validate_username(self, first_name, last_name):
-        """
-        Validate that the username (first name + last name) is unique.
-
-        Args:
-        -----
-        first_name : StringField
-            First name field to validate
-        last_name : StringField
-            Last name field to validate
-
-        Raises:
-        -------
-        ValidationError
-            If a user with the same first and last name already exists
-        """
-        user = User.query.filter(
-            User.full_name == f"{first_name.data} {last_name.data}"
-        ).first()
-        if user is not None:
-            raise ValidationError("A user with this name already exists. Please use a different name or contact the administrator.")
+    def validate_email(self, email):
+        """Check if email is already registered"""
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError('This email address is already registered.')
 
 class SummerLoginForm(FlaskForm):
     """
@@ -265,6 +237,7 @@ class SummerLoginForm(FlaskForm):
 
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
     year = SelectField(
         "Year",
