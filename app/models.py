@@ -1,7 +1,7 @@
 from app.database import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from datetime import datetime
+import datetime
 from flask import current_app
 import os
 
@@ -51,7 +51,7 @@ class Challenge(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(100), nullable=False, index=True)
     content = db.Column(db.Text, nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, index=True)
     file_url = db.Column(db.String(100))
     key_stage = db.Column(db.String(3), nullable=False, index=True)
     first_correct_submission = db.Column(db.DateTime)
@@ -133,7 +133,7 @@ class AnswerSubmission(db.Model):
     )
     answer = db.Column(db.String(100), nullable=False)
     is_correct = db.Column(db.Boolean, nullable=True)
-    submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    submitted_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, index=True)
     
     # Relationships
     user = db.relationship("User", back_populates="submissions")
@@ -158,7 +158,7 @@ class Article(db.Model):
     file_url = db.Column(db.String(255))  # This will store the PDF file path
     content = db.Column(db.Text, nullable=False)
     named_creator = db.Column(db.String(100), nullable=True)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     type = db.Column(db.String(20), default="article", nullable=False, index=True)
     
@@ -184,7 +184,7 @@ class LeaderboardEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     score = db.Column(db.Integer, default=0, nullable=False)
-    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, index=True)
     key_stage = db.Column(db.String(3), nullable=False, index=True)
     
     # Relationships
@@ -208,7 +208,7 @@ class Announcement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now, index=True)
     
     def __repr__(self):
         return f'<Announcement {self.title}>'
@@ -221,7 +221,7 @@ class School(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True, index=True)
     email_domain = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(200), nullable=True)
-    date_joined = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_joined = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
     
     # Relationships
     users = db.relationship('User', backref='school', lazy='dynamic')
@@ -236,7 +236,7 @@ class SummerChallenge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False, index=True)
     content = db.Column(db.Text, nullable=False)
-    date_posted = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_posted = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
     duration_hours = db.Column(db.Integer, default=24, nullable=False)
     file_url = db.Column(db.String(100))
     key_stage = db.Column(db.String(3), nullable=False, index=True)
@@ -265,7 +265,7 @@ class SummerChallenge(db.Model):
         from datetime import datetime, timedelta
         # Check manual lock first, then time-based lock
         return (self.is_manually_locked or 
-                datetime.utcnow() > self.date_posted + timedelta(hours=self.duration_hours))
+                datetime.datetime.now > self.date_posted + timedelta(hours=self.duration_hours))
 
     @property
     def lock_reason(self):
@@ -273,7 +273,7 @@ class SummerChallenge(db.Model):
         """Returns the reason why the challenge is locked"""
         if self.is_manually_locked:
             return "manually_locked"
-        elif datetime.utcnow() > self.date_posted + timedelta(hours=self.duration_hours):
+        elif datetime.datetime.now > self.date_posted + timedelta(hours=self.duration_hours):
             return "time_expired"
         return None
 
@@ -319,7 +319,7 @@ class SummerSubmission(db.Model):
     )
     answer = db.Column(db.String(100), nullable=False)
     is_correct = db.Column(db.Boolean, nullable=True)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    submitted_at = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False, index=True)
     points_awarded = db.Column(db.Integer, default=0, nullable=False)
     
     # Relationships
@@ -345,7 +345,7 @@ class SummerLeaderboard(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False, index=True)
     score = db.Column(db.Integer, default=0, nullable=False)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    last_updated = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False, index=True)
     
     # Relationships
     user = db.relationship('User', backref=db.backref('summer_leaderboard_entries', lazy='dynamic'))
