@@ -1746,6 +1746,10 @@ def edit_summer_challenge(challenge_id):
             challenge.key_stage = form.key_stage.data
             challenge.duration_hours = form.duration_hours.data
             
+            # Update release time if provided
+            if form.release_at.data:
+                challenge.release_at = form.release_at.data
+            
             # Handle image upload if provided
             if form.image.data:
                 challenge_folder = create_challenge_folder(challenge.date_posted)
@@ -1802,6 +1806,7 @@ def edit_summer_challenge(challenge_id):
         form.content.data = challenge.content
         form.key_stage.data = challenge.key_stage
         form.duration_hours.data = challenge.duration_hours
+        form.release_at.data = challenge.release_at
         
         # Add current answer boxes
         form.answer_boxes.entries = []

@@ -45,8 +45,62 @@ from wtforms import (
     FormField,
 )
 from wtforms.fields import DateTimeLocalField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional
+from wtforms.validators import DataRequired, Length, Email, EqualTo, NumberRange, Optional, ValidationError
 from flask_ckeditor import CKEditorField
+import datetime
+
+
+def validate_datetime_optional(form, field):
+    """Custom validator for optional datetime fields that handles cross-platform compatibility."""
+    if field.data is None:
+        return  # Optional field, None is valid
+    
+    # If it's already a datetime object, it's valid
+    if isinstance(field.data, datetime.datetime):
+        return
+    
+    # If it's a string, try to parse it
+    if isinstance(field.data, str):
+        try:
+            # Try common datetime formats
+            for fmt in ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M']:
+                try:
+                    datetime.datetime.strptime(field.data, fmt)
+                    return
+                except ValueError:
+                    continue
+        except:
+            pass
+    
+    raise ValidationError('Invalid datetime format. Please use YYYY-MM-DD HH:MM format.')
+
+
+class CrossPlatformDateTimeField(DateTimeLocalField):
+    """Enhanced DateTimeLocalField that works consistently across platforms."""
+    
+    def process_formdata(self, valuelist):
+        if valuelist:
+            date_str = ' '.join(valuelist).strip()
+            if not date_str:
+                self.data = None
+                return
+                
+            # Try to parse various formats
+            for fmt in ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%m/%d/%Y %H:%M']:
+                try:
+                    self.data = datetime.datetime.strptime(date_str, fmt)
+                    return
+                except ValueError:
+                    continue
+            
+            # If all parsing attempts fail, let the parent handle it
+            try:
+                super().process_formdata(valuelist)
+            except ValueError:
+                self.data = None
+                raise ValueError(f'Invalid datetime format: {date_str}')
+        else:
+            self.data = None
 
 
 class LeaderboardEntryForm(FlaskForm):
@@ -130,7 +184,7 @@ class ChallengeForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField("Content", validators=[DataRequired()])
     image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
-    release_at = DateTimeLocalField("Release Date & Time (leave blank for immediate release)", validators=[Optional()])
+    release_at = CrossPlatformDateTimeField("Release Date & Time (leave blank for immediate release)", validators=[Optional(), validate_datetime_optional])
     lock_after_hours = IntegerField("Lock after X hours (leave blank for no auto-lock)", validators=[Optional(), NumberRange(min=1, max=8760)])  # Max 1 year
     key_stage = SelectField(
         "Key Stage",
@@ -148,7 +202,7 @@ class SummerChallengeForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired(), Length(min=1, max=100)])
     content = CKEditorField("Content", validators=[DataRequired()])
     image = FileField("Image", validators=[FileAllowed(["jpg", "png", "gif"])])
-    release_at = DateTimeLocalField("Release Date & Time (leave blank for immediate release)", validators=[Optional()])
+    release_at = CrossPlatformDateTimeField("Release Date & Time (leave blank for immediate release)", validators=[Optional(), validate_datetime_optional])
     key_stage = SelectField(
         "Key Stage",
         choices=[("KS3", "Key Stage 3"), ("KS4", "Key Stage 4"), ("KS5", "Key Stage 5")],
