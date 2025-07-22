@@ -575,11 +575,15 @@ def edit_challenge(challenge_id):
                 challenge.file_url = filename
 
             # Manage answer boxes
-            existing_boxes = {box.order: box for box in challenge.answer_boxes}
+            existing_boxes = list(challenge.answer_boxes.order_by(ChallengeAnswerBox.order))
             used_box_ids = set()
 
             for index, box_form in enumerate(form.answer_boxes):
-                if index in existing_boxes:
+                # Skip empty box forms
+                if not box_form.box_label.data or not box_form.correct_answer.data:
+                    continue
+                    
+                if index < len(existing_boxes):
                     # Update existing box
                     box = existing_boxes[index]
                     box.box_label = box_form.box_label.data
@@ -597,7 +601,7 @@ def edit_challenge(challenge_id):
                     db.session.add(new_box)
 
             # Delete unused boxes (those without submissions)
-            for box in challenge.answer_boxes:
+            for box in existing_boxes:
                 if box.id not in used_box_ids:
                     if box.submissions.count() == 0:
                         db.session.delete(box)
@@ -1737,11 +1741,15 @@ def edit_summer_challenge(challenge_id):
                 challenge.file_url = filename
             
             # Manage answer boxes
-            existing_boxes = {box.order: box for box in challenge.answer_boxes}
+            existing_boxes = list(challenge.answer_boxes.order_by(SummerChallengeAnswerBox.order))
             used_box_ids = set()
             
             for index, box_form in enumerate(form.answer_boxes):
-                if index in existing_boxes:
+                # Skip empty box forms
+                if not box_form.box_label.data or not box_form.correct_answer.data:
+                    continue
+                    
+                if index < len(existing_boxes):
                     # Update existing box
                     box = existing_boxes[index]
                     box.box_label = box_form.box_label.data
@@ -1759,7 +1767,7 @@ def edit_summer_challenge(challenge_id):
                     db.session.add(new_box)
             
             # Delete unused boxes (those with submissions should be archived, but for simplicity we'll delete)
-            for box in challenge.answer_boxes:
+            for box in existing_boxes:
                 if box.id not in used_box_ids:
                     if box.submissions.count() == 0:
                         db.session.delete(box)
