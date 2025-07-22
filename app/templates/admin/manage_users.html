@@ -36,7 +36,7 @@
                     <input type="text" 
                            name="search" 
                            value="{{ current_filters.search }}" 
-                           placeholder="Search by name, class, or ID..." 
+                           placeholder="Search by name, email, class, or ID..." 
                            class="search-input"
                            id="searchInput">
                     <button type="submit" class="search-btn">🔍 Search</button>
@@ -129,6 +129,7 @@
                             <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllSelection(this)">
                         </th>
                         <th>👤 Name</th>
+                        <th>📧 Email</th>
                         <th>#️⃣ ID</th>
                         <th>📚 Year</th>
                         <th>🔢 Class/School</th>
@@ -152,6 +153,9 @@
                                     </span>
                                     <span class="name">{{ user.full_name }}</span>
                                 </div>
+                            </td>
+                            <td class="user-email">
+                                <span class="email">{{ user.email }}</span>
                             </td>
                             <td class="user-id">{{ user.id }}</td>
                             <td class="user-year">
@@ -206,7 +210,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="10" class="no-users">
+                            <td colspan="11" class="no-users">
                                 <div class="empty-state">
                                     <h3>👤 No users found</h3>
                                     <p>No users match your current filters.</p>
