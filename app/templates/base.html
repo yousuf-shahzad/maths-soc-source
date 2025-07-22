@@ -107,10 +107,10 @@
                         <a href="{{ url_for('auth.summer_register') }}">📝 Register</a>
                         <a href="{{ url_for('auth.summer_login') }}">🔑 Login</a>
                         <a href="{{ url_for('main.summer_leaderboard') }}">🏆 Leaderboard</a>
-                        <a href="#" onclick="showCompetitionInfo(); return false;">ℹ️ About</a>
+                        <a href="{{ url_for('main.summer_about') }}">ℹ️ About</a>
                         {% else %}
                         <a href="{{ url_for('main.summer_leaderboard') }}">🏆 Leaderboard</a>
-                        <a href="#" onclick="showCompetitionInfo(); return false;">ℹ️ About</a>
+                        <a href="{{ url_for('main.summer_about') }}">ℹ️ About</a>
                         {% endif %}
                     </div>
                 </li>
@@ -172,45 +172,6 @@
         document.getElementById('cookie-consent-banner').style.display = 'none';
     };
 
-    // Function to show competition info modal
-    function showCompetitionInfo() {
-        const modal = document.createElement('div');
-        modal.classList.add('modal-overlay');
-        
-        modal.innerHTML = `
-            <div class="modal-content">
-                <button onclick="this.closest('.modal-overlay').remove()" class="modal-close-button">×</button>
-                <div class="modal-header">
-                    <h2>🏆 Summer Competition 2025</h2>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Competition Period:</strong> July 21 - August 31, 2025</p>
-                    <p><strong>Registration Deadline:</strong> July 25, 2025</p>
-                    <p><strong>Format:</strong> Weekly challenges released every Monday</p>
-                    <p><strong>Participants:</strong> Students from participating schools across the region</p>
-                    <p><strong>Prizes:</strong> Awards for top performers in each year group</p>
-                    <hr>
-                    <p><strong>How it works:</strong> Solve mathematical challenges, earn points, and compete for the top spot on our leaderboard!</p>
-                    <div class="modal-actions">
-                        <a href="{{ url_for('auth.summer_register') }}" class="button">Register Now</a>
-                        <a href="{{ url_for('auth.summer_login') }}" class="button button-secondary">Login</a>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-        document.body.appendChild(modal);
-        if (document.getElementById('navMenu').classList.contains('active')) {
-            closeMobileNav();
-        }
-    }
-
     // Mobile navigation toggle
     const hamburgerMenu = document.getElementById('hamburgerMenu');
     const navMenu = document.getElementById('navMenu');
@@ -255,12 +216,7 @@
     // Close mobile nav when a link is clicked
     navMenu.addEventListener('click', function(e) {
         if (e.target.tagName === 'A' && !e.target.classList.contains('dropdown-toggle')) {
-            // Check if the link is for the info modal
-            if (e.target.getAttribute('onclick')?.includes('showCompetitionInfo')) {
-                // The modal function will close the nav
-            } else {
-                closeMobileNav();
-            }
+            closeMobileNav();
         }
     });
 

@@ -163,6 +163,17 @@ def about():
     return render_template("main/about.html", title="About")
 
 
+@bp.route("/summer_about")
+def summer_about():
+    """
+    Render the summer competition about page.
+
+    Returns:
+        Rendered summer competition about page template.
+    """
+    return render_template("main/summer_about.html", title="About Summer Competition 2025")
+
+
 # ============================================================================
 # Challenge Routes
 # ============================================================================
@@ -400,33 +411,42 @@ def handle_submission_result(
     if submission.is_correct:
         flash(f"Correct answer for {answer_box.box_label}!", "success")
 
-        # Check if this submission completes the entire challenge
+        # Check if this submission completes the entire challenge for this user
         user_correct_boxes = AnswerSubmission.query.filter_by(
             user_id=submission.user_id,
             challenge_id=challenge.id,
             is_correct=True
         ).count()
         
-        total_boxes = len(list(challenge.answer_boxes))
+        total_boxes = challenge.answer_boxes.count()  # Use .count() instead of len(list())
         
         # If this submission completes the challenge (all boxes correct)
-        if user_correct_boxes + 1 == total_boxes:
-            # Check if anyone else has completed the entire challenge already
-            completed_users = db.session.query(AnswerSubmission.user_id).filter(
-                AnswerSubmission.challenge_id == challenge.id,
-                AnswerSubmission.is_correct == True
-            ).group_by(AnswerSubmission.user_id).having(
-                db.func.count(AnswerSubmission.answer_box_id) == total_boxes
-            ).count()
+        if user_correct_boxes == total_boxes:  # Remove the +1 since the submission is already saved
             
-            # If no one has completed it yet, this user gets 3 points
-            if completed_users == 0:
+            # Check if anyone else has completed the entire challenge already
+            # We need to check for users who have correct answers for ALL answer boxes
+            completed_users_subquery = (
+                db.session.query(AnswerSubmission.user_id)
+                .filter(
+                    AnswerSubmission.challenge_id == challenge.id,
+                    AnswerSubmission.is_correct == True,
+                    AnswerSubmission.user_id != submission.user_id  # Exclude current user
+                )
+                .group_by(AnswerSubmission.user_id)
+                .having(db.func.count(db.func.distinct(AnswerSubmission.answer_box_id)) == total_boxes)
+            )
+            
+            completed_users_count = completed_users_subquery.count()
+            
+            # If no one else has completed it yet, this user gets 3 points
+            if completed_users_count == 0:
                 update_leaderboard(submission.user_id, 3, challenge.key_stage)
                 flash("🎉 First to complete the entire challenge! +3 points!", "success")
                 
                 # Update challenge completion timestamp
                 if challenge.first_correct_submission is None:
                     challenge.first_correct_submission = datetime.datetime.now()
+                    db.session.commit()
             else:
                 # Someone else completed it first, this user gets 1 point
                 update_leaderboard(submission.user_id, 1, challenge.key_stage)
@@ -436,7 +456,6 @@ def handle_submission_result(
             flash("Correct! Keep going to complete the challenge!", "success")
             # No points awarded until entire challenge is completed
 
-        db.session.commit()
     else:
         remaining = 3 - submission_count
         flash(
