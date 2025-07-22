@@ -263,18 +263,18 @@ class SummerChallenge(db.Model):
 
     @property
     def is_locked(self):
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         # Check manual lock first, then time-based lock
         return (self.is_manually_locked or 
-                datetime.datetime.now > self.date_posted + timedelta(hours=self.duration_hours))
+                datetime.datetime.now() > self.date_posted + timedelta(hours=self.duration_hours))
 
     @property
     def lock_reason(self):
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         """Returns the reason why the challenge is locked"""
         if self.is_manually_locked:
             return "manually_locked"
-        elif datetime.datetime.now > self.date_posted + timedelta(hours=self.duration_hours):
+        elif datetime.datetime.now() > self.date_posted + timedelta(hours=self.duration_hours):
             return "time_expired"
         return None
 

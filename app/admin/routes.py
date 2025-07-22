@@ -54,7 +54,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app import db
 from app.admin import bp
@@ -793,6 +793,7 @@ def manage_users():
         query = query.filter(
             db.or_(
                 User.full_name.ilike(search_term),
+                User.email.ilike(search_term),
                 User.maths_class.ilike(search_term),
                 User.id.like(search_term)
             )
@@ -882,6 +883,7 @@ def users_search():
     users = User.query.filter(
         db.or_(
             User.full_name.ilike(search_term),
+            User.email.ilike(search_term),
             User.maths_class.ilike(search_term),
             User.id.like(search_term)
         )
@@ -892,6 +894,7 @@ def users_search():
         user_data.append({
             'id': user.id,
             'full_name': user.full_name,
+            'email': user.email,
             'maths_class': user.maths_class,
             'key_stage': user.key_stage,
             'year': user.year,
@@ -1032,6 +1035,7 @@ def create_user():
             
             user = User(
                 full_name=full_name,
+                email=form.email.data.strip().lower(),
                 year=form.year.data,
                 key_stage=key_stage,
                 maths_class=form.maths_class.data if not form.is_competition_participant.data else None,
@@ -1046,6 +1050,14 @@ def create_user():
             flash("User created successfully.")
             return redirect(url_for("admin.manage_users"))
 
+        except IntegrityError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Integrity error creating user: {str(e)}")
+            if "email" in str(e).lower():
+                flash("Error: A user with this email address already exists.")
+            else:
+                flash("Error creating user: Duplicate data detected.")
+        
         except SQLAlchemyError as e:
             db.session.rollback()
             current_app.logger.error(f"Error creating user: {str(e)}")
@@ -1079,6 +1091,7 @@ def edit_user(user_id):
     form = EditUserForm(
         first_name=first_name.strip(),
         last_name=last_name.strip(),
+        email=user.email,
         year=user.year,
         maths_class=user.maths_class,
         is_competition_participant=user.is_competition_participant,
@@ -1106,6 +1119,7 @@ def edit_user(user_id):
                     return redirect(url_for("admin.edit_user", user_id=user_id))
 
             user.full_name = f"{first_name} {last_name}"
+            user.email = form.email.data.strip().lower()
             user.year = form.year.data
             user.key_stage = key_stage
             user.maths_class = form.maths_class.data if not form.is_competition_participant.data else None
@@ -1981,6 +1995,21 @@ def calculate_summer_leaderboard_stats():
     try:
         # Basic counts
         total_entries = SummerLeaderboard.query.count()
+        if total_entries == 0:
+            return {
+                'total_entries': 0,
+                'unique_participants': 0,
+                'participating_schools': 0,
+                'max_score': 0,
+                'min_score': 0,
+                'avg_score': 0,
+                'average_score': 0,
+                'total_score': 0,
+                'key_stage_breakdown': {},
+                'school_performance': [],
+                'top_performers': []
+            }
+            
         unique_users = db.session.query(SummerLeaderboard.user_id).distinct().count()
         unique_schools = db.session.query(SummerLeaderboard.school_id).distinct().count()
         
@@ -1998,9 +2027,9 @@ def calculate_summer_leaderboard_stats():
             db.func.count(SummerLeaderboard.id).label('count'),
             db.func.avg(SummerLeaderboard.score).label('avg_score'),
             db.func.max(SummerLeaderboard.score).label('max_score')
-        ).join(SummerLeaderboard).group_by(User.key_stage).all()
+        ).join(User, SummerLeaderboard.user_id == User.id).group_by(User.key_stage).all()
         
-        # School performance
+        # School performance (top 10)
         school_stats = db.session.query(
             School.name,
             School.id,
@@ -2008,15 +2037,19 @@ def calculate_summer_leaderboard_stats():
             db.func.avg(SummerLeaderboard.score).label('avg_score'),
             db.func.sum(SummerLeaderboard.score).label('total_score'),
             db.func.max(SummerLeaderboard.score).label('best_score')
-        ).join(SummerLeaderboard).group_by(School.id).order_by(db.func.sum(SummerLeaderboard.score).desc()).all()
+        ).join(School, SummerLeaderboard.school_id == School.id).group_by(
+            School.id, School.name
+        ).order_by(db.func.sum(SummerLeaderboard.score).desc()).limit(10).all()
         
-        # Top performers
+        # Top performers (top 10)
         top_performers = db.session.query(
             User.full_name,
             User.key_stage,
             School.name.label('school_name'),
             SummerLeaderboard.score
-        ).join(SummerLeaderboard).join(School).order_by(SummerLeaderboard.score.desc()).limit(10).all()
+        ).join(User, SummerLeaderboard.user_id == User.id).join(
+            School, SummerLeaderboard.school_id == School.id
+        ).order_by(SummerLeaderboard.score.desc()).limit(10).all()
         
         return {
             'total_entries': total_entries,
@@ -2024,19 +2057,19 @@ def calculate_summer_leaderboard_stats():
             'participating_schools': unique_schools,
             'max_score': score_stats.max_score or 0,
             'min_score': score_stats.min_score or 0,
-            'avg_score': round(score_stats.avg_score, 2) if score_stats.avg_score else 0,
-            'average_score': round(score_stats.avg_score, 2) if score_stats.avg_score else 0,  # Template compatibility
+            'avg_score': round(float(score_stats.avg_score), 2) if score_stats.avg_score else 0,
+            'average_score': round(float(score_stats.avg_score), 2) if score_stats.avg_score else 0,  # Template compatibility
             'total_score': score_stats.total_score or 0,
             'key_stage_breakdown': {ks.key_stage: {
                 'count': ks.count,
-                'avg_score': round(ks.avg_score, 2) if ks.avg_score else 0,
+                'avg_score': round(float(ks.avg_score), 2) if ks.avg_score else 0,
                 'max_score': ks.max_score or 0
             } for ks in ks_stats},
             'school_performance': [{
                 'name': school.name,
                 'id': school.id,
                 'participants': school.participant_count,
-                'avg_score': round(school.avg_score, 2) if school.avg_score else 0,
+                'avg_score': round(float(school.avg_score), 2) if school.avg_score else 0,
                 'total_score': school.total_score or 0,
                 'best_score': school.best_score or 0
             } for school in school_stats],
@@ -2126,31 +2159,6 @@ def summer_leaderboard_bulk_action():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
-
-
-def calculate_user_summer_score(user_id):
-    """Calculate a user's total score from summer challenge submissions"""
-    try:
-        # This would calculate based on SummerSubmission model
-        # Placeholder implementation - adjust based on your scoring system
-        from app.models import SummerSubmission, SummerChallenge
-        
-        total_score = 0
-        submissions = SummerSubmission.query.filter_by(user_id=user_id).all()
-        
-        for submission in submissions:
-            if submission.is_correct:
-                # Add points based on challenge difficulty or static points
-                challenge = SummerChallenge.query.get(submission.challenge_id)
-                if challenge:
-                    # Assume each correct answer gives 10 points
-                    total_score += 10
-        
-        return total_score
-    except Exception as e:
-        current_app.logger.error(f"Error calculating user score: {str(e)}")
-        return 0
-
 
 @bp.route("/admin/summer_leaderboard/stats")
 @login_required
@@ -2255,6 +2263,12 @@ def export_summer_leaderboard():
 def summer_school_rankings():
     """Display school rankings and performance analytics"""
     try:
+        # Check if we have any data
+        total_entries = SummerLeaderboard.query.count()
+        if total_entries == 0:
+            flash("No summer leaderboard data available for school rankings.", "info")
+            return redirect(url_for("admin.manage_summer_leaderboard"))
+        
         # Calculate school rankings
         school_rankings = db.session.query(
             School.id,
@@ -2264,33 +2278,38 @@ def summer_school_rankings():
             db.func.avg(SummerLeaderboard.score).label('avg_score'),
             db.func.max(SummerLeaderboard.score).label('best_score'),
             db.func.min(SummerLeaderboard.score).label('lowest_score')
-        ).join(SummerLeaderboard).group_by(School.id).order_by(
+        ).join(SummerLeaderboard).group_by(School.id, School.name).order_by(
             db.func.sum(SummerLeaderboard.score).desc()
         ).all()
         
         # Key stage performance by school
         ks_performance = db.session.query(
-            School.name,
+            School.name.label('school_name'),
             User.key_stage,
             db.func.count(SummerLeaderboard.id).label('count'),
             db.func.avg(SummerLeaderboard.score).label('avg_score')
         ).join(SummerLeaderboard).join(User).group_by(
-            School.id, User.key_stage
+            School.id, School.name, User.key_stage
         ).order_by(School.name, User.key_stage).all()
         
-        # Participation rates
-        total_participants = db.session.query(
-            School.name,
-            db.func.count(User.id).label('total_students'),
-            db.func.count(SummerLeaderboard.id).label('participants')
-        ).outerjoin(User).outerjoin(SummerLeaderboard).group_by(School.id).all()
+        # Total participation stats
+        total_competition_users = User.query.filter(User.is_competition_participant == True).count()
+        participating_users = db.session.query(SummerLeaderboard.user_id).distinct().count()
+        participation_rate = (participating_users / total_competition_users * 100) if total_competition_users > 0 else 0
+        
+        school_data = {
+            'rankings': school_rankings,
+            'ks_performance': ks_performance,
+            'total_competition_users': total_competition_users,
+            'participating_users': participating_users,
+            'participation_rate': round(participation_rate, 1)
+        }
         
         return render_template(
-            "admin/summer_school_rankings.html",
+            "admin/manage_summer_leaderboard.html",
             title="Summer Competition School Rankings",
-            school_rankings=school_rankings,
-            ks_performance=ks_performance,
-            participation_rates=total_participants
+            school_data=school_data,
+            show_school_rankings=True
         )
         
     except SQLAlchemyError as e:
@@ -2305,42 +2324,80 @@ def summer_school_rankings():
 def summer_leaderboard_analytics():
     """Advanced analytics and insights for summer competition"""
     try:
-        # Performance trends
+        # Check if we have any data first
+        total_entries = SummerLeaderboard.query.count()
+        if total_entries == 0:
+            flash("No summer leaderboard data available for analytics.", "info")
+            return redirect(url_for("admin.manage_summer_leaderboard"))
+        
+        # Performance trends - score distribution
         score_distribution = db.session.query(
-            db.func.count(SummerLeaderboard.id).label('count'),
-            SummerLeaderboard.score
+            SummerLeaderboard.score,
+            db.func.count(SummerLeaderboard.id).label('count')
         ).group_by(SummerLeaderboard.score).order_by(SummerLeaderboard.score).all()
         
         # Top performers analysis
-        top_10_percent = db.session.query(SummerLeaderboard).order_by(
+        top_10_percent_count = max(1, total_entries // 10)
+        top_performers = db.session.query(
+            SummerLeaderboard, User, School
+        ).join(User).join(School).order_by(
             SummerLeaderboard.score.desc()
-        ).limit(max(1, SummerLeaderboard.query.count() // 10)).all()
+        ).limit(top_10_percent_count).all()
         
         # Participation by key stage
         ks_participation = db.session.query(
             User.key_stage,
             db.func.count(SummerLeaderboard.id).label('participants'),
             db.func.avg(SummerLeaderboard.score).label('avg_score'),
-            db.func.stddev(SummerLeaderboard.score).label('score_stddev')
+            db.func.max(SummerLeaderboard.score).label('max_score'),
+            db.func.min(SummerLeaderboard.score).label('min_score')
         ).join(SummerLeaderboard).group_by(User.key_stage).all()
         
-        # Recent activity
-        recent_updates = db.session.query(SummerLeaderboard, User, School).join(User).join(School).filter(
-            SummerLeaderboard.last_updated >= datetime.datetime.now() - timedelta(days=7)
+        # Recent activity (last 7 days)
+        week_ago = datetime.datetime.now() - timedelta(days=7)
+        recent_updates = db.session.query(
+            SummerLeaderboard, User, School
+        ).join(User).join(School).filter(
+            SummerLeaderboard.last_updated >= week_ago
         ).order_by(SummerLeaderboard.last_updated.desc()).limit(20).all()
         
+        # School performance summary
+        school_performance = db.session.query(
+            School.name,
+            db.func.count(SummerLeaderboard.id).label('participant_count'),
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.sum(SummerLeaderboard.score).label('total_score')
+        ).join(SummerLeaderboard).group_by(School.id, School.name).order_by(
+            db.func.sum(SummerLeaderboard.score).desc()
+        ).limit(10).all()
+        
+        # Calculate some basic statistics
+        score_stats = db.session.query(
+            db.func.avg(SummerLeaderboard.score).label('avg_score'),
+            db.func.max(SummerLeaderboard.score).label('max_score'),
+            db.func.min(SummerLeaderboard.score).label('min_score')
+        ).first()
+        
+        analytics_data = {
+            'total_entries': total_entries,
+            'score_distribution': [(score, count) for score, count in score_distribution],
+            'top_performers': [(entry, user, school) for entry, user, school in top_performers],
+            'ks_participation': ks_participation,
+            'recent_updates': recent_updates,
+            'school_performance': school_performance,
+            'score_stats': score_stats
+        }
+        
         return render_template(
-            "admin/summer_leaderboard_analytics.html",
+            "admin/manage_summer_leaderboard.html",
             title="Summer Competition Analytics",
-            score_distribution=score_distribution,
-            top_performers=top_10_percent,
-            ks_participation=ks_participation,
-            recent_updates=recent_updates
+            analytics_data=analytics_data,
+            show_analytics=True
         )
         
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error loading analytics: {str(e)}")
-        flash("Error loading analytics.", "error")
+        flash("Error loading analytics data.", "error")
         return redirect(url_for("admin.manage_summer_leaderboard"))
 
 
@@ -2515,61 +2572,6 @@ def reset_summer_leaderboard():
         flash("Error resetting summer leaderboard. Please try again.", "error")
     
     return redirect(url_for('admin.manage_summer_leaderboard'))
-
-
-@bp.route("/admin/summer_leaderboard/bulk_update", methods=["GET", "POST"])
-@login_required  
-@admin_required
-def bulk_update_summer_leaderboard():
-    """
-    Bulk update summer leaderboard entries (e.g., add points to all participants)
-    """
-    if request.method == "POST":
-        try:
-            points_to_add = int(request.form.get("points", 0))
-            key_stage_filter = request.form.get("key_stage", "all")
-            
-            if points_to_add == 0:
-                flash("Please enter a valid number of points to add.", "error")
-                return redirect(url_for("admin.bulk_update_summer_leaderboard"))
-            
-            # Build query based on filter
-            query = SummerLeaderboard.query
-            if key_stage_filter != "all":
-                query = query.join(User).filter(User.key_stage == key_stage_filter)
-            
-            # Update scores
-            if key_stage_filter == "all":
-                updated_count = SummerLeaderboard.query.update({
-                    SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
-                    SummerLeaderboard.last_updated: datetime.datetime.now()
-                })
-            else:
-                # For filtered updates, we need to get IDs first
-                entry_ids = [entry.id for entry in query.all()]
-                updated_count = SummerLeaderboard.query.filter(
-                    SummerLeaderboard.id.in_(entry_ids)
-                ).update({
-                    SummerLeaderboard.score: SummerLeaderboard.score + points_to_add,
-                    SummerLeaderboard.last_updated: datetime.datetime.now()
-                }, synchronize_session=False)
-            
-            db.session.commit()
-            
-            filter_text = f" for {key_stage_filter} students" if key_stage_filter != "all" else ""
-            flash(f'Bulk update successful! Added {points_to_add} points to {updated_count} entries{filter_text}.', 'success')
-            return redirect(url_for('admin.manage_summer_leaderboard'))
-            
-        except (ValueError, SQLAlchemyError) as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error in bulk update: {str(e)}")
-            flash("Error performing bulk update. Please try again.", "error")
-    
-    return render_template(
-        "admin/bulk_update_summer_leaderboard.html",
-        title="Bulk Update Summer Leaderboard"
-    )
-
 
 # ! ERROR HANDLERS
 

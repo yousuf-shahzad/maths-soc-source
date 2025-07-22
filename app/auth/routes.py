@@ -280,24 +280,22 @@ def summer_register():
             form.first_name.data.strip(),
             form.last_name.data.strip(),
         )
-        if " " in first_name or " " in last_name:
-            flash("Please remove any whitespace from your name.")
+        
+        email = form.email.data.strip()
+        
+        if " " in first_name or " " in last_name or " " in email:
+            flash("Please remove any whitespace from your name and/or email.")
             return redirect(url_for("auth.register"))
 
         full_name = f"{first_name} {last_name}"
 
-        if profanity.contains_profanity(full_name):
-            flash("Unauthorized content detected in your name. Please try again.")
+        if profanity.contains_profanity(full_name) or profanity.contains_profanity(email):
+            flash("Unauthorized content detected in your name or email. Please try again.")
             return redirect(url_for("auth.register"))
 
-        existing_user = User.query.filter(
-            User.full_name == full_name, User.year == form.year.data, User.school_id == form.school_id.data
-        ).first()
-
-        if existing_user:
-            flash(
-                "A user with this name and year already exists in this school. Please use a different name or contact admin."
-            )
+        # Check if a user with the same email already exists
+        if User.query.filter_by(email=email).first():
+            flash("This email address is already registered.")
             return redirect(url_for("auth.summer_register"))
 
         user = User(
@@ -306,6 +304,7 @@ def summer_register():
             key_stage=key_stage,
             school_id=form.school_id.data,
             is_competition_participant=True,
+            email=email
         )
         user.set_password(form.password.data)
         db.session.add(user)
@@ -325,14 +324,13 @@ def summer_login():
     # Set school choices from the database
     form.school_id.choices = [(s.id, s.name) for s in School.query.order_by(School.name).all()]
     if form.validate_on_submit():
-        full_name = f"{form.first_name.data} {form.last_name.data}".strip()
-        user = User.query.filter(
-            User.full_name == full_name, User.year == form.year.data, User.school_id == form.school_id.data
-        ).first()
+        # Query using full_name for consistency
+        email = form.email.data.strip()
+        user = User.query.filter_by(email=email).first()
 
         if user is None or not user.check_password(form.password.data):
-            flash("Invalid name or password")
-            return redirect(url_for("auth.summer_login"))
+            flash("Invalid email or password")
+            return redirect(url_for("auth.login"))
         login_user(user, remember=form.remember_me.data)
         return redirect(url_for("main.home"))
     return render_template("auth/summer_login.html", title="Sign In", form=form)

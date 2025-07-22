@@ -58,19 +58,6 @@ class LoginForm(FlaskForm):
 
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
-    year = SelectField(
-        "Year",
-        choices=[
-            ("7", "7"),
-            ("8", "8"),
-            ("9", "9"),
-            ("10", "10"),
-            ("11", "11"),
-            ("12", "12"),
-            ("13", "13"),
-        ],
-        validators=[DataRequired()],
-    )
     remember_me = BooleanField("Remember Me")
     submit = SubmitField("Sign In")
 
@@ -221,28 +208,8 @@ class SummerRegistrationForm(FlaskForm):
 
 class SummerLoginForm(FlaskForm):
     """
-    Form for user login authentication.
-
-    Fields:
-    -------
-    first_name : StringField
-        User's first name (required)
-    last_name : StringField
-        User's last name (required)
-    password : PasswordField
-        User's password (required)
-    year : SelectField
-        User's current academic year (7-13)
-    school_id : SelectField
-        User's school (only required for competition participants)
-    remember_me : BooleanField
-        Option to maintain user session
-    submit : SubmitField
-        Button to submit login credentials
+    Form for summer competition login authentication.
     """
-
-    first_name = StringField("First Name", validators=[DataRequired()])
-    last_name = StringField("Last Name", validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
     year = SelectField(
@@ -270,8 +237,6 @@ class SummerLoginForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         """
         Initialize the form with dynamic school choices.
-        
-        Schools are loaded from the database to populate the dropdown.
         """
         super(SummerLoginForm, self).__init__(*args, **kwargs)
         from app.models import School

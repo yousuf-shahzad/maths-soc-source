@@ -216,6 +216,8 @@ class EditUserForm(FlaskForm):
         User's first name
     last_name : StringField
         User's last name
+    email : StringField
+        User's email address
     year : SelectField
         User's current academic year (7-13)
     is_competition_participant : BooleanField
@@ -230,6 +232,7 @@ class EditUserForm(FlaskForm):
 
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email()])
     year = SelectField(
         "Year",
         choices=[
@@ -264,6 +267,8 @@ class CreateUserForm(FlaskForm):
         User's first name
     last_name : StringField
         User's last name
+    email : StringField
+        User's email address
     password : StringField
         Initial password for the user
     year : SelectField
@@ -282,6 +287,7 @@ class CreateUserForm(FlaskForm):
 
     first_name = StringField("First Name", validators=[DataRequired()])
     last_name = StringField("Last Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email()])
     password = StringField("Password", validators=[DataRequired()])
     year = SelectField(
         "Year",
