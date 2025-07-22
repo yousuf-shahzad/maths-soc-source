@@ -103,10 +103,15 @@
                         <span class="dropdown-arrow"></span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="{{ url_for('auth.summer_register') }}" style="color: #333">📝 Register</a>
-                        <a href="{{ url_for('auth.summer_login') }}" style="color: #333">🔑 Login</a>
-                        <a href="{{ url_for('main.summer_leaderboard') }}" style="color: #333">🏆 Leaderboard</a>
-                        <a href="#" onclick="showCompetitionInfo(); return false;" style="color: #333">ℹ️ About</a>
+                        {% if current_user.is_anonymous %}
+                        <a href="{{ url_for('auth.summer_register') }}">📝 Register</a>
+                        <a href="{{ url_for('auth.summer_login') }}">🔑 Login</a>
+                        <a href="{{ url_for('main.summer_leaderboard') }}">🏆 Leaderboard</a>
+                        <a href="#" onclick="showCompetitionInfo(); return false;">ℹ️ About</a>
+                        {% else %}
+                        <a href="{{ url_for('main.summer_leaderboard') }}">🏆 Leaderboard</a>
+                        <a href="#" onclick="showCompetitionInfo(); return false;">ℹ️ About</a>
+                        {% endif %}
                     </div>
                 </li>
 
