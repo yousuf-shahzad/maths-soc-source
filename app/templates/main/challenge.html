@@ -3,17 +3,16 @@
 {% block content %}
 <div class="challenge-detail-container">
     <!-- Challenge Header -->
-    <div class="challenge-header-section">
-        <div class="challenge-breadcrumb">
-            <a href="{{ url_for('main.challenges') }}" class="breadcrumb-link">
-                <span>←</span> Back to Challenges
-            </a>
+    <div class="breadcrumb">
+            <a href="{{ url_for('main.challenges') }}">🎯 Challenges</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>{{ challenge.title }}</span>
         </div>
         
-        <div class="challenge-title-area">
-            <h1 class="challenge-title">{{ challenge.title }}</h1>
-            
-            <div class="challenge-meta-info">
+        <div class="page-header">
+            <h1>{{ challenge.title }}</h1>
+        </div>
+         <div class="challenge-meta">
                 <div class="meta-item">
                     <span class="meta-icon">📅</span>
                     <span class="meta-label">Posted:</span>
@@ -39,7 +38,6 @@
                 </div>
                 {% endif %}
             </div>
-        </div>
     </div>
 
     <!-- Success Message -->
@@ -72,13 +70,12 @@
     <div class="challenge-main-content">
         <!-- Challenge Problem -->
         <div class="challenge-problem-section">
-            <div class="section-card">
+            <div class="section-container">
                 <div class="section-header">
                     <h2>📋 Challenge Problem</h2>
                 </div>
-                
-                <div class="challenge-content">
-                    {{ challenge.content | safe }}
+                <div class="section-content">
+                    <p>{{ challenge.content | safe }}</p>
                 </div>
 
                 {% if challenge.file_url %}
@@ -223,7 +220,7 @@
         <!-- Admin Actions -->
         {% if current_user.is_admin %}
         <div class="admin-actions-section">
-            <div class="section-card admin-card">
+            <div class="admin-card">
                 <div class="section-header">
                     <h2>⚙️ Admin Actions</h2>
                 </div>
@@ -233,7 +230,7 @@
                         <span>✏️</span> Edit Challenge
                     </a>
                     <a href="{{ url_for('admin.manage_challenges') }}" 
-                       class="button button-outline">
+                       class="button button-secondary">
                         <span>📋</span> Manage All
                     </a>
                     {% if challenge.is_locked %}

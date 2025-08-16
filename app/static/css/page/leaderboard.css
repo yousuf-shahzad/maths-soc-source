@@ -1,0 +1,451 @@
+/* Tab Content */
+.tab-content {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    min-height: 400px;
+}
+
+.tab-title {
+    font-size: 1.75rem;
+    margin: 0 0 2rem 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ks3-title {
+    color: #962835;
+}
+
+.ks4-title {
+    color: #f59e0b;
+}
+
+.ks5-title {
+    color: #10b981;
+}
+
+.schools-title {
+    color: #06b6d4;
+}
+
+.activity-title {
+    color: #8b5cf6;
+}
+
+
+.rank {
+    font-size: 1.75rem;
+    font-weight: 700;
+    min-width: 4rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.podium-position .rank {
+    color: #962835;
+}
+
+.user-info {
+    flex: 1;
+    margin-left: 1.5rem;
+}
+
+.user-name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.user-details {
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.score {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.ks3-score {
+    color: #962835;
+}
+
+.ks4-score {
+    color: #7e3641;
+}
+
+.ks5-score {
+    color: #6b2f37;
+}
+
+/* School Leaderboard */
+.school-section-title {
+    font-size: 1.25rem;
+    margin: 2.5rem 0 1.5rem 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.school-category-section {
+    margin-bottom: 2.5rem;
+}
+
+.school-category-title {
+    font-size: 1.25rem;
+    margin: 0 0 1.5rem 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.school-leaderboard {
+    margin-bottom: 1rem;
+}
+
+.school-row {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 4px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.school-row:hover {
+    background: #f1f5f9;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.school-row.school-podium {
+    background: linear-gradient(135deg, #fdeaea, #fdd4d4);
+    border-left-color: #962835;
+}
+
+.school-info {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.school-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.school-stats {
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.school-total-score {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* Activity Feed */
+.activity-feed {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border-left: 4px solid #962835;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #fdeaea;
+    transform: translateX(2px);
+}
+
+.activity-icon {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    min-width: 2rem;
+    text-align: center;
+}
+
+.activity-info {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.activity-details {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.activity-points {
+    font-weight: 700;
+    color: #962835;
+    font-size: 1rem;
+}
+
+/* No Participants State */
+.no-participants {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+}
+
+.no-participants-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.no-participants p {
+    font-size: 1.1rem;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Call to Action */
+.cta-section {
+    background: transparent;
+    color: #962835;
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    text-align: center;
+    margin-top: 3rem;
+    border: 3px solid #962835;
+    box-shadow: 0 8px 32px rgba(150, 40, 53, 0.1);
+}
+
+.cta-section h2 {
+    font-size: 2rem;
+    margin: 0 0 1rem 0;
+    font-weight: 700;
+}
+
+.cta-section p {
+    font-size: 1.1rem;
+    margin: 0 0 2rem 0;
+    opacity: 0.9;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-button {
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cta-button.primary {
+    background: #962835;
+    color: white;
+}
+
+.cta-button.primary:hover {
+    background: #7e3641;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(150, 40, 53, 0.3);
+}
+
+.cta-button.secondary {
+    background: rgb(94, 94, 94);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.cta-button.secondary:hover {
+    background: rgba(94, 94, 94, 0.8);
+    transform: translateY(-2px);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1.25rem 1rem;
+    border: none;
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, #962835, #7e3641);
+    color: white;
+    box-shadow: 0 4px 12px rgba(150, 40, 53, 0.3);
+}
+
+.tab-button.active:hover {
+    background: linear-gradient(135deg, #7e3641, #6b2f37);
+}
+
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {    
+    .tab-buttons {
+        flex-direction: column;
+    }
+    
+    .tab-button {
+        border-radius: 0;
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        border-radius: 0 0 16px 16px;
+    }
+    
+    .tab-title {
+        font-size: 1.5rem;
+    }
+    
+    .leaderboard-row {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.25rem;
+    }
+    
+    .rank {
+        margin-bottom: 0.5rem;
+        min-width: auto;
+    }
+    
+    .user-info {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+    
+    .score {
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+    
+    .school-row {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .school-info {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+    
+    .school-total-score {
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .activity-icon {
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .activity-info {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+    
+    .activity-points {
+        margin-top: 0.5rem;
+    }
+    
+    .cta-section {
+        padding: 2rem 1.5rem;
+    }
+    
+    .cta-section h2 {
+        font-size: 1.75rem;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .cta-button {
+        width: 100%;
+        max-width: 250px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {    
+    .tab-title {
+        font-size: 1.25rem;
+    }
+    
+    .rank {
+        font-size: 1.5rem;
+    }
+    
+    .user-name {
+        font-size: 1.1rem;
+    }
+    
+    .score {
+        font-size: 1.5rem;
+    }
+    
+    .activity-feed {
+        max-height: 400px;
+    }
+}

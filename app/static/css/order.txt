@@ -1,0 +1,51 @@
+# CSS Files in Cascade Order (relative to static/ directory)
+# Arranged from most general to most specific
+
+# ===========================================
+# 1. BASE & RESET (Foundation)
+# ===========================================
+css/base/base.css
+
+# ===========================================
+# 2. CORE COMPONENTS (Building blocks)
+# ===========================================
+css/base/button.css
+css/base/forms.css
+css/base/table.css
+css/base/nav.css
+css/base/footer.css
+css/base/pagination.css
+css/base/section.css
+css/base/stats.css
+css/base/alerts.css
+css/base/cookies.css
+css/base/mobile.css
+
+# ===========================================
+# 3. LAYOUT & STRUCTURE (Page layouts)
+# ===========================================
+css/index.css
+
+# ===========================================
+# 4. SPECIFIC PAGES (Page-specific styles)
+# ===========================================
+css/page/challenge.css
+css/page/leaderboard.css
+css/page/about.css
+
+# ===========================================
+# 5. FEATURE SECTIONS (Feature-specific)
+# ===========================================
+css/profile/profile.css
+css/summer/nav.css
+css/summer/about.css
+css/article-newsletter/shared.css
+css/article-newsletter/pdf.css
+
+# ===========================================
+# 6. ADMIN SECTION (Admin-specific)
+# ===========================================
+css/admin/dashboard.css
+css/admin/challenges.css
+css/admin/users.css
+css/admin/actions.css

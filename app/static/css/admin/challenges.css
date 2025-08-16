@@ -1,0 +1,63 @@
+
+/* Math Field Styling */
+.math-field-container {
+    margin-bottom: 1rem;
+}
+
+math-field.form-control {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 1.5rem !important;
+}
+
+/* Preview Containers */
+#imagePreviewContainer,
+#currentImageContainer,
+#newImagePreview {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+#imagePreviewContainer img,
+#currentImageContainer img,
+#newImagePreview img {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+}
+
+.remove-box,
+.remove-box-btn {
+    width: auto;
+    align-self: flex-end;
+    margin-top: 1.5rem;
+}
+
+/* Headings within forms */
+.answer-box h3,
+.answer-box-group h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+/* Error Messages */
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Hidden Elements */
+.hidden-math-input {
+    display: none !important;
+}

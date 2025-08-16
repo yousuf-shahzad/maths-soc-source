@@ -1,0 +1,53 @@
+.dashboard-stats {
+    margin-bottom: 2rem;
+}
+
+.admin-dashboard ul {
+    list-style-type: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 0;
+}
+
+.admin-dashboard li a {
+    display: block;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #962835, #7e3641);
+    color: #fff;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(150, 40, 53, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-dashboard li a h3, .admin-dashboard li a p {
+    color: #fff;
+}
+
+.admin-dashboard li a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    transition: left 0.5s;
+}
+
+.admin-dashboard li a:hover::before {
+    left: 100%;
+}
+
+.admin-dashboard li a:hover {
+    background: linear-gradient(135deg, #7e3641, #5c2a32);
+    text-decoration: none;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(150, 40, 53, 0.4);
+}
+

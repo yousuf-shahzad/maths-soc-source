@@ -96,26 +96,6 @@
         {% endfor %}
     </div>
 
-    <!-- Newsletter Archive Info -->
-    {% if articles %}
-    <div class="newsletter-archive-info">
-        <div class="archive-header">
-            <h2>📚 Newsletter Archive</h2>
-            <p>Browse our complete collection of newsletters spanning mathematical discoveries, society events, and educational content.</p>
-        </div>
-        <div class="archive-stats">
-            <div class="stat-item">
-                <span class="stat-number">{{ articles|length if articles else 0 }}</span>
-                <span class="stat-label">Total Newsletters</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">{{ articles|length if articles else 0 }}</span>
-                <span class="stat-label">PDF Editions</span>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Quick Actions for Admins -->
     {% if current_user.is_admin %}
     <div class="admin-actions">

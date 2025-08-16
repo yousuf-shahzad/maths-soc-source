@@ -255,3 +255,80 @@ For technical support or collaboration:
 - Sudhakara Ambati
 
 Upton Court Grammar School
+
+
+Architecture Overview
+----------------------
+
+High-Level Components
+~~~~~~~~~~~~~~~~~~~~~
+
+- **Application Factory**: ``app.create_app`` builds the Flask app with the requested configuration (development, testing, production).
+- **Blueprints**: Modular structure with ``auth``, ``main``, ``profile``, and ``admin`` blueprints.
+- **Database**: SQLAlchemy models in ``app/models.py``; database initialization via Flask-Migrate (Alembic).
+- **Forms**: WTForms under each blueprint's ``forms.py``.
+- **Templates**: Jinja templates organized per blueprint in ``app/templates/<blueprint>/``; shared base template ``base.html``.
+- **Static Assets**: Modular CSS in ``app/static/css``; images under ``app/static/images``; user uploads under ``app/static/uploads``.
+- **Rich Text**: CKEditor is integrated for content fields in admin.
+
+App Factory and Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The application uses an app factory pattern (``app/__init__.py``):
+
+- Loads configuration via ``config.get_config``
+- Initializes extensions: SQLAlchemy, Flask-Login, Flask-Migrate, CKEditor
+- Registers blueprints
+- Configurable via environment variables (see ``installation``)
+
+Database and Migrations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- Create migrations: ``flask db migrate -m "message"``
+- Apply migrations: ``flask db upgrade``
+- For development seeding, ``init_db.py`` can create default schools and an admin user (non-production only)
+
+CSS and Frontend Scheme
+-----------------------
+
+We use a modular CSS approach. Key points:
+
+- ``app/static/css/main.css`` is an import hub (no direct styles)
+- Base components live under ``app/static/css/base`` (e.g., ``base.css``, ``forms.css``, ``button.css``)
+- Feature/page-specific styles live under folders like ``admin/``, ``page/``, ``profile/``, ``summer/``, ``article-newsletter/``
+- The file ``app/static/css/order.txt`` lists suggested cascade order
+- Avoid inline CSS in templates; use classes from base/feature CSS files
+
+Blueprint Conventions
+---------------------
+
+- ``routes.py`` defines endpoints; ``forms.py`` defines WTForms; ``__init__.py`` registers the blueprint
+- Templates: route naming aligns with subfolders under ``app/templates/<blueprint>/``
+- Admin pages follow consistent form and layout classes (see ``base/forms.css``, ``base/button.css``)
+
+Developer Onboarding (Quick)
+----------------------------
+
+1. Set up environment (see :doc:`installation`).
+2. Run ``flask db upgrade`` (or ``python init_db.py`` in dev).
+3. Start the dev server with ``python run.py``.
+4. Explore blueprints: ``app/admin``, ``app/auth``, ``app/main``, ``app/profile``.
+5. Run tests with ``pytest``; add new tests in ``tests/`` mirroring module layout.
+6. For UI work, reuse classes from ``base`` CSS and mirror existing admin templates.
+
+Code Style and Quality
+----------------------
+
+- PEP 8, type hints encouraged
+- Keep functions small and focused
+- Prefer blueprint modularity; avoid monolithic files
+- Update or add tests for new features and bug fixes
+- Keep migrations atomic and named clearly
+
+Security Notes
+--------------
+
+- Never commit real secrets; use ``.env``
+- Set a strong ``SECRET_KEY`` in production
+- Validate file uploads; review upload folders and allowed types
+- Regularly update dependencies

@@ -4,7 +4,7 @@
 <div class="newsletter-detail-container">
     <!-- Newsletter Header -->
     <header class="newsletter-detail-header">
-        <div class="newsletter-breadcrumb">
+        <div class="breadcrumb">
             <a href="{{ url_for('main.newsletters') }}">📰 Newsletters</a>
             <span class="breadcrumb-separator">›</span>
             <span>{{ article.title }}</span>
@@ -120,16 +120,16 @@
         <div class="share-section">
             <h3>Share this Newsletter</h3>
             <div class="share-buttons">
-                <button onclick="copyToClipboard('{{ request.url }}')" class="share-btn copy-btn">
+                <button onclick="copyToClipboard('{{ request.url }}')" class="button button-share">
                     <span>🔗</span> Copy Link
                 </button>
                 <a href="mailto:?subject={{ article.title | urlencode }}&body=Check out this newsletter: {{ request.url | urlencode }}" 
-                   class="share-btn email-btn">
+                   class="button button-share">
                     <span>✉️</span> Share via Email
                 </a>
                 {% if article.file_url %}
                 <a href="mailto:?subject={{ article.title | urlencode }}&body=Check out this newsletter: {{ request.url | urlencode }}%0A%0APDF Download: {{ url_for('main.serve_newsletter', filename=article.file_url, _external=True) | urlencode }}" 
-                   class="share-btn email-pdf-btn">
+                   class="button button-share">
                     <span>📎</span> Share PDF Link
                 </a>
                 {% endif %}

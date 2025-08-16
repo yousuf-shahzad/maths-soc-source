@@ -1,82 +1,89 @@
 {% extends "base.html" %}
 {% block title %}Summer Competition 2025 Leaderboard{% endblock %}
+
 {% block content %}
 <div class="container">
-    <!-- Summer Competition Header -->
-    <div class="summer-hero" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+    <!-- Leaderboard Header -->
+    <div class="summer-hero">
         <h1>🏆 Summer Competition 2025 Leaderboard</h1>
         <p>See how you rank against competitors from across the region!</p>
     </div>
 
+    <div class="alert alert-info" style="margin-bottom: 1rem;">
+        <strong>Note:</strong> This leaderboard is for the <b>Summer Competition 2025</b> only.<br>
+        Looking for the regular UCGS weekly challenges leaderboard? 
+        <a href="{{ url_for('main.leaderboard') }}" style="color: #007bff; font-weight: bold;">Click here</a>
+    </div>
+
     <!-- Competition Statistics -->
-    <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #ff6b6b;">
-            <h3 style="margin: 0; color: #ff6b6b; font-size: 2rem;">{{ stats.ks3_participants }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">KS3 Participants</p>
+    <div class="stats-grid">
+        <div class="stats-card ks3-stats">
+            <h3>KS3 Participants</h3>
+            <p>{{ stats.ks3_participants or 0 }}</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #ffa500;">
-            <h3 style="margin: 0; color: #ffa500; font-size: 2rem;">{{ stats.ks4_participants }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">KS4 Participants</p>
+        <div class="stats-card ks4-stats">
+            <h3>KS4 Participants</h3>
+            <p>{{ stats.ks4_participants or 0 }}</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #28a745;">
-            <h3 style="margin: 0; color: #28a745; font-size: 2rem;">{{ stats.ks5_participants }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">KS5 Participants</p>
+        <div class="stats-card ks5-stats">
+            <h3>KS5 Participants</h3>
+            <p>{{ stats.ks5_participants or 0 }}</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #17a2b8;">
-            <h3 style="margin: 0; color: #17a2b8; font-size: 2rem;">{{ stats.total_schools }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Total Schools</p>
+        <div class="stats-card points-stats">
+            <h3>Points Awarded</h3>
+            <p>{{ stats.total_points_awarded or 0 }}</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #6f42c1;">
-            <h3 style="margin: 0; color: #6f42c1; font-size: 2rem;">{{ stats.total_points_awarded }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Points Awarded</p>
+        <div class="stats-card challenges-stats">
+            <h3>Active Challenges</h3>
+            <p>{{ stats.active_challenges or 0 }}</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #20c997;">
-            <h3 style="margin: 0; color: #20c997; font-size: 2rem;">{{ stats.active_challenges }}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #666;">Active Challenges</p>
+        <div class="stats-card submissions-stats">
+            <h3>Total Schools</h3>
+            <p>{{ stats.total_schools or 0 }}</p>
         </div>
     </div>
 
     <!-- Leaderboard Tabs -->
-    <div class="leaderboard-tabs" style="margin-bottom: 2rem;">
-        <div class="tab-buttons" style="display: flex; background: white; border-radius: 8px 8px 0 0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <button onclick="showTab('ks3')" id="ks3-tab" class="tab-button active" style="flex: 1; padding: 1rem; border: none; background: #ff6b6b; color: white; cursor: pointer; font-weight: bold; transition: background 0.3s;">
+    <div class="leaderboard-tabs">
+        <div class="tab-buttons">
+            <button onclick="showTab('ks3')" id="ks3-tab" class="tab-button active">
                 🎓 Key Stage 3
             </button>
-            <button onclick="showTab('ks4')" id="ks4-tab" class="tab-button" style="flex: 1; padding: 1rem; border: none; background: #f8f9fa; color: #666; cursor: pointer; font-weight: bold; transition: background 0.3s;">
+            <button onclick="showTab('ks4')" id="ks4-tab" class="tab-button">
                 📐 Key Stage 4
             </button>
-            <button onclick="showTab('ks5')" id="ks5-tab" class="tab-button" style="flex: 1; padding: 1rem; border: none; background: #f8f9fa; color: #666; cursor: pointer; font-weight: bold; transition: background 0.3s;">
+            <button onclick="showTab('ks5')" id="ks5-tab" class="tab-button">
                 🎯 Key Stage 5
             </button>
-            <button onclick="showTab('schools')" id="schools-tab" class="tab-button" style="flex: 1; padding: 1rem; border: none; background: #f8f9fa; color: #666; cursor: pointer; font-weight: bold; transition: background 0.3s;">
+            <button onclick="showTab('schools')" id="schools-tab" class="tab-button">
                 🏫 School Rankings
             </button>
-            <button onclick="showTab('activity')" id="activity-tab" class="tab-button" style="flex: 1; padding: 1rem; border: none; background: #f8f9fa; color: #666; cursor: pointer; font-weight: bold; transition: background 0.3s;">
+            <button onclick="showTab('activity')" id="activity-tab" class="tab-button">
                 ⚡ Recent Activity
             </button>
         </div>
 
         <!-- Key Stage 3 Leaderboard -->
-        <div id="ks3-content" class="tab-content" style="background: white; padding: 2rem; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="margin: 0 0 1.5rem 0; color: #ff6b6b;">🥇 Key Stage 3 Leaders (Years 7-8)</h2>
+        <div id="ks3-content" class="tab-content">
+            <h2 class="tab-title ks3-title">🥇 Key Stage 3 Leaders (Years 7-8)</h2>
             {% if ks3_leaders %}
                 <div class="leaderboard-table">
                     {% for entry in ks3_leaders %}
-                        <div class="leaderboard-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff8e1' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                            <div class="rank" style="font-size: 1.5rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 3rem;">
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
                                 {% if loop.index == 1 %}🥇
                                 {% elif loop.index == 2 %}🥈
                                 {% elif loop.index == 3 %}🥉
                                 {% else %}{{ loop.index }}
                                 {% endif %}
                             </div>
-                            <div class="user-info" style="flex: 1; margin-left: 1rem;">
-                                <div style="font-weight: bold; font-size: 1.1rem;">{{ entry.user.full_name }}</div>
-                                <div style="color: #666; font-size: 0.9rem;">
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
                                     {{ entry.school.name }} • Year {{ entry.user.year }}
                                 </div>
                             </div>
-                            <div class="score" style="font-size: 1.5rem; font-weight: bold; color: #ff6b6b;">
+                            <div class="score ks3-score">
                                 {{ entry.score }} pts
                             </div>
                         </div>
@@ -84,51 +91,57 @@
                 </div>
                 
                 <!-- KS3 School Rankings -->
-                <h3 style="margin: 2rem 0 1rem 0; color: #ff6b6b;">🏫 Top KS3 Schools</h3>
+                <h3>🏫 Top KS3 Schools</h3>
                 {% if ks3_school_leaders %}
                     <div class="school-leaderboard">
                         {% for school in ks3_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff3cd' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
+                            <div class="school-row">
+                                <div class="rank">
                                     {{ loop.index }}
                                 </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
+                                <div class="school-info">
+                                    <div>{{ school.name }}</div>
+                                    <div>
                                         {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
                                     </div>
                                 </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #ff6b6b;">{{ school.total_score }} pts</div>
+                                <div class="total-score">{{ school.total_score }} pts</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% endif %}
             {% else %}
-                <p style="text-align: center; color: #666; font-style: italic;">No KS3 participants yet. Be the first to join the competition!</p>
+                <div class="no-participants">
+                    <div class="no-participants-icon">🎓</div>
+                    <p>No KS3 participants yet. Be the first to join the competition!</p>
+                    {% if current_user.is_authenticated and current_user.is_competition_participant %}
+                        <a href="{{ url_for('main.challenges') }}" class="button">Start Solving Challenges</a>
+                    {% endif %}
+                </div>
             {% endif %}
         </div>
 
         <!-- Key Stage 4 Leaderboard -->
-        <div id="ks4-content" class="tab-content" style="background: white; padding: 2rem; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
-            <h2 style="margin: 0 0 1.5rem 0; color: #ffa500;">🥇 Key Stage 4 Leaders (Years 9-11)</h2>
+        <div id="ks4-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title ks4-title">🥇 Key Stage 4 Leaders (Years 9-11)</h2>
             {% if ks4_leaders %}
                 <div class="leaderboard-table">
                     {% for entry in ks4_leaders %}
-                        <div class="leaderboard-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff8e1' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                            <div class="rank" style="font-size: 1.5rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 3rem;">
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
                                 {% if loop.index == 1 %}🥇
                                 {% elif loop.index == 2 %}🥈
                                 {% elif loop.index == 3 %}🥉
                                 {% else %}{{ loop.index }}
                                 {% endif %}
                             </div>
-                            <div class="user-info" style="flex: 1; margin-left: 1rem;">
-                                <div style="font-weight: bold; font-size: 1.1rem;">{{ entry.user.full_name }}</div>
-                                <div style="color: #666; font-size: 0.9rem;">
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
                                     {{ entry.school.name }} • Year {{ entry.user.year }}
                                 </div>
                             </div>
-                            <div class="score" style="font-size: 1.5rem; font-weight: bold; color: #ffa500;">
+                            <div class="score ks4-score">
                                 {{ entry.score }} pts
                             </div>
                         </div>
@@ -136,209 +149,188 @@
                 </div>
                 
                 <!-- KS4 School Rankings -->
-                <h3 style="margin: 2rem 0 1rem 0; color: #ffa500;">🏫 Top KS4 Schools</h3>
+                <h3>🏫 Top KS4 Schools</h3>
                 {% if ks4_school_leaders %}
                     <div class="school-leaderboard">
                         {% for school in ks4_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff3cd' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
+                            <div class="school-row school-row-ks4 loop-{{ loop.index }}">
+                                <div class="rank rank-ks4 loop-{{ loop.index }}">
                                     {{ loop.index }}
                                 </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
+                                <div class="school-info">
+                                    <div>{{ school.name }}</div>
+                                    <div>
                                         {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
                                     </div>
                                 </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #ffa500;">{{ school.total_score }} pts</div>
+                                <div class="total-score score-ks4">{{ school.total_score }} pts</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% endif %}
             {% else %}
-                <p style="text-align: center; color: #666; font-style: italic;">No KS4 participants yet. Be the first to join the competition!</p>
+                <p>No KS4 participants yet. Be the first to join the competition!</p>
             {% endif %}
         </div>
 
         <!-- Key Stage 5 Leaderboard -->
-        <div id="ks5-content" class="tab-content" style="background: white; padding: 2rem; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
-            <h2 style="margin: 0 0 1.5rem 0; color: #28a745;">🥇 Key Stage 5 Leaders (Years 12-13)</h2>
+        <div id="ks5-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title ks5-title">🥇 Key Stage 5 Leaders (Years 12-13)</h2>
             {% if ks5_leaders %}
                 <div class="leaderboard-table">
                     {% for entry in ks5_leaders %}
-                        <div class="leaderboard-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff8e1' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                            <div class="rank" style="font-size: 1.5rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 3rem;">
+                        <div class="leaderboard-row {% if loop.index <= 3 %}podium-position{% endif %}">
+                            <div class="rank">
                                 {% if loop.index == 1 %}🥇
                                 {% elif loop.index == 2 %}🥈
                                 {% elif loop.index == 3 %}🥉
                                 {% else %}{{ loop.index }}
                                 {% endif %}
                             </div>
-                            <div class="user-info" style="flex: 1; margin-left: 1rem;">
-                                <div style="font-weight: bold; font-size: 1.1rem;">{{ entry.user.full_name }}</div>
-                                <div style="color: #666; font-size: 0.9rem;">
+                            <div class="user-info">
+                                <div class="user-name">{{ entry.user.full_name }}</div>
+                                <div class="user-details">
                                     {{ entry.school.name }} • Year {{ entry.user.year }}
                                 </div>
                             </div>
-                            <div class="score" style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
+                            <div class="score ks5-score">
                                 {{ entry.score }} pts
                             </div>
                         </div>
                     {% endfor %}
-                </div>
-                
-                <!-- KS5 School Rankings -->
-                <h3 style="margin: 2rem 0 1rem 0; color: #28a745;">🏫 Top KS5 Schools</h3>
-                {% if ks5_school_leaders %}
-                    <div class="school-leaderboard">
-                        {% for school in ks5_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff3cd' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
-                                    {{ loop.index }}
-                                </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
-                                        {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
-                                    </div>
-                                </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #28a745;">{{ school.total_score }} pts</div>
-                            </div>
-                        {% endfor %}
+               {% endif %}
                     </div>
                 {% endif %}
-            {% else %}
-                <p style="text-align: center; color: #666; font-style: italic;">No KS5 participants yet. Be the first to join the competition!</p>
-            {% endif %}
         </div>
 
         <!-- Combined School Rankings -->
-        <div id="schools-content" class="tab-content" style="background: white; padding: 2rem; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
-            <h2 style="margin: 0 0 1.5rem 0; color: #17a2b8;">� School Competition by Key Stage</h2>
-            
+        <div id="schools-content" class="tab-content">
             <!-- KS3 Schools -->
-            <div style="margin-bottom: 2rem;">
-                <h3 style="margin: 0 0 1rem 0; color: #ff6b6b;">🎓 Key Stage 3 Schools</h3>
+            <div>
+                <h3>🎓 Key Stage 3 Schools</h3>
                 {% if ks3_school_leaders %}
                     <div class="school-leaderboard">
                         {% for school in ks3_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff8e1' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
+                            <div class="school-row school-row-ks3 loop-{{ loop.index }}">
+                                <div class="rank rank-ks3 loop-{{ loop.index }}">
                                     {{ loop.index }}
                                 </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
+                                <div class="school-info">
+                                    <div>{{ school.name }}</div>
+                                    <div>
                                         {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
                                     </div>
                                 </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #ff6b6b;">{{ school.total_score }} pts</div>
+                                <div class="total-score score-ks3">{{ school.total_score }} pts</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p style="color: #666; font-style: italic;">No KS3 school data available yet.</p>
+                    <p>No KS3 school data available yet.</p>
                 {% endif %}
             </div>
             
             <!-- KS4 Schools -->
-            <div style="margin-bottom: 2rem;">
-                <h3 style="margin: 0 0 1rem 0; color: #ffa500;">📐 Key Stage 4 Schools</h3>
+            <div>
+                <h3>📐 Key Stage 4 Schools</h3>
                 {% if ks4_school_leaders %}
                     <div class="school-leaderboard">
                         {% for school in ks4_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#fff3cd' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
+                            <div class="school-row school-row-ks4 loop-{{ loop.index }}">
+                                <div class="rank rank-ks4 loop-{{ loop.index }}">
                                     {{ loop.index }}
                                 </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
+                                <div class="school-info">
+                                    <div>{{ school.name }}</div>
+                                    <div>
                                         {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
                                     </div>
                                 </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #ffa500;">{{ school.total_score }} pts</div>
+                                <div class="total-score score-ks4">{{ school.total_score }} pts</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p style="color: #666; font-style: italic;">No KS4 school data available yet.</p>
+                    <p>No KS4 school data available yet.</p>
                 {% endif %}
             </div>
             
             <!-- KS5 Schools -->
             <div>
-                <h3 style="margin: 0 0 1rem 0; color: #28a745;">🎯 Key Stage 5 Schools</h3>
+                <h3>🎯 Key Stage 5 Schools</h3>
                 {% if ks5_school_leaders %}
                     <div class="school-leaderboard">
                         {% for school in ks5_school_leaders %}
-                            <div class="school-row" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: {{ '#d4edda' if loop.index <= 3 else '#f8f9fa' }}; border-radius: 6px; border-left: 4px solid {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#e9ecef' }};">
-                                <div class="rank" style="font-size: 1.2rem; font-weight: bold; color: {{ '#FFD700' if loop.index == 1 else '#C0C0C0' if loop.index == 2 else '#CD7F32' if loop.index == 3 else '#666' }}; min-width: 2.5rem;">
+                            <div class="school-row school-row-ks5 loop-{{ loop.index }}">
+                                <div class="rank rank-ks5 loop-{{ loop.index }}">
                                     {{ loop.index }}
                                 </div>
-                                <div class="school-info" style="flex: 1; margin-left: 1rem;">
-                                    <div style="font-weight: bold; font-size: 1rem;">{{ school.name }}</div>
-                                    <div style="color: #666; font-size: 0.8rem;">
+                                <div class="school-info">
+                                    <div>{{ school.name }}</div>
+                                    <div>
                                         {{ school.participant_count }} participants • Avg: {{ "%.1f"|format(school.average_score) }} pts
                                     </div>
                                 </div>
-                                <div class="total-score" style="font-size: 1.2rem; font-weight: bold; color: #28a745;">{{ school.total_score }} pts</div>
+                                <div class="total-score score-ks5">{{ school.total_score }} pts</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p style="color: #666; font-style: italic;">No KS5 school data available yet.</p>
+                    <p>No KS5 school data available yet.</p>
                 {% endif %}
             </div>
         </div>
 
         <!-- Recent Activity -->
-        <div id="activity-content" class="tab-content" style="background: white; padding: 2rem; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
-            <h2 style="margin: 0 0 1.5rem 0; color: #17a2b8;">⚡ Latest Submissions</h2>
+        <div id="activity-content" class="tab-content" style="display: none;">
+            <h2 class="tab-title activity-title">⚡ Recent Activity</h2>
             {% if recent_activity %}
-                <div class="activity-feed" style="max-height: 500px; overflow-y: auto;">
+                <div class="activity-feed">
                     {% for submission in recent_activity %}
-                        <div class="activity-item" style="display: flex; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #28a745;">
-                            <div class="activity-icon" style="margin-right: 1rem; font-size: 1.5rem;">✅</div>
-                            <div class="activity-info" style="flex: 1;">
-                                <div style="font-weight: bold;">{{ submission.user.full_name }}</div>
-                                <div style="color: #666; font-size: 0.9rem;">
+                        <div class="activity-item">
+                            <div class="activity-icon">✅</div>
+                            <div class="activity-info">
+                                <div class="activity-title">{{ submission.user.full_name }}</div>
+                                <div class="activity-details">
                                     Solved "{{ submission.challenge.title }}" • {{ submission.school.name }}
                                 </div>
-                                <div style="color: #999; font-size: 0.8rem;">
+                                <div class="activity-time">
                                     {{ submission.submitted_at.strftime('%B %d, %Y at %I:%M %p') }}
                                 </div>
                             </div>
-                            <div class="points-awarded" style="font-weight: bold; color: #17a2b8;">
+                            <div class="activity-points">
                                 +{{ submission.points_awarded }} pts
                             </div>
                         </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <p style="text-align: center; color: #666; font-style: italic;">No recent activity to display.</p>
+                <div class="no-participants">
+                    <div class="no-participants-icon">⚡</div>
+                    <p>No recent activity to display.</p>
+                </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Call to Action -->
-    <div class="cta-section" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; padding: 2rem; border-radius: 8px; text-align: center; margin-bottom: 2rem;">
-        <h2 style="margin: 0 0 1rem 0;">Ready to Climb the Leaderboard?</h2>
-        <p style="margin: 0 0 1.5rem 0;">Join the competition and start earning points today!</p>
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <div class="cta-section">
+        <h2>Ready to Join the Summer Competition?</h2>
+        <p>Start solving challenges and climb the leaderboard today!</p>
+        <div class="cta-buttons">
             {% if current_user.is_anonymous %}
-                <a href="{{ url_for('auth.summer_register') }}" style="background: white; color: #ff6b6b; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                <a href="{{ url_for('auth.summer_register') }}" class="cta-button primary">
                     Register Now
                 </a>
-                <a href="{{ url_for('auth.summer_login') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                <a href="{{ url_for('auth.summer_login') }}" class="cta-button secondary">
                     Login
                 </a>
             {% else %}
-                <a href="{{ url_for('main.challenges') }}" style="background: white; color: #ff6b6b; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                <a href="{{ url_for('main.challenges') }}" class="cta-button primary">
                     View Challenges
                 </a>
                 {% if current_user.is_competition_participant %}
-                    <a href="{{ url_for('profile.profile') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                    <a href="{{ url_for('profile.profile') }}" class="cta-button secondary">
                         My Profile
                     </a>
                 {% endif %}
@@ -356,60 +348,20 @@ function showTab(tabName) {
     
     // Remove active class from all tab buttons
     document.querySelectorAll('.tab-button').forEach(button => {
-        button.style.background = '#f8f9fa';
-        button.style.color = '#666';
         button.classList.remove('active');
     });
     
     // Show selected tab content
     document.getElementById(tabName + '-content').style.display = 'block';
     
-    // Activate selected tab button with appropriate color
-    const activeButton = document.getElementById(tabName + '-tab');
-    if (tabName === 'ks3') {
-        activeButton.style.background = '#ff6b6b';
-    } else if (tabName === 'ks4') {
-        activeButton.style.background = '#ffa500';
-    } else if (tabName === 'ks5') {
-        activeButton.style.background = '#28a745';
-    } else if (tabName === 'schools') {
-        activeButton.style.background = '#17a2b8';
-    } else {
-        activeButton.style.background = '#6c757d';
-    }
-    activeButton.style.color = 'white';
-    activeButton.classList.add('active');
+    // Activate selected tab button
+    document.getElementById(tabName + '-tab').classList.add('active');
 }
 
-// Auto-refresh leaderboard every 30 seconds
+// Auto-refresh leaderboard every 60 seconds
 setInterval(() => {
     if (document.hidden) return; // Don't refresh if tab is hidden
     location.reload();
-}, 30000);
+}, 60000);
 </script>
-
-<style>
-@media (max-width: 768px) {
-    .tab-buttons {
-        flex-direction: column !important;
-    }
-    
-    .leaderboard-row, .school-row {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .leaderboard-row .rank, .school-row .rank {
-        margin-bottom: 0.5rem;
-    }
-    
-    .year-groups {
-        grid-template-columns: 1fr !important;
-    }
-    
-    .stats-container {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-}
-</style>
 {% endblock %}

@@ -1,31 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Admin Dashboard</h1>
+    <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage the overall mathematics leaderboard and user statistics</p>
+    </div>
     
     {% if stats %}
-    <div class="dashboard-stats">
+    <div class="page-section">
+        <section>
         <h2>📊 Quick Statistics</h2>
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stats-card">
                 <h3>Challenges</h3>
                 <p><strong>{{ stats.released_challenges }}</strong> Released</p>
                 <p><strong>{{ stats.unreleased_challenges }}</strong> Unreleased</p>
                 <p>{{ stats.total_challenges }} Total</p>
             </div>
-            <div class="stat-card">
+            <div class="stats-card">
                 <h3>Users</h3>
                 <p><strong>{{ stats.total_users }}</strong> Total</p>
             </div>
-            <div class="stat-card">
+            <div class="stats-card">
                 <h3>Articles</h3>
                 <p><strong>{{ stats.total_articles }}</strong> Total</p>
             </div>
         </div>
-    </div>
+    </section>
     {% endif %}
     
-    <div class="admin-dashboard">
+    <section class="admin-dashboard">
     <h2>📋 Management Options</h2>
     <ul>
         <li><a href="{{ url_for('admin.manage_challenges') }}">Manage Challenges</a></li>
@@ -35,5 +39,6 @@
         <li><a href="{{ url_for('admin.manage_announcements') }}">Manage Announcements</a></li>
         <li><a href="{{ url_for('admin.manage_summer_competition') }}">Manage Summer Competition</a></li>
     </ul>
-    </div>
+</section>
+</div>
 {% endblock %}

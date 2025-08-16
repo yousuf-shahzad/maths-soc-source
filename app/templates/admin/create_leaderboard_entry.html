@@ -1,39 +1,47 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="challenge-container">
-    <h1>Create Leaderboard Entry</h1>
-    
+<div class="container">
+    <div class="page-header">
+        <h1>Create Leaderboard Entry</h1>
+    </div>
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('admin.manage_leaderboard') }}">Manage Leaderboard</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>Create Leaderboard Entry</span>
+        </div>
+
     <form method="POST">
         {{ form.hidden_tag() }}
         
         <p>
-            {{ form.user_id.label }}
+            {{ form.user_id.label(class="form-label") }}
             {{ form.user_id(class="form-control") }}
             {% for error in form.user_id.errors %}
-            <span style="color: red;">[{{ error }}]</span>
+            <span class="error-message">{{ error }}</span>
             {% endfor %}
         </p>
         
         <p>
-            {{ form.score.label }}
+            {{ form.score.label(class="form-label") }}
             {{ form.score(class="form-control") }}
             {% for error in form.score.errors %}
-            <span style="color: red;">[{{ error }}]</span>
+            <span class="error-message">{{ error }}</span>
             {% endfor %}
         </p>
         
         <p>
-            {{ form.key_stage.label }}
+            {{ form.key_stage.label(class="form-label") }}
             {{ form.key_stage(class="form-control") }}
             {% for error in form.key_stage.errors %}
-            <span style="color: red;">[{{ error }}]</span>
+            <span class="error-message">{{ error }}</span>
             {% endfor %}
         </p>
         
         <p>{{ form.submit(class="button") }}</p>
         
-        <div class="challenge-actions">
+        <div">
             <a href="{{ url_for('admin.manage_leaderboard') }}" class="button button-secondary">Cancel</a>
         </div>
     </form>

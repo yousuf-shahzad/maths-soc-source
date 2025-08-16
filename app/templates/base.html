@@ -41,7 +41,7 @@
         
         <!-- Author and Copyright -->
         <meta name="author" content="UCGS Mathematics Society">
-        <meta name="copyright" content="© 2024 UCGS Mathematics Society">
+        <meta name="copyright" content="© 2025 UCGS Mathematics Society">
         
         <!-- Language and Content-Type -->
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -54,8 +54,11 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
         
         <!-- Stylesheet and Script Links -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.min.css') }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
         
         <!-- External Scripts -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
@@ -80,7 +83,7 @@
         <nav class="nav-container">
             <a href="{{ url_for('main.home') }}" class="nav-logo">
                 <img src="{{ url_for('static', filename='images/crest.png') }}" alt="UCGS Crest">
-                <span>UCGS Maths Society</span>
+                <span>UCGS Maths Society<span>
             </a>
 
             <button class="hamburger-menu" id="hamburgerMenu" aria-label="Toggle navigation menu" aria-expanded="false">

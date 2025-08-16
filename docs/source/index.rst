@@ -10,10 +10,14 @@ Welcome to the documentation for the UCGS Maths Society Site! This comprehensive
    installation
    development
    deployment
+   app
+   css
+   onboarding
    api/app.admin
    api/app.main
    api/app.profile
    api/app.auth
+   modules
 
 Indices and tables
 ==================

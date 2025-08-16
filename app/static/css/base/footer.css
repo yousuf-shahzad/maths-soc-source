@@ -1,0 +1,136 @@
+/*****************************************
+ * Footer Styles
+ *****************************************/
+footer {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    margin-top: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #962835, #7e3641, #962835);
+    background-size: 200% 100%;
+    animation: gradientShift 3s ease-in-out infinite;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    padding: 3rem 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-section h4 {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #962835;
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.footer-section p {
+    margin: 0.5rem 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-section ul li {
+    margin: 0.5rem 0;
+}
+
+.footer-section ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.footer-section ul li a:hover {
+    opacity: 1;
+    color: #f39c12;
+    transform: translateX(5px);
+}
+
+.footer-bottom {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-credits p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.footer-credits strong {
+    color: #f39c12;
+    font-weight: 600;
+}
+
+.footer-credits a {
+    color: #ffffff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-credits a:hover {
+    color: #f39c12;
+}
+
+/* Mobile footer adjustments */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        padding: 2rem 1rem 1rem;
+        gap: 1.5rem;
+    }
+    
+    .footer-section h4 {
+        font-size: 1rem;
+    }
+    
+    .footer-bottom {
+        padding: 1rem;
+    }
+    
+    .footer-credits p {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-content {
+        padding: 1.5rem 1rem 1rem;
+    }
+    
+    .footer-section {
+        text-align: center;
+    }
+    
+    .footer-credits a {
+        display: block;
+        margin: 0.25rem 0;
+    }
+}

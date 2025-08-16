@@ -3,25 +3,26 @@
 {% block content %}
 <div class="container">
     <!-- Admin Header -->
-    <div class="admin-hero" style="background: linear-gradient(135deg, #6f42c1, #17a2b8); color: white; padding: 2rem 0; text-align: center; border-radius: 8px; margin-bottom: 2rem;">
+    <div class="page-header">
         <h1>✏️ Edit School</h1>
         <p>Update school information for Summer Competition 2025</p>
     </div>
 
-    <!-- Navigation -->
-    <div class="navigation-breadcrumb" style="margin-bottom: 2rem;">
-        <a href="{{ url_for('admin.manage_schools') }}" style="color: #6f42c1; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 0.5rem;">
-            ← Back to Manage Schools
-        </a>
-    </div>
+    <div class="breadcrumb">
+            <a href="{{ url_for('admin.manage_schools') }}">Manage Schools</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>Edit School</span>
+        </div>
 
     <!-- Edit School Form -->
-    <div class="form-container" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <h2 style="color: #6f42c1; margin-bottom: 1.5rem;">📝 School Details</h2>
+    <div class="page-section">
+        <section>
+            <h2 class="section-header">Edit School Details</h2>
+            <p>Update the school name, email domain, and address below.</p>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert" style="padding: 1rem; margin-bottom: 1rem; border-radius: 6px; border-left: 4px solid {{ '#28a745' if category == 'success' else '#dc3545' }}; background: {{ '#d4edda' if category == 'success' else '#f8d7da' }}; color: {{ '#155724' if category == 'success' else '#721c24' }};">
+                    <div>
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -29,80 +30,46 @@
         {% endwith %}
         <form method="POST">
             {{ form.hidden_tag() }}
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                {{ form.name.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
-                {{ form.name(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
+            <div class="form-group">
+                {{ form.name.label(class="form-label")}}
+                {{ form.name(class="form-control") }}
                 {% for error in form.name.errors %}
-                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                    <div class="error-message">{{ error }}</div>
                 {% endfor %}
             </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                {{ form.email_domain.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
-                {{ form.email_domain(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
-                <small style="color: #666; font-size: 0.875rem; display: block; margin-top: 0.25rem;">e.g., school.edu.uk</small>
+            <div class="form-group">
+                {{ form.email_domain.label(class="form-label") }}
+                {{ form.email_domain(class="form-control") }}
+                <small class="form-text text-muted">e.g., school.edu.uk</small>
                 {% for error in form.email_domain.errors %}
-                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                    <div class="error-message">{{ error }}</div>
                 {% endfor %}
             </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                {{ form.address.label(class="form-label", style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #333;") }}
-                {{ form.address(class="form-control", style="width: 100%; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;") }}
-                <small style="color: #666; font-size: 0.875rem; display: block; margin-top: 0.25rem;">Full school address including postcode</small>
+            <div class="form-group">
+                {{ form.address.label(class="form-label") }}
+                {{ form.address(class="form-control") }}
+                <small class="form-text text-muted">Full school address including postcode</small>
                 {% for error in form.address.errors %}
-                    <div class="error-message" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">{{ error }}</div>
+                    <div class="error-message">{{ error }}</div>
                 {% endfor %}
             </div>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                {{ form.submit(class="submit-button", style="background: linear-gradient(135deg, #6f42c1, #17a2b8); color: white; padding: 0.75rem 2rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s;") }}
-                <a href="{{ url_for('admin.manage_schools') }}" style="background: #6c757d; color: white; padding: 0.75rem 2rem; border-radius: 6px; text-decoration: none; font-size: 1rem; font-weight: bold; display: inline-flex; align-items: center; transition: background-color 0.2s;">
+            <div>
+                {{ form.submit(class="button") }}
+                <a href="{{ url_for('admin.manage_schools') }}" class="button button-secondary">
                     Cancel
                 </a>
             </div>
         </form>
-    </div>
+        </section>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #17a2b8;">
-        <h3 style="color: #17a2b8; margin: 0 0 1rem 0;">💡 Quick Tips</h3>
-        <ul style="margin: 0; padding-left: 1.5rem; color: #666;">
+    <section>
+        <h3 class="section-header">💡 Quick Tips</h3>
+        <ul>
             <li>School name should be the official full name</li>
             <li>Email domain helps with automatic school detection during registration</li>
             <li>Address should include full postal address for verification</li>
         </ul>
+    </section>
     </div>
 </div>
-
-<style>
-.submit-button:hover {
-    transform: translateY(-2px);
-}
-
-.form-control:focus {
-    border-color: #6f42c1 !important;
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
-}
-
-a[href*="cancel"]:hover, .cancel-button:hover {
-    background-color: #5a6268 !important;
-}
-
-@media (max-width: 768px) {
-    .form-container, .quick-actions {
-        padding: 1rem !important;
-    }
-    
-    .admin-hero h1 {
-        font-size: 1.5rem;
-    }
-    
-    .admin-hero p {
-        font-size: 0.9rem;
-    }
-    
-    .form-group {
-        margin-bottom: 1rem !important;
-    }
-}
-</style>
 {% endblock %}

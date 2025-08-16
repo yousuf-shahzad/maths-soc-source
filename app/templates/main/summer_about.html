@@ -8,6 +8,7 @@
             <img src="{{ url_for('static', filename='images/crest.png') }}" alt="Upton Court Grammar School Crest">
             <h1>Summer Competition 2025</h1>
         </div>
+            <p>Join us for an exciting summer of mathematical challenges and competitions!</p>
     </div>
 
     <!-- Welcome Section -->
@@ -20,7 +21,7 @@
         </div>
     </div>
 
-    <div class="competition-info" style="background-color: #f8f9fa; border-left: 4px solid #ff6b6b; padding: 1.5rem; margin-bottom: 2rem; border-radius: 0 8px 8px 0;">
+    <div class="competition-info">
         <h3 style="color: #ff6b6b;">Competition Details</h3>
         <p><strong>Competition Period:</strong> July 28 - September 5, 2025</p>
         <p><strong>Challenge Schedule:</strong> New challenges released every weekday (Monday-Friday)</p>
@@ -196,35 +197,33 @@
     </div>
 
     <!-- Getting Started -->
-    <div class="section-container cta-section">
-        <h2 class="section-title">🚀 Ready to Get Started?</h2>
-        <div class="cta-content">
-            <p>Join hundreds of students in this exciting mathematical adventure. Test your skills, learn new concepts, and compete for glory!</p>
-            
-            <div class="action-buttons">
-                {% if current_user.is_authenticated %}
-                    {% if current_user.is_competition_participant %}
-                        <a href="{{ url_for('main.summer_leaderboard') }}" class="btn btn-primary">
+        <div class="cta-section">
+        <h2>Ready to Join the Summer Competition?</h2>
+        <p>Start solving challenges and climb the leaderboard today!</p>
+        <div class="cta-buttons">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_competition_participant %}
+                    <a href="{{ url_for('main.summer_leaderboard') }}" class="cta-button primary">
                             📊 View Leaderboard
                         </a>
-                        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('main.home') }}" class="cta-button secondary">
                             🎯 View Challenges
                         </a>
-                    {% else %}
-                        <a href="{{ url_for('auth.summer_register') }}" class="btn btn-primary">
+            {% else %}
+                        <a href="{{ url_for('auth.summer_register') }}" class="cta-button primary">
                             📝 Register for Competition
                         </a>
                     {% endif %}
                 {% else %}
-                    <a href="{{ url_for('auth.summer_register') }}" class="btn btn-primary">
+                    <a href="{{ url_for('auth.summer_register') }}" class="cta-button primary">
                         📝 Register Now
                     </a>
-                    <a href="{{ url_for('auth.summer_login') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('auth.summer_login') }}" class="cta-button secondary">
                         🔑 Already Registered? Login
                     </a>
                 {% endif %}
-            </div>
         </div>
+    </div>
     </div>
 
     <!-- Contact Information -->
@@ -252,412 +251,4 @@
         </div>
     </div>
 </div>
-
-<style>
-/* Summer About Page Styles */
-.summer-about-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    line-height: 1.6;
-}
-
-.summer-hero {
-    text-align: center;
-    padding: 40px 0;
-    background: linear-gradient(135deg, #f7971e, #ffd200);
-    color: white;
-    border-radius: 12px;
-    margin-bottom: 40px;
-    box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
-    animation: hero-glow 4s ease-in-out infinite alternate;
-}
-
-@keyframes hero-glow {
-    from {
-        box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
-    }
-    to {
-        box-shadow: 0 8px 40px rgba(247, 151, 30, 0.5), 0 0 30px rgba(255, 210, 0, 0.2);
-    }
-}
-
-.summer-hero .school-crest img {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 20px;
-}
-
-.summer-hero h1 {
-    font-size: 2.5rem;
-    margin: 10px 0;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.hero-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.9;
-    margin: 0;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
-.section-container {
-    margin-bottom: 40px;
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.section-title {
-    color: #333;
-    font-size: 1.8rem;
-    margin-bottom: 20px;
-    border-bottom: 3px solid #f7971e;
-    padding-bottom: 10px;
-}
-
-/* How It Works Steps */
-.how-it-works {
-    display: grid;
-    gap: 20px;
-}
-
-.step {
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-left: 4px solid #f7971e;
-}
-
-.step-number {
-    background: linear-gradient(135deg, #f7971e, #ffd200);
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(247, 151, 30, 0.3);
-    animation: step-glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes step-glow {
-    from {
-        box-shadow: 0 4px 12px rgba(247, 151, 30, 0.3);
-    }
-    to {
-        box-shadow: 0 4px 16px rgba(247, 151, 30, 0.5), 0 0 15px rgba(255, 210, 0, 0.2);
-    }
-}
-
-.step-content h3 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
-
-.step-content p {
-    margin: 0;
-    color: #666;
-}
-
-/* Key Stages Grid */
-.key-stages-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.key-stage-card {
-    border-radius: 8px;
-    padding: 25px;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-}
-
-.key-stage-card:hover {
-    transform: translateY(-5px);
-}
-
-.key-stage-card.ks3 {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
-}
-
-.key-stage-card.ks4 {
-    background: linear-gradient(135deg, #f7971e, #ffd200);
-    box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3);
-    animation: ks4-glow 4s ease-in-out infinite alternate;
-}
-
-@keyframes ks4-glow {
-    from {
-        box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3);
-    }
-    to {
-        box-shadow: 0 4px 20px rgba(247, 151, 30, 0.5), 0 0 20px rgba(255, 210, 0, 0.2);
-    }
-}
-
-.key-stage-card.ks5 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
-}
-
-.ks-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.ks-header h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
-.ks-years {
-    background: rgba(255,255,255,0.2);
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-}
-
-.ks-content ul {
-    list-style: none;
-    padding: 0;
-}
-
-.ks-content li {
-    padding: 5px 0;
-    position: relative;
-    padding-left: 20px;
-}
-
-.ks-content li:before {
-    content: "✓";
-    position: absolute;
-    left: 0;
-    font-weight: bold;
-}
-
-/* Features Grid */
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.feature-card {
-    text-align: center;
-    padding: 25px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-.feature-card:nth-child(2n) {
-    background: linear-gradient(135deg, rgba(247, 151, 30, 0.1), rgba(255, 210, 0, 0.1));
-    border: 2px solid rgba(247, 151, 30, 0.2);
-}
-
-.feature-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
-}
-
-.feature-card h3 {
-    color: #333;
-    margin: 15px 0 10px 0;
-}
-
-.feature-card p {
-    color: #666;
-    margin: 0;
-}
-
-/* Rules Section */
-.rules-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-top: 20px;
-}
-
-.rule-section h3 {
-    color: #f7971e;
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-}
-
-.rule-section ul {
-    list-style: none;
-    padding: 0;
-}
-
-.rule-section li {
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-    position: relative;
-    padding-left: 25px;
-}
-
-.rule-section li:before {
-    content: "•";
-    color: #f7971e;
-    position: absolute;
-    left: 0;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-/* CTA Section */
-.cta-section {
-    background: linear-gradient(135deg, #f7971e, #ffd200);
-    color: white;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
-    animation: cta-glow 5s ease-in-out infinite alternate;
-}
-
-@keyframes cta-glow {
-    from {
-        box-shadow: 0 8px 32px rgba(247, 151, 30, 0.3);
-    }
-    to {
-        box-shadow: 0 8px 40px rgba(247, 151, 30, 0.5), 0 0 30px rgba(255, 210, 0, 0.2);
-    }
-}
-
-.cta-section .section-title {
-    color: white;
-    border-bottom-color: rgba(255,255,255,0.3);
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.action-buttons {
-    margin-top: 25px;
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 12px 24px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    display: inline-block;
-}
-
-.btn-primary {
-    background: #fff;
-    color: #f7971e;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
-}
-
-.btn-primary:hover {
-    background: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
-}
-
-.btn-secondary {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 2px solid white;
-}
-
-.btn-secondary:hover {
-    background: white;
-    color: #f7971e;
-    transform: translateY(-2px);
-}
-
-/* Contact Section */
-.contact-section {
-    background: #f8f9fa;
-}
-
-.contact-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.contact-item {
-    padding: 20px;
-    background: white;
-    border-radius: 6px;
-    border-left: 4px solid #f7971e;
-    transition: transform 0.3s ease;
-}
-
-.contact-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(247, 151, 30, 0.1);
-}
-
-.contact-item strong {
-    color: #333;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.contact-item p {
-    margin: 0;
-    color: #666;
-}
-
-.contact-item a {
-    color: #f7971e;
-    text-decoration: none;
-}
-
-.contact-item a:hover {
-    text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .summer-hero h1 {
-        font-size: 2rem;
-    }
-    
-    .step {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .section-container {
-        padding: 20px;
-    }
-}
-</style>
 {% endblock %}

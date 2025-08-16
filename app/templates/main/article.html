@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="article-detail-container">
-    <!-- Article Header -->
-    <header class="article-detail-header">
-        <div class="article-breadcrumb">
-            <a href="{{ url_for('main.articles') }}">📚 Articles</a>
+<div class="newsletter-detail-container">
+    <!-- Newsletter Header -->
+    <header class="newsletter-detail-header">
+        <div class="breadcrumb">
+            <a href="{{ url_for('main.newsletters') }}">📚 Articles</a>
             <span class="breadcrumb-separator">›</span>
             <span>{{ article.title }}</span>
         </div>
         
-        <div class="article-title-section">
-            <h1 class="article-detail-title">{{ article.title }}</h1>
+        <div class="newsletter-title-section">
+            <div class="newsletter-type-badge">
+                <span class="type-icon">📰</span>
+                <span>Article Edition</span>
+            </div>
             
-            <div class="article-meta-info">
+            <h1 class="newsletter-detail-title">{{ article.title }}</h1>
+            
+            <div class="newsletter-meta-info">
                 <div class="meta-item">
                     <span class="meta-icon">📅</span>
                     <span class="meta-label">Published:</span>
@@ -21,31 +26,38 @@
                 </div>
                 <div class="meta-item">
                     <span class="meta-icon">✍️</span>
-                    <span class="meta-label">Author:</span>
+                    <span class="meta-label">Editor:</span>
                     <span class="meta-value">{{ article.named_creator }}</span>
                 </div>
                 {% if article.file_url %}
                 <div class="meta-item">
                     <span class="meta-icon">📄</span>
                     <span class="meta-label">Format:</span>
-                    <span class="meta-value">Article + PDF</span>
+                    <span class="meta-value">Digital + PDF Edition</span>
                 </div>
                 {% endif %}
             </div>
         </div>
     </header>
 
-    <!-- Article Content -->
-    <div class="article-detail-content">
-        <div class="article-body">
-            {{ article.content | safe }}
+    <!-- Newsletter Content -->
+    <div class="newsletter-detail-content">
+        <div class="newsletter-body">
+            <div class="content-intro">
+                <h2>📖 Article Content</h2>
+                <p>Read the digital version below or download the PDF for the complete formatted edition.</p>
+            </div>
+            
+            <div class="newsletter-text-content">
+                {{ article.content | safe }}
+            </div>
         </div>
 
         {% if article.file_url %}
         <div class="pdf-section">
             <div class="pdf-section-header">
-                <h2>📄 PDF Document</h2>
-                <p>View or download the complete article as a PDF document</p>
+                <h2>📄 PDF Article Edition</h2>
+                <p>Experience the complete article with professional formatting, graphics, and additional content</p>
             </div>
             
             <!-- PDF Viewer -->
@@ -59,14 +71,18 @@
                         </a>
                         <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
                            download class="button">
-                            <span>💾</span> Download
+                            <span>💾</span> Download PDF
                         </a>
+                        <button onclick="printNewsletter('{{ url_for('main.serve_newsletter', filename=article.file_url) }}')" 
+                                class="button button-outline">
+                            <span>🖨️</span> Print
+                        </button>
                     </div>
                 </div>
                 
                 <div class="pdf-viewer">
                     <iframe src="{{ url_for('main.serve_newsletter', filename=article.file_url) }}"
-                            width="100%" height="600" frameborder="0"
+                            width="100%" height="700" frameborder="0"
                             title="Article PDF Preview"></iframe>
                 </div>
             </div>
@@ -74,8 +90,8 @@
         {% endif %}
     </div>
 
-    <!-- Article Actions -->
-    <div class="article-detail-actions">
+    <!-- Newsletter Actions -->
+    <div class="newsletter-detail-actions">
         <div class="action-buttons">
             <a href="{{ url_for('main.articles') }}" class="button button-secondary">
                 <span>← </span> Back to Articles
@@ -85,6 +101,10 @@
             <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
                target="_blank" class="button">
                 <span>📄</span> Open PDF
+            </a>
+            <a href="{{ url_for('main.serve_newsletter', filename=article.file_url) }}" 
+               download class="button button-outline">
+                <span>💾</span> Download
             </a>
             {% endif %}
             
@@ -97,29 +117,44 @@
         </div>
         
         <!-- Share Section -->
-        <div class="share-section">
+        <div class="page-section">
             <h3>Share this Article</h3>
             <div class="share-buttons">
-                <button onclick="copyToClipboard('{{ request.url }}')" class="share-btn copy-btn">
+                <button onclick="copyToClipboard('{{ request.url }}')" class="button button-share">
                     <span>🔗</span> Copy Link
                 </button>
                 <a href="mailto:?subject={{ article.title | urlencode }}&body=Check out this article: {{ request.url | urlencode }}" 
-                   class="share-btn email-btn">
+                   class="button button-share">
                     <span>✉️</span> Share via Email
                 </a>
+                {% if article.file_url %}
+                <a href="mailto:?subject={{ article.title | urlencode }}&body=Check out this article: {{ request.url | urlencode }}%0A%0APDF Download: {{ url_for('main.serve_newsletter', filename=article.file_url, _external=True) | urlencode }}" 
+                   class="button button-share">
+                    <span>📎</span> Share PDF Link
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Related Articles or Back Navigation -->
-    <div class="article-footer">
-        <div class="navigation-help">
+    <!-- Newsletter Navigation -->
+    <div class="newsletter-footer">
+        <div class="newsletter-navigation">
             <div class="nav-item">
                 <span class="nav-icon">📚</span>
                 <div class="nav-content">
-                    <h4>Explore More</h4>
-                    <p>Discover more mathematical insights and educational content</p>
+                    <h4>More Articles</h4>
+                    <p>Discover in-depth mathematical research and educational content</p>
                     <a href="{{ url_for('main.articles') }}" class="nav-link">Browse All Articles →</a>
+                </div>
+            </div>
+            
+            <div class="nav-item">
+                <span class="nav-icon">📰</span>
+                <div class="nav-content">
+                    <h4>Read Newsletters</h4>
+                    <p>Explore our archive of mathematical insights and society updates</p>
+                    <a href="{{ url_for('main.newsletters') }}" class="nav-link">View Articles →</a>
                 </div>
             </div>
             
@@ -165,6 +200,14 @@ function copyToClipboard(text) {
             button.innerHTML = originalText;
         }, 2000);
     });
+}
+
+function printNewsletter(pdfUrl) {
+    // Open PDF in a new window and trigger print
+    const printWindow = window.open(pdfUrl, '_blank');
+    printWindow.onload = function() {
+        printWindow.print();
+    };
 }
 </script>
 {% endblock %}
