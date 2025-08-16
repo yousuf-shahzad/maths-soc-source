@@ -1,0 +1,122 @@
+.stats-grid {
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: left;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    height: auto;
+    min-height: 180px;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #962835, #7e3641);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(126, 54, 65, 0.15);
+    border-color: #7e3641;
+}
+
+.stats-card:hover::before {
+    opacity: 1;
+}
+
+.stats-card h3 {
+    color: #7e3641;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    border: none;
+    margin-top: 0;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.stats-card p {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0.75rem 0;
+    line-height: 1.3;
+}
+
+.stats-card.meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: normal;
+    margin-top: 1rem;
+    display: block;
+    line-height: 1.4;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f3f4;
+}
+
+.key-stage-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes statsCountUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-card {
+    animation: statsCountUp 0.6s ease-out;
+}
+
+.stats-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.stats-card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.stats-card:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.stats-card:nth-child(5) {
+    animation-delay: 0.4s;
+}
+
+.stats-card:nth-child(6) {
+    animation-delay: 0.5s;
+}

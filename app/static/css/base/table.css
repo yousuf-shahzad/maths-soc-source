@@ -1,0 +1,307 @@
+table {
+    width: 100%;
+    font-size: 0.9rem;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+table th,
+table td {
+    padding: 1rem;
+    text-align: left;
+}
+
+table th {
+    background: linear-gradient(135deg, rgba(248, 249, 250, 0.9), rgba(233, 236, 239, 0.9));
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+    white-space: nowrap;
+}
+
+table tr:hover {
+    background: rgba(255, 107, 107, 0.02);
+}
+
+table tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
+
+.table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.table-header {
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.table-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.table-controls {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Table Responsive */
+.table-responsive {
+    overflow-x: auto;
+    padding: 0 2rem 2rem;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.select-col {
+    width: 50px;
+    text-align: center;
+}
+
+.user-row {
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.user-row:hover {
+    background: #f8f9fa;
+    transform: scale(1.005);
+}
+
+.user-row:last-child {
+    border-bottom: none;
+}
+
+.users-table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+@media screen and (max-width: 768px) {
+    table {
+        border: 0;
+        width: 100%;
+    }
+    
+    table caption {
+        font-size: 1.3em;
+    }
+    
+    table thead {
+        border: none;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        width: 1px;
+    }
+    
+    table tr {
+        border-bottom: 3px solid #ddd;
+        display: block;
+        margin-bottom: 0.625em;
+        padding: 0.35em;
+    }
+    
+    table td {
+        border-bottom: 1px solid #ddd;
+        display: block;
+        font-size: 0.8em;
+        text-align: left;
+        padding: 0.625em;
+    }
+    
+    table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    table td:last-child {
+        border-bottom: 0;
+    }
+    
+    /* Specific styles for action buttons in mobile view */
+    td.challenge-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    td.challenge-actions::before {
+        display: none;
+    }
+    
+    td.challenge-actions .button {
+        width: 100%;
+        margin: 0;
+    }
+
+    .table-header {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .table-responsive {
+        padding: 0 1rem 1rem;
+    }
+    
+    .users-table {
+        font-size: 1rem;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 0.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .users-table .user-id,
+    .users-table .user-joined {
+        display: none;
+    }
+    
+    .users-table th:nth-child(3),
+    .users-table td:nth-child(3),
+    .users-table th:nth-child(9),
+    .users-table td:nth-child(9) {
+        display: none;
+    }
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-icon {
+    font-size: 1.2rem;
+}
+
+.name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.user-id {
+    font-family: 'Monaco', 'Menlo', monospace;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.year-badge, .key-stage-badge, .type-badge, .status-badge, .school-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.year-badge {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.key-stage-badge {
+    color: white;
+}
+
+.key-stage-badge.ks-ks3 {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.key-stage-badge.ks-ks4 {
+    background: linear-gradient(135deg, #ffa500, #ff8c00);
+}
+
+.key-stage-badge.ks-ks5 {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.type-badge.competition {
+    background: linear-gradient(135deg, #ffc107, #ffb300);
+    color: #212529;
+}
+
+.type-badge.regular {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.status-badge.admin {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.status-badge.user {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.school-badge {
+    background: linear-gradient(135deg, #e7f3ff, #cce7ff);
+    color: #0056b3;
+    border: 1px solid #b8daff;
+}
+
+.user-joined {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Empty State */
+.no-users {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state h3 {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    color: #9ca3af;
+    margin-bottom: 2rem;
+}

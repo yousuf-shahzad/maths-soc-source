@@ -1,0 +1,483 @@
+/*****************************************
+ * User Profile
+ *****************************************/
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Profile Header */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-left: 4px solid #ff6b6b;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #962835, #7e3641);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+}
+
+.profile-info h1 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.profile-role {
+    color: #962835;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0 0 0.25rem 0;
+}
+
+.profile-school {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Profile Stats */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stats-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.stats-info h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stats-info p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Profile Sections */
+.profile-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 107, 107, 0.1);
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+/* Profile Details Grid */
+.profile-details-grid {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+
+}
+
+.detail-item:hover {
+    transform: translateY(-2px);
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.admin {
+    background: linear-gradient(135deg, #962835, #7e3641);
+    color: white;
+}
+
+.role-badge.user {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.role-badge.summer-user {
+    background: linear-gradient(135deg, #f57f17, #ffc300);
+    color: white;
+}
+
+/* Quick Actions */
+.profile-actions {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border: 2px solid #f8f9fa;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    color: inherit;
+}
+
+.action-card:hover {
+    border-color: #ff6b6b;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 107, 107, 0.15);
+    text-decoration: none;
+}
+
+.action-card.admin {
+    border-color: #ffa500;
+}
+
+.action-card.admin:hover {
+    border-color: #ff9500;
+    box-shadow: 0 8px 24px rgba(255, 165, 0, 0.15);
+}
+
+.action-icon {
+    font-size: 1.8rem;
+    opacity: 0.8;
+}
+
+.action-content h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.action-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Account Management */
+.account-actions {
+    padding: 2rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.account-actions .button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Privacy Notice */
+.privacy-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #2196f3;
+}
+
+.privacy-icon {
+    font-size: 1.5rem;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.privacy-content p {
+    margin: 0;
+    color: #37474f;
+    line-height: 1.6;
+}
+
+.privacy-content a {
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.privacy-content a:hover {
+    color: #1565c0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .avatar-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .profile-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .profile-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stats-info h3 {
+        font-size: 1.5rem;
+    }
+    
+    .section-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .profile-details-grid {
+        padding: 1.5rem;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .profile-actions {
+        padding: 1.5rem;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .action-card {
+        padding: 1rem;
+    }
+    
+    .account-actions {
+        padding: 1.5rem;
+        flex-direction: column;
+    }
+    
+    .account-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .privacy-notice {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 0.75rem;
+    }
+    
+    .profile-header {
+        padding: 1rem;
+    }
+    
+    .avatar-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .profile-info h1 {
+        font-size: 1.25rem;
+    }
+    
+    .profile-role {
+        font-size: 1rem;
+    }
+    
+    .stats-info h3 {
+        font-size: 1.25rem;
+    }
+    
+    .section-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .profile-details-grid,
+    .profile-actions,
+    .account-actions {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+    
+    .profile-section {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .profile-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .auth-container {
+        width: 95%;
+        max-width: 400px;
+        padding: 1.5rem;
+        margin: 1rem auto;
+    }
+    
+    .auth-form h2 {
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .auth-links {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .auth-links a {
+        display: block;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+    }
+    
+    /* Summer registration mobile improvements */
+    .summer-registration {
+        padding: 1rem;
+    }
+    
+    .summer-registration h2 {
+        font-size: 1.4rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .key-stage-info {
+        padding: 1rem;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 0.75rem;
+    }
+    
+    .profile-section {
+        padding: 0.75rem;
+    }
+    
+    .profile-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .auth-container {
+        width: 98%;
+        padding: 1rem;
+    }
+    
+    .auth-form h2 {
+        font-size: 1.3rem;
+    }
+    
+    .summer-registration {
+        padding: 0.75rem;
+    }
+    
+    .summer-registration h2 {
+        font-size: 1.2rem;
+    }
+    
+    .key-stage-info {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+}

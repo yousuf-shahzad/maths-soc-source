@@ -1,0 +1,249 @@
+/* Controls Panel */
+.user-controls-panel {
+    padding: 2rem;
+}
+
+.user-filters-form {
+    margin-bottom: 1rem;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.search-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #962835;
+    box-shadow: 0 0 0 3px rgba(150, 40, 53, 0.1);
+    background: white;
+}
+
+.search-btn {
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #962835 0%, #7e3641 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(150, 40, 53, 0.3);
+}
+
+.filter-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.action-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn, .clear-btn, .create-user-btn {
+    padding: 0.875rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-btn:hover,.clear-btn:hover,.create-user-btn:hover {
+    transform: translateY(-2px);
+}
+
+.filter-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.filter-btn:hover {
+    background: #545b62;
+}
+
+.clear-btn {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+}
+
+.clear-btn:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.create-user-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.create-user-btn:hover {
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Bulk Actions Panel */
+.bulk-actions-panel {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.2);
+}
+
+.bulk-info {
+    font-weight: 600;
+    color: #856404;
+    font-size: 1rem;
+}
+
+.bulk-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.bulk-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.bulk-btn.admin-btn {
+    background: #28a745;
+    color: white;
+}
+
+.bulk-btn.demote-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.bulk-btn.competition-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.bulk-btn.regular-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.bulk-btn.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.bulk-btn.cancel-btn {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.bulk-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .filter-row {
+        gap: 1rem;
+    }
+    
+    .filter-group {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    
+    .action-group {
+        justify-content: stretch;
+    }
+    
+    .action-group > * {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {    
+    .user-controls-panel {
+        padding: 1.5rem;
+    }
+    
+    .search-group {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-group {
+        flex-direction: column;
+    }
+    
+    .bulk-actions-panel {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .bulk-buttons {
+        justify-content: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {    
+    .bulk-buttons {
+        flex-direction: column;
+    }
+    
+    .bulk-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

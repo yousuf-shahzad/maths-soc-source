@@ -3,28 +3,28 @@
 {% block content %}
 <div class="container">
     <!-- Admin Header -->
-    <div class="user-management-header">
+    <div class="page-header">
         <h1>👥 User Management</h1>
         <p>Manage student and admin accounts for Summer Competition 2025</p>
     </div>
 
     <!-- Stats Dashboard -->
-    <div class="user-stats-grid">
-        <div class="stat-card total-users">
-            <h3>{{ total_users }}</h3>
-            <p>Total Users</p>
+    <div class="stats-grid">
+        <div class="stats-card total-users">
+            <h3>Total Users</h3>
+            <p>{{ total_users }}</p>
         </div>
-        <div class="stat-card admin-users">
-            <h3>{{ admin_users }}</h3>
-            <p>Admin Users</p>
+        <div class="stats-card admin-users">
+            <h3>Admin Users</h3>
+            <p>{{ admin_users }}</p>
         </div>
-        <div class="stat-card competition-users">
-            <h3>{{ competition_users }}</h3>
-            <p>Competition Users</p>
+        <div class="stats-card competition-users">
+            <h3>Competition Users</h3>
+            <p>{{ competition_users }}</p>
         </div>
-        <div class="stat-card regular-users">
-            <h3>{{ regular_users }}</h3>
-            <p>Regular Users</p>
+        <div class="stats-card regular-users">
+            <h3>Regular Users</h3>
+            <p>{{ regular_users }}</p>
         </div>
     </div>
 
@@ -43,33 +43,33 @@
                 </div>
                 
                 <div class="filter-group">
-                    <select name="key_stage" class="filter-select">
+                    <select name="key_stage"">
                         <option value="">All Key Stages</option>
                         {% for ks in available_key_stages %}
                             <option value="{{ ks }}" {% if current_filters.key_stage == ks %}selected{% endif %}>{{ ks }}</option>
                         {% endfor %}
                     </select>
                     
-                    <select name="year" class="filter-select">
+                    <select name="year">
                         <option value="">All Years</option>
                         {% for year in available_years %}
                             <option value="{{ year }}" {% if current_filters.year == year|string %}selected{% endif %}>Year {{ year }}</option>
                         {% endfor %}
                     </select>
                     
-                    <select name="user_type" class="filter-select">
+                    <select name="user_type">
                         <option value="">All Types</option>
                         <option value="competition" {% if current_filters.user_type == 'competition' %}selected{% endif %}>Competition</option>
                         <option value="regular" {% if current_filters.user_type == 'regular' %}selected{% endif %}>Regular</option>
                     </select>
                     
-                    <select name="admin_status" class="filter-select">
+                    <select name="admin_status">
                         <option value="">All Status</option>
                         <option value="admin" {% if current_filters.admin_status == 'admin' %}selected{% endif %}>Admin</option>
                         <option value="user" {% if current_filters.admin_status == 'user' %}selected{% endif %}>User</option>
                     </select>
                     
-                    <select name="per_page" class="filter-select">
+                    <select name="per_page">
                         <option value="25" {% if current_filters.per_page == 25 %}selected{% endif %}>25 per page</option>
                         <option value="50" {% if current_filters.per_page == 50 %}selected{% endif %}>50 per page</option>
                         <option value="100" {% if current_filters.per_page == 100 %}selected{% endif %}>100 per page</option>
@@ -112,12 +112,12 @@
     {% endwith %}
 
     <!-- Users Table -->
-    <div class="users-table-container">
+    <div class="table-container">
         <div class="table-header">
             <h2>Users ({{ pagination.total }} total)</h2>
             <div class="table-controls">
-                <button onclick="selectAll()" class="select-all-btn">Select All</button>
-                <button onclick="clearSelection()" class="clear-selection-btn">Clear Selection</button>
+                <button onclick="selectAll()" class="button">Select All</button>
+                <button onclick="clearSelection()" class="button button-secondary">Clear Selection</button>
             </div>
         </div>
         

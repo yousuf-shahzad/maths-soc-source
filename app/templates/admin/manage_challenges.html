@@ -2,17 +2,21 @@
 
 {% block content %}
 <div class="admin-dashboard">
-    <h1>Manage Challenges</h1>
+    <div class="page-header">
+        <h1>Manage Challenges</h1>
+    </div>
+
     <a href="{{ url_for('admin.create_challenge') }}" class="button">Create New Challenge</a>
 
+    <div class="page-section">
     <!-- Unreleased Challenges Section -->
     {% if unreleased_challenges %}
-    <div class="unreleased-section">
-        <h2>📅 Unreleased Challenges</h2>
-        <div class="challenge-grid">
-            {% for challenge in unreleased_challenges %}
-            <div class="challenge-card unreleased-challenge">
-                <div class="unreleased-badge">Unreleased</div>
+        <section>
+            <h2>📅 Unreleased Challenges</h2>
+            <div class="challenge-grid">
+                {% for challenge in unreleased_challenges %}
+                <div class="challenge-card unreleased-challenge">
+                    <div class="unreleased-badge">Unreleased</div>
                 <h2>{{ challenge.title }}</h2>
                 <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
                 <p><strong>Release Date:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</p>
@@ -26,250 +30,106 @@
                 </div>
                 {% endif %}
                 
-                <div class="challenge-actions">
+                <div>
                     <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
                        class="action-button edit-button">
                         <span class="button-icon">✏️</span>
                         <span class="button-text">Edit</span>
                     </a>
-                    <button class="action-button delete-button" 
-                            onclick="confirmDelete({{ challenge.id }})">
+                    <button class="action-button button-danger" 
+                            data-challenge-id="{{ challenge.id }}"
+                            onclick="confirmDelete(this)">
                         <span class="button-icon">🗑️</span>
                         <span class="button-text">Delete</span>
                     </button>
                 </div>
             </div>
             {% endfor %}
-        </div>
-    </div>
+        </section>
     {% endif %}
 
     <!-- Released Challenges Section -->
-    <div class="released-section">
+    <section>
         <h2>✅ Released Challenges</h2>
-        <div class="challenge-grid">
+        <div class="challenges-grid">
             {% for challenge in released_challenges %}
             <div class="challenge-card">
                 <h2>{{ challenge.title }}</h2>
-                <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
-                <p><strong>Released:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</p>
-                {% if challenge.lock_after_hours %}
-                <p><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours }} hours</p>
-                {% endif %}
-                
-                <!-- Lock Status Display -->
-                <div class="challenge-status">
-                    {% if challenge.is_manually_locked %}
-                        <span class="status-badge locked-manual">🔒 Manually Locked</span>
-                    {% elif challenge.lock_reason == 'time_expired' %}
-                        <span class="status-badge locked-time">⏰ Time Expired</span>
-                    {% else %}
-                        <span class="status-badge unlocked">🔓 Open</span>
-                    {% endif %}
+                <div class="challenge-meta">
+                    <span class="challenge-date"><strong>Posted:</strong> {{ challenge.date_posted.strftime('%Y-%m-%d') }}</span><br>
+                    <span class="challenge-released"><strong>Released:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</span><br>
+                    <span class="challenge-lock"><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours if challenge.lock_after_hours else 'No Limit' }} </span>
                 </div>
                 
+                <!-- Lock Status Display -->
+                {% if challenge.is_manually_locked or challenge.lock_after_hours %}
+                    <div class="challenge-badge locked">
+                        <span class="status-icon">🔒</span>
+                        {% if challenge.lock_after_hours %}
+                            <span>Time Expired</span>
+                        {% else %}
+                            <span>Manually Locked</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="challenge-badge unlocked">
+                        <span class="status-icon">🔓</span>
+                        <span>Open</span>
+                    </div>
+                {% endif %}
+
                 {% if challenge.file_url %}
                 <div class="image-preview">
                     <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
                 </div>
                 {% endif %}
                 
-                <div class="challenge-actions">
+                <div>
+                    <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" 
+                       class="action-btn view-btn">
+                        <span class="button-icon">👁️</span>
+                    </a>
                     <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
-                       class="action-button edit-button">
+                       class="action-btn edit-btn">
                         <span class="button-icon">✏️</span>
-                        <span class="button-text">Edit</span>
                     </a>
                     
-                    <!-- Lock/Unlock Button -->
-                    <form method="POST" action="{{ url_for('admin.toggle_challenge_lock', challenge_id=challenge.id) }}" class="inline-form">
-                        {% if challenge.is_manually_locked %}
-                            <button type="submit" class="action-button unlock-button" 
-                                    onclick="return confirm('Unlock this challenge? Students will be able to submit answers again.');">
-                                <span class="button-icon">🔓</span>
-                                <span class="button-text">Unlock</span>
-                            </button>
-                        {% else %}
-                            <button type="submit" class="action-button lock-button" 
-                                    onclick="return confirm('Lock this challenge? Students will no longer be able to submit answers and answers will be revealed.');">
-                                <span class="button-icon">🔒</span>
-                                <span class="button-text">Lock</span>
-                            </button>
-                        {% endif %}
+                    <form class="form-btn" method="POST" action="{{ url_for('admin.toggle_challenge_lock', challenge_id=challenge.id) }}">
+                        <button type="submit" class="action-btn reset-btn" 
+                                data-action="{{ 'unlock' if challenge.is_manually_locked else 'lock' }}"
+                                onclick="return confirmToggleLock(this);">
+                            <span class="button-icon">{{ '🔓' if challenge.is_manually_locked else '🔒' }}</span>
+                        </button>
                     </form>
-                    
-                    <button class="action-button delete-button" 
-                            onclick="confirmDelete({{ challenge.id }})">
+
+                    <button class="action-btn delete-btn" 
+                            data-challenge-id="{{ challenge.id }}"
+                            onclick="confirmDelete(this)">
                         <span class="button-icon">🗑️</span>
-                        <span class="button-text">Delete</span>
                     </button>
                 </div>
             </div>
             {% endfor %}
         </div>
-    </div>
+    </section>
 </div>
 
 <script>
-    function confirmDelete(challengeId) {
+    function confirmDelete(button) {
+        const challengeId = button.getAttribute('data-challenge-id');
         if (confirm("Are you sure you want to delete this challenge?")) {
             window.location.href = `{{ url_for('admin.delete_challenge', challenge_id=0) }}`.replace('0', challengeId);
         }
     }
+
+    function confirmToggleLock(button) {
+        const action = button.getAttribute('data-action');
+        const message = action === 'lock' 
+            ? "Are you sure you want to lock this challenge? Students will no longer be able to submit answers."
+            : "Are you sure you want to unlock this challenge? Students will be able to submit answers again.";
+        
+        return confirm(message);
+    }
 </script>
 
-<style>
-    /* Challenge Actions Styling */
-    .challenge-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e9ecef;
-    }
-    
-    .action-button {
-        flex: 1;
-        min-width: 100px;
-        max-width: 120px;
-        padding: 0.75rem 1rem;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-decoration: none;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    
-    .action-button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        text-decoration: none;
-    }
-    
-    .action-button:active {
-        transform: translateY(0);
-    }
-    
-    .button-icon {
-        font-size: 1rem;
-    }
-    
-    .button-text {
-        font-size: 0.875rem;
-    }
-    
-    /* Button Color Variations */
-    .edit-button {
-        background: #007bff;
-        color: white;
-    }
-    
-    .edit-button:hover {
-        background: #0056b3;
-        color: white;
-    }
-    
-    .lock-button {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .lock-button:hover {
-        background: #c82333;
-        color: white;
-    }
-    
-    .unlock-button {
-        background: #28a745;
-        color: white;
-    }
-    
-    .unlock-button:hover {
-        background: #218838;
-        color: white;
-    }
-    
-    .delete-button {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .delete-button:hover {
-        background: #545b62;
-        color: white;
-    }
-    
-    /* Inline form for lock/unlock buttons */
-    .inline-form {
-        display: contents;
-    }
-    
-    /* Challenge Status Styling */
-    .challenge-status {
-        margin: 1rem 0;
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.875rem;
-    }
-    
-    .status-badge.locked-manual {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .status-badge.locked-time {
-        background: #fd7e14;
-        color: white;
-    }
-    
-    .status-badge.unlocked {
-        background: #28a745;
-        color: white;
-    }
-    
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .challenge-actions {
-            flex-direction: column;
-        }
-        
-        .action-button {
-            flex: none;
-            max-width: none;
-            min-width: auto;
-        }
-        
-        .button-text {
-            display: inline;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .action-button {
-            padding: 0.6rem 0.8rem;
-        }
-        
-        .button-icon {
-            font-size: 0.9rem;
-        }
-        
-        .button-text {
-            font-size: 0.8rem;
-        }
-    }
-</style>
 {% endblock %}

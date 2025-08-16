@@ -1,131 +1,142 @@
-# Maths Club Website
+# Maths Society Web Platform
 
 ## Overview
 
-A comprehensive web application for Upton Court Grammar School's Maths Society, designed to enhance mathematical engagement through challenges, leaderboards, and newsletter systems. Built using Flask and Jinja templating, the website provides an interactive platform for students to explore and excel in mathematics.
+An interactive Flask web application for Upton Court Grammar School’s Maths Society. Students can attempt challenges (including Summer Competition challenges), track progress on leaderboards, and read articles/newsletters. Admins manage users, content, and competitions through a dedicated admin area.
 
-## Key Features
+Tech highlights: Flask, SQLAlchemy, Flask-Login, WTForms, Flask-Migrate (Alembic), CKEditor, Jinja2, PyTest, and Sphinx docs.
 
-- User authentication and profile management
-- Mathematical challenges with difficulty levels
-- Dynamic leaderboard tracking student achievements
-- Newsletter subscription and distribution system
-- Admin panel for content management
+## Features
 
-## Installation
+- Authentication and profiles (students and admins)
+- Challenges with answer boxes (MathLive input) and scheduled release times
+- Summer Competition mode with timed/locked challenges
+- Leaderboards and stats
+- Articles/Newsletters with file uploads (PDF-friendly)
+- Admin panel: manage users, challenges, articles
 
-### Prerequisites
+## Quick Start (Windows)
 
-- Python 3.8+
-- pip (Python package manager)
+Prerequisites: Python 3.8+ and pip
 
-### Steps
-
-1. Clone the repository
+1. Clone and enter the project
 
 ```bash
-git clone https://github.com/yousuf-shahzad/math-soc-source.git
-cd math-soc-source
+git clone https://github.com/yousuf-shahzad/maths-soc-source.git
+cd maths-soc-source
 ```
 
-2. Create a virtual environment
+1. Create and activate a virtual environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+venv\Scripts\activate
 ```
 
-3. Install dependencies
+1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Set up environment variables
-Create a `.env` file in the root directory and add:
+1. Configure environment (create a .env file)
 
 ```env
-SECRET_KEY=your_super_secret_key
-DATABASE_TYPE=postgresql or sqlite
-DB_USERNAME=user
-DB_PASSWORD=pass
-DB_HOST=host
-DB_NAME=dbname
+# If DATABASE_URL is set, it overrides the settings below
+SECRET_KEY=change_me
+
+# Database (defaults to PostgreSQL if not provided)
+DATABASE_TYPE=postgresql   # or sqlite
+DB_USERNAME=postgres
+DB_PASSWORD=
+DB_HOST=localhost
+DB_NAME=mathsoc
+
+# Environment flags (any of these can mark production)
+FLASK_ENV=development      # development|testing|production
+APP_ENVIRONMENT=development
+ENV=dev
+
+# Logging
+LOG_TO_STDOUT=false
 ```
 
-## Running the Project
+1. Initialize the database
 
-### Development Server
+Option A: Use Flask-Migrate (recommended)
+
+```cmd
+set FLASK_APP=run:app
+flask db upgrade
+```
+
+Option B: Seed defaults via helper script (dev only)
+
+```bash
+python init_db.py
+```
+
+This creates tables and a default admin user (non‑production) with password “admin123” — change it immediately.
+
+1. Run the app
 
 ```bash
 python run.py
 ```
 
-### Running Tests
+## Configuration
+
+Configuration lives in `config.py` and supports:
+
+- SECRET_KEY (required in production)
+- DATABASE_URL (takes precedence if set)
+- DATABASE_TYPE (postgresql|sqlite) + DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME
+- FLASK_ENV / APP_ENVIRONMENT / ENV (any can indicate production)
+- LOG_TO_STDOUT (true|false)
+
+The app uses an application factory (`create_app`) and initializes: SQLAlchemy, Flask‑Migrate, Flask‑Login, and CKEditor.
+
+## Running Tests
 
 ```bash
-pytest tests/
+pytest
 ```
 
-## Project Structure
+## Project Structure (top-level)
 
-```layout
-math_soc/
-│
-├── app/                # Main application package
-│   ├── auth/           # Authentication module
-│   ├── main/           # Core application routes
-│   ├── admin/          # Admin management routes
-│   ├── profile/        # User profile management
-│   ├── static/         # Static files (CSS, images)
-│   └── templates/      # HTML templates
-│
-├── tests/              # Test suite
-│   ├── auth/           # Authentication tests
-│   ├── main/           # Main routes tests
-│   ├── admin/          # Admin routes tests
-│   └── profile/        # Profile routes tests
-│
-├── docs/
-│   ├── source/
-│   │   ├── modules.rst
-│   │   ├── installation.rst
-│   │   ├── development.rst
-│   │   ├── deployment.rst
-│   │   ├── api/
-│   │   └── index.rst
-│   ├── build/
-│   └── Makefile
-├── config.py           # Configuration settings
-└── run.py              # Application entry point
+```text
+app/
+	admin/        # Admin routes, forms, templates
+	auth/         # Auth routes & forms
+	main/         # Public routes
+	profile/      # Profile routes & forms
+	static/
+		css/        # Modular CSS (see below)
+		images/
+		uploads/    # User uploads
+	templates/    # Jinja templates
+docs/           # Sphinx documentation
+migrations/     # Alembic migrations (Flask-Migrate)
+tests/          # PyTest suite
+config.py
+run.py          # App entrypoint
+init_db.py      # Dev helper to seed data
 ```
 
-## Contributing
+## CSS Organization
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Modular CSS under `app/static/css`:
 
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use type hints
-- Write comprehensive tests for new features
-
-## Deployment
-
-### Deployment Steps
-
-1. Ensure all environment variables are configured
-2. Set up a production-ready database
-3. Configure your chosen hosting platform
-4. Deploy using the platform's CLI or integration
+- `base/` foundation and components (base.css, forms.css, button.css, nav.css, etc.)
+- `admin/` admin pages (users, challenges, dashboard)
+- `page/` page-specific styles (leaderboard, challenge, about)
+- `profile/`, `summer/`, `article-newsletter/`
+- `main.css` is an import hub only; no inline styles
+- `order.txt` lists load order for predictable cascade
 
 ## Documentation
 
-Documentation is generated using Sphinx. To build the docs:
+Sphinx docs are in `docs/`. To build:
 
 ```bash
 cd docs
@@ -133,17 +144,22 @@ pip install -r requirements.txt
 make html
 ```
 
+## Deployment Notes
+
+- Set a strong `SECRET_KEY` and appropriate DB settings (prefer managed PostgreSQL)
+- Ensure `FLASK_ENV`, `APP_ENVIRONMENT`, or `ENV` indicate production
+- Run migrations: `flask db upgrade`
+- Enable logging to stdout if required by your platform (`LOG_TO_STDOUT=true`)
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see `LICENSE`.
 
 ## Contact
 
-```
-Yousuf Shahzad or Sudhakara Ambati
-Upton Court Grammar School
-```
+Upton Court Grammar School — Maths Society
 
-## Additional Resources
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [Jinja Templating Guide](https://jinja.palletsprojects.com/)
+## Useful Links
+
+- [Flask](https://flask.palletsprojects.com/)
+- [Jinja](https://jinja.palletsprojects.com/)

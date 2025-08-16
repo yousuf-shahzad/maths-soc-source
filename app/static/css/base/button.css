@@ -1,0 +1,174 @@
+/*****************************************
+ * Links & Buttons
+ *****************************************/
+a {
+    color: #962835;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+a:hover {
+    color: #7e3641;
+    text-decoration: none;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #962835, #7e3641);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-align: center;
+    justify-content: center;
+    min-height: 44px; /* Better touch target */
+    line-height: 1.5;
+}
+
+.button:hover {
+    background: linear-gradient(135deg, #7e3641, #5c2a32);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(150, 40, 53, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.button:active {
+    transform: translateY(0);
+}
+
+.button-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.button-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #3d4043);
+    color: white;
+}
+
+.button-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.button-danger:hover {
+    background: linear-gradient(135deg, #c82333, #a71e2a);
+}
+
+/* Mobile button improvements */
+@media (max-width: 768px) {
+    .button {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+        min-height: 48px; /* Larger touch target on mobile */
+    }
+
+    .action-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        min-height: 44px;
+    }
+}
+
+.button:active {
+    transform: translateY(0);
+}
+
+.button-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.button-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #3d4043);
+    color: white;
+}
+
+.button-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.button-danger:hover {
+    background: linear-gradient(135deg, #c82333, #a71e2a);
+}
+
+.button-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.button-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #495057);
+    box-shadow: 0 6px 16px rgba(108, 117, 125, 0.4);
+}
+
+.button-share {
+    /* need a darker blue*/
+    background: linear-gradient(135deg, #003e80, #005d8b); 
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.button-share:hover {
+    background: linear-gradient(135deg, rgb(0, 67, 100), #004d74);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.action-btn.edit-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.action-btn.admin-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.action-btn.reset-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.action-btn.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.action-btn.view-btn {
+    background: #28a745;
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}

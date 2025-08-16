@@ -1,10 +1,17 @@
+{# create_summer_challenge.html #}
 {% extends "base.html" %}
-{% block title %}Create Summer Challenge{% endblock %}
 {% block content %}
-<main>
-    <div class="challenge-container">
-        <h1>Create New Summer Challenge</h1>
+    <div class="container">
+        <div class="page-header">
+            <h1>Create New Summer Challenge</h1>
+        </div>
         
+        <div class="breadcrumb">
+            <a href="{{ url_for('admin.manage_summer_challenges') }}">Manage Summer Challenges</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>Create Summer Challenge</span>
+        </div>
+
         <form method="POST" enctype="multipart/form-data" class="form-group">
             {{ form.hidden_tag() }}
             
@@ -49,6 +56,7 @@
                 {% for error in form.duration_hours.errors %}
                     <span class="error-message">{{ error }}</span>
                 {% endfor %}
+                <small class="form-help">Duration of the challenge in hours.</small>
             </div>
             
             <div class="form-group">
@@ -92,13 +100,12 @@
                 <button type="button" id="add-box" class="button">Add Answer Box</button>
             </div>
             
-            <div class="challenge-actions">
+            <div>
                 {{ form.submit(class="button") }}
                 <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button">Back to Manage Summer Challenges</a>
             </div>
         </form>
     </div>
-</main>
 
 <script defer src="//unpkg.com/mathlive"></script>
 <script>
@@ -210,26 +217,6 @@
 </script>
 
 <style>
-    .answer-boxes-container {
-        margin-top: 2rem;
-        border-top: 1px solid #ddd;
-        padding-top: 2rem;
-    }
-    
-    .answer-box {
-        border: 1px solid #ddd;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
-    }
-    
-    .button-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-    
-    .button-danger:hover {
-        background-color: #c82333;
-    }
+
 </style>
 {% endblock %}

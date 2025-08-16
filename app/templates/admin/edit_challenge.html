@@ -2,10 +2,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main>
-    <div class="challenge-container">
-        <h1>Edit Challenge</h1>
+    <div class="container">
+        <div class="page-header">
+            <h1>Edit Challenge</h1>
+        </div>
         
+        <div class="breadcrumb">
+            <a href="{{ url_for('admin.manage_challenges') }}">Manage Challenges</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>Edit Challenge</span>
+        </div>
+
         <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=request.view_args.challenge_id) }}" 
               enctype="multipart/form-data" class="form-group">
             {{ form.hidden_tag() }}
@@ -104,21 +111,20 @@
                                     {% endfor %}
                                 </div>
                                 
-                                <button type="button" class="remove-box-btn button-danger">Remove</button>
+                                <button type="button" class="action-btn delete-btn">🗑️</button>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
-                <button type="button" id="add-answer-box" class="button-secondary">Add Answer Box</button>
+                <button type="button" id="add-answer-box" class="button button-secondary">Add Answer Box</button>
             </div>
             
-            <div class="challenge-actions">
+            <div>
                 {{ form.submit(class="button") }}
                 <a href="{{ url_for('admin.manage_challenges') }}" class="button button-secondary">Back to Manage Challenges</a>
             </div>
         </form>
     </div>
-</main>
 
 <script defer src="//unpkg.com/mathlive"></script>
 <script>
@@ -215,26 +221,6 @@
 </script>
 
 <style>
-    .answer-boxes-container {
-        margin-top: 2rem;
-        border-top: 1px solid #ddd;
-        padding-top: 2rem;
-    }
-    
-    .answer-box {
-        border: 1px solid #ddd;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
-    }
-    
-    .button-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-    
-    .button-danger:hover {
-        background-color: #c82333;
-    }
+
 </style>
 {% endblock %}

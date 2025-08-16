@@ -1,0 +1,85 @@
+/*****************************************
+ * Home page
+ *****************************************/
+
+/* Home Page Specific Styles */
+.home-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.hero-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.section-container {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.section-title {
+    border-bottom: 2px solid rgb(254, 192, 19);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.view-all-container {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Mobile improvements for home page */
+@media (max-width: 768px) {
+    .home-page {
+        padding: 10px;
+    }
+    
+    .hero-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .section-container {
+        padding: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-page {
+        padding: 5px;
+    }
+    
+    .hero-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-container {
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+}

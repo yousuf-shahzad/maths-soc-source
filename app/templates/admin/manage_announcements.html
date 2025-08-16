@@ -3,25 +3,34 @@
 
 {% block content %}
 <div class="admin-dashboard">
-    <h1>Manage Announcements</h1>
+    <div class="page-header">
+        <h1>Manage Announcements</h1>
+    </div>
+
     <a href="{{ url_for('admin.create_announcement') }}" class="button">Create New</a>
 
-    <div class="article-grid">
-        {% for announcement in announcements %}
-        <div class="article-card">
-            <h2>{{ announcement.title }}</h2>
-            <p>Posted: {{ announcement.date_posted.strftime('%Y-%m-%d') }}</p>
-            <div class="article-actions">
-                <a href="{{ url_for('admin.edit_announcement', announcement_id=announcement.id) }}" 
-                   class="button">Edit</a>
-                <button class="button delete-button" 
-                        onclick="confirmDelete({{ announcement.id }})">
-                    Delete
-                </button>
+    <div class="page-section">
+        <section>
+            <div class="challenge-grid">
+                {% for announcement in announcements %}
+                <div class="article-card">
+                    <h2>{{ announcement.title }}</h2>
+                    <p>Posted: {{ announcement.date_posted.strftime('%Y-%m-%d') }}</p>
+                    <div class="quick-actions">
+                        <a href="{{ url_for('admin.edit_announcement', announcement_id=announcement.id) }}"
+                            class="action-btn edit-btn">✏️</a>
+                        <button class="action-btn delete-btn"
+                            onclick="confirmDelete({{ announcement.id }}, '{{ announcement.type }}')">
+                            🗑️
+                        </button>
+                </div>
+                </div>
+                {% endfor %}
             </div>
-        </div>
-        {% endfor %}
+        </section>
     </div>
+
+
 </div>
 
 <script>

@@ -1,107 +1,137 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Manage Summer Challenges</h2>
-<a href="{{ url_for('admin.create_summer_challenge') }}" class="button">Create New Summer Challenge</a>
+<div class="admin-dashboard">
+    <div class="page-header">
+        <h1>Manage Summer Challenges</h1>
+    </div>
 
-<!-- Unreleased Summer Challenges -->
-{% if unreleased_challenges %}
-<h3>📅 Unreleased Summer Challenges</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Key Stage</th>
-            <th>Date Posted</th>
-            <th>Release Date</th>
-            <th>Duration (hours)</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for challenge in unreleased_challenges %}
-        <tr style="background-color: #fff3cd;">
-            <td>{{ challenge.title }} <span style="color: #856404; font-weight: bold;">[UNRELEASED]</span></td>
-            <td>{{ challenge.key_stage }}</td>
-            <td>{{ challenge.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</td>
-            <td>{{ challenge.duration_hours }}</td>
-            <td>
-                <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" class="button">Edit</a>
-                <form style="display:inline;" method="POST" action="{{ url_for('admin.delete_summer_challenge', challenge_id=challenge.id) }}">
-                    <button type="submit" class="button delete-button" onclick="return confirm('Are you sure?')">Delete</button>
-                </form>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% endif %}
+    <a href="{{ url_for('admin.create_summer_challenge') }}" class="button">Create New Challenge</a>
 
-<!-- Released Summer Challenges -->
-<h3>✅ Released Summer Challenges</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Key Stage</th>
-            <th>Date Posted</th>
-            <th>Release Date</th>
-            <th>Duration (hours)</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for challenge in released_challenges %}
-        <tr>
-            <td>{{ challenge.title }}</td>
-            <td>{{ challenge.key_stage }}</td>
-            <td>{{ challenge.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</td>
-            <td>{{ challenge.duration_hours }}</td>
-            <td>
-                {% if challenge.is_manually_locked %}
-                    <span style="color: red; font-weight: bold;">🔒 Manually Locked</span>
-                {% elif challenge.is_locked %}
-                    <span style="color: orange;">⏰ Time Expired</span>
-                {% else %}
-                    <span style="color: green;">🔓 Open</span>
+    <div class="page-section">
+    <!-- Unreleased Challenges Section -->
+    {% if unreleased_challenges %}
+        <section>
+        <h2>📅 Unreleased Challenges</h2>
+        <div class="challenge-grid">
+            {% for challenge in unreleased_challenges %}
+            <div class="challenge-card unreleased-challenge">
+                <div class="unreleased-badge">Unreleased</div>
+                <h2>{{ challenge.title }}</h2>
+                <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
+                <p><strong>Release Date:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</p>
+                {% if challenge.lock_after_hours %}
+                <p><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours }} hours</p>
                 {% endif %}
-            </td>
-            </td>
-            <td>
-                <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" class="button">Edit</a>
                 
-                <!-- Lock/Unlock Button -->
-                <form method="POST" action="{{ url_for('admin.toggle_summer_challenge_lock', challenge_id=challenge.id) }}" style="display:inline;">
-                    {% if challenge.is_manually_locked %}
-                        <button type="submit" class="button unlock-button" style="background-color: #28a745; color: white;" onclick="return confirm('Unlock this challenge? Students will be able to submit answers again.');">
-                            🔓 Unlock
-                        </button>
-                    {% else %}
-                        <button type="submit" class="button lock-button" style="background-color: #dc3545; color: white;" onclick="return confirm('Lock this challenge? Students will no longer be able to submit answers and answers will be revealed.');">
-                            🔒 Lock
-                        </button>
-                    {% endif %}
-                </form>
+                {% if challenge.file_url %}
+                <div class="image-preview">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+                </div>
+                {% endif %}
                 
-                <form method="POST" action="{{ url_for('admin.delete_summer_challenge', challenge_id=challenge.id) }}" style="display:inline;" onsubmit="return confirm('Delete this challenge?');">
-                    <button type="submit" class="button delete-button">Delete</button>
-                </form>
-            </td>
-        </tr>
-    {% else %}
-        <tr><td colspan="6">No summer challenges yet.</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
+                <div>
+                    <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" 
+                       class="action-button edit-button">
+                        <span class="button-icon">✏️</span>
+                        <span class="button-text">Edit</span>
+                    </a>
+                    <button class="action-button button-danger" 
+                            data-challenge-id="{{ challenge.id }}"
+                            onclick="confirmDelete(this)">
+                        <span class="button-icon">🗑️</span>
+                        <span class="button-text">Delete</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
-<style>
-.lock-button:hover {
-    background-color: #c82333 !important;
-}
-.unlock-button:hover {
-    background-color: #218838 !important;
-}
-</style>
+    <!-- Released Challenges Section -->
+    <section>
+        <h2>✅ Released Challenges</h2>
+        <div class="challenges-grid">
+            {% for challenge in released_challenges %}
+            <div class="challenge-card">
+                <h2>{{ challenge.title }}</h2>
+                <div class="challenge-meta">
+                    <span class="challenge-date"><strong>Posted:</strong> {{ challenge.date_posted.strftime('%Y-%m-%d') }}</span><br>
+                    <span class="challenge-released"><strong>Released:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</span><br>
+                    <span class="challenge-lock"><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours if challenge.lock_after_hours else 'No Limit' }} </span>
+                </div>
+                
+                <!-- Lock Status Display -->
+                {% if challenge.is_manually_locked or challenge.lock_after_hours %}
+                    <div class="challenge-badge locked">
+                        <span class="status-icon">🔒</span>
+                        {% if challenge.lock_after_hours %}
+                            <span>Time Expired</span>
+                        {% else %}
+                            <span>Manually Locked</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="challenge-badge unlocked">
+                        <span class="status-icon">🔓</span>
+                        <span>Open</span>
+                    </div>
+                {% endif %}
+
+                {% if challenge.file_url %}
+                <div class="image-preview">
+                    <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
+                </div>
+                {% endif %}
+                
+                <div>
+                    <a href="{{ url_for('main.summer_challenge', challenge_id=challenge.id) }}" 
+                       class="action-btn view-btn">
+                        <span class="button-icon">👁️</span>
+                    </a>
+                    <a href="{{ url_for('admin.edit_summer_challenge', challenge_id=challenge.id) }}" 
+                       class="action-btn edit-btn">
+                        <span class="button-icon">✏️</span>
+                    </a>
+                    
+                    <form class="form-btn" method="POST" action="{{ url_for('admin.toggle_challenge_lock', challenge_id=challenge.id) }}">
+                        <button type="submit" class="action-btn reset-btn" 
+                                data-action="{{ 'unlock' if challenge.is_manually_locked else 'lock' }}"
+                                onclick="return confirmToggleLock(this);">
+                            <span class="button-icon">{{ '🔓' if challenge.is_manually_locked else '🔒' }}</span>
+                        </button>
+                    </form>
+
+                    <button class="action-btn delete-btn" 
+                            data-challenge-id="{{ challenge.id }}"
+                            onclick="confirmDelete(this)">
+                        <span class="button-icon">🗑️</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(button) {
+        const challengeId = button.getAttribute('data-challenge-id');
+        if (confirm("Are you sure you want to delete this challenge?")) {
+            window.location.href = `{{ url_for('admin.delete_summer_challenge', challenge_id=0) }}`.replace('0', challengeId);
+        }
+    }
+
+    function confirmToggleLock(button) {
+        const action = button.getAttribute('data-action');
+        const message = action === 'lock' 
+            ? "Are you sure you want to lock this challenge? Students will no longer be able to submit answers."
+            : "Are you sure you want to unlock this challenge? Students will be able to submit answers again.";
+        
+        return confirm(message);
+    }
+</script>
+
 {% endblock %}

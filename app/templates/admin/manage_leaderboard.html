@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="challenge-container">
-    <h1>Manage Leaderboard</h1>
+<div class="container">
+    <div class="page-header">
+        <h1>Manage Leaderboard</h1>
+    </div>
     
     <div class="admin-dashboard">
         <ul>
@@ -26,37 +28,52 @@
         </ul>
     </div>
 
-    <div class="leaderboard-sections">
-        <section class="recent-entries">
-            <h2>Recent Entries</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Key Stage</th>
-                        <th>Points</th>
-                        <th>Last Updated</th>
-                        <th>Actions</th>
+    <div class="page-section">
+        <section class="table-container">
+        <div class="table-header">
+            <h2>Entries</h2>
+        </div>
+        <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                        <th>👤 User</th>
+                        <th>📊 Key Stage</th>
+                        <th>🏆 Points</th>
+                        <th>🕒 Last Updated</th>
+                        <th>⚙️ Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for entry in leaderboard[:10] %}
-                    <tr>
-                        <td data-label="User">{{ entry.user.full_name }}</td>
-                        <td data-label="Key Stage">{{ entry.key_stage }}</td>
-                        <td data-label="Points">{{ entry.score }}</td>
-                        <td data-label="Last Updated">{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <tr class="user-row">
+                        <td class="user-name">
+                            <div class="user-info">
+                                <span class="user-icon">
+                                    {% if entry.user.is_admin %}👑{% elif entry.user.is_competition_participant %}🏆{% else %}🎓{% endif %}
+                                </span>
+                                <span class="user-name">{{ entry.user.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="user-key-stage">
+                                <span class="key-stage-badge ks-{{ entry.user.key_stage.lower() if entry.user.key_stage }}">
+                                    {{ entry.user.key_stage }}
+                                </span>
+                            </td>
+                        <td class="user-points">{{ entry.score }}</td>
+                        <td class="user-last-updated">{{ entry.last_updated.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td class="challenge-actions">
                             <a href="{{ url_for('admin.edit_leaderboard_entry', entry_id=entry.id) }}" 
-                               class="button">Edit</a>
+                               class="action-btn edit-btn">✏️</a>
                             <a href="{{ url_for('admin.delete_leaderboard_entry', entry_id=entry.id) }}" 
-                               class="button delete-button"
-                               onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                               class="action-btn delete-btn"
+                               onclick="return confirm('Are you sure you want to delete this entry?');">🗑️</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
         </section>
 
         <section class="quick-actions">

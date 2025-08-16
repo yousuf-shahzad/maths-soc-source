@@ -1,32 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="challenge-container">
-        <article>
-            <h1 class="challenge-title">{{ challenge.title }}</h1>
-            
-            {% if all_correct %}
-                <div class="alert alert-success">
-                    <h4>🎉 Challenge Completed! 🎉</h4>
-                    <p>You have successfully solved this challenge!</p>
+<div class="challenge-detail-container">
+    <!-- Challenge Header -->
+    <div class="breadcrumb">
+            <a href="{{ url_for('main.challenges') }}">🎯 Challenges</a>
+            <span class="breadcrumb-separator">›</span>
+            <span>{{ challenge.title }}</span>
+        </div>
+        
+        <div class="page-header">
+            <h1>{{ challenge.title }}</h1>
+        </div>
+         <div class="challenge-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span class="meta-label">Posted:</span>
+                    <span class="meta-value">{{ challenge.date_posted.strftime('%B %d, %Y') }}</span>
                 </div>
-            {% endif %}
-            
-            <div class="challenge-meta">
-                <p>Posted on: {{ challenge.date_posted.strftime('%d/%m/%Y') }}</p>
-                <p>Key Stage: {{ challenge.key_stage.upper() }}</p>
-                <p>Duration: {{ challenge.duration_hours }} hours</p>
+                <div class="meta-item">
+                    <span class="meta-icon">🎯</span>
+                    <span class="meta-label">Key Stage:</span>
+                    <span class="meta-value">{{ challenge.key_stage.upper() }}</span>
+                </div>
+                {% if challenge.lock_after_hours %}
+                <div class="meta-item">
+                    <span class="meta-icon">⏰</span>
+                    <span class="meta-label">Duration:</span>
+                    <span class="meta-value">{{ challenge.lock_after_hours }} hours</span>
+                </div>
+                {% endif %}
                 {% if challenge.is_locked %}
-                    {% if challenge.is_manually_locked %}
-                        <div class="alert alert-warning" style="background: #ffe066; color: #333;">
-                            🔒 This challenge has been manually locked by an admin. Answers are now revealed below.
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning" style="background: #ffe066; color: #333;">
-                            ⏰ This summer challenge has expired. Answers are now revealed below.
-                        </div>
-                    {% endif %}
+                <div class="meta-item">
+                    <span class="meta-icon">🔒</span>
+                    <span class="meta-label">Status:</span>
+                    <span class="meta-value locked-status">Locked</span>
+                </div>
                 {% endif %}
             </div>
+    </div>
             
             <div class="challenge-content">
                 {{ challenge.content | safe }}
@@ -52,10 +63,10 @@
                     
                     {% if challenge.is_locked %}
                         <!-- Show correct answer when locked -->
-                        <div class="correct-answer-reveal" style="background: #d4edda; padding: 1rem; border-radius: 4px; border-left: 4px solid #28a745; margin: 1rem 0;">
-                            <h4 style="color: #155724; margin: 0 0 0.5rem 0;">✅ Correct Answer:</h4>
-                            <div style="background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #c3e6cb;">
-                                <math-field readonly class="form-control" style="font-size: 1.2rem; background: none; border: none;">{{ answer_box.correct_answer }}</math-field>
+                        <div class="correct-answer-reveal">
+                            <h4>✅ Correct Answer:</h4>
+                            <div>
+                                <math-field readonly class="form-control">{{ answer_box.correct_answer }}</math-field>
                             </div>
                         </div>
                     {% elif not has_correct and attempts_remaining > 0 %}
@@ -75,7 +86,7 @@
                                             <math-field 
                                                 id="formula-{{ answer_box.id }}"
                                                 class="form-control"
-                                                style="font-size: 1.5rem; padding: 1rem;">{{ form.answer.data or '' }}</math-field>
+                                                >{{ form.answer.data or '' }}</math-field>
                                         </div>
                                         {{ form.answer(id='hidden-answer-' ~ answer_box.id, style="display: none;") }}
                                         {% for error in form.answer.errors %}
@@ -83,7 +94,7 @@
                                         {% endfor %}
                                     </div>
                                     
-                                    <div class="challenge-actions">
+                                    <div>
                                         {{ form.submit(class="button") }}
                                     </div>
                                 </form>

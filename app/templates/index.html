@@ -13,15 +13,15 @@
     <div class="stats-grid">
         <div class="stats-card">
             <h3>Active Challenges</h3>
-            <p class="stats-number">{{ challenges.count() if challenges else 0 }}</p>
+            <p>{{ challenges.count() if challenges else 0 }}</p>
         </div>
         <div class="stats-card">
             <h3>Total Articles</h3>
-            <p class="stats-number">{{ articles.count() if articles else 0 }}</p>
+            <p>{{ articles.count() if articles else 0 }}</p>
         </div>
         <div class="stats-card">
             <h3>Active Members</h3>
-            <p class="stats-number">{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
+            <p>{{ leaderboard_entries.count() if leaderboard_entries else 0 }}</p>
         </div>
     </div>
 </section>
@@ -40,7 +40,7 @@
                 Posted {{ latest_announcement.date_posted.strftime('%B %d, %Y') }}
             </p>
             <p class="article-excerpt">{{ latest_announcement.content| safe }}</p>
-            <div class="article-actions">
+            <div class="quick-actions">
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('admin.edit_announcement', announcement_id=latest_announcement.id) }}" class="button button-secondary">Edit</a>
                 {% endif %}
@@ -73,7 +73,7 @@
                 <h3>Newsletter PDF Available</h3>
             </div>
             {% endif %}
-            <div class="article-actions">
+            <div class="quick-actions">
                 <a href="{{ url_for('main.newsletter', id=latest_newsletter.id) }}" class="button">Read Newsletter</a>
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('admin.edit_article', article_id=latest_newsletter.id) }}" class="button button-secondary">Edit</a>
@@ -87,7 +87,7 @@
 </section>
 
 <!-- Latest Challenges -->
-<section class="recent-challenges section-container">
+<section class="section-container">
     <h2 class="section-title">Latest Challenges</h2>
     <div class="challenge-grid">
         {% for challenge in recent_challenges %}
@@ -100,17 +100,17 @@
                 <img src="{{ challenge.file_url }}" alt="Challenge image" class="challenge-image">
             </div>
             {% endif %}
-            <div class="challenge-actions">
+            <div>
                 <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" class="button">Try Challenge</a>
                 {% if current_user.is_admin %}
-                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="button-secondary">Edit</a>
+                <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="button button-secondary">Edit</a>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
     <div class="view-all-container">
-        <a href="{{ url_for('main.challenges') }}" class="button-secondary">View All Challenges</a>
+        <a href="{{ url_for('main.challenges') }}" class="button button-secondary">View All Challenges</a>
     </div>
 </section>
 
@@ -131,10 +131,10 @@
                     {% endif %}
                 </p>
                 <p class="article-excerpt">{{ article.content[:150] | safe  }}...</p>
-                <div class="article-actions">
+                <div class="quick-actions">
                     <a href="{{ url_for('main.article', id=article.id) }}" class="button">Read More</a>
                     {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" class="button-secondary">Edit</a>
+                    <a href="{{ url_for('admin.edit_article', article_id=article.id) }}" class="button button-secondary">Edit</a>
                     {% endif %}
                 </div>
             </div>
@@ -142,7 +142,7 @@
         {% endfor %}
     </div>
     <div class="view-all-container">
-        <a href="{{ url_for('main.articles') }}" class="button-secondary">View All Articles</a>
+        <a href="{{ url_for('main.articles') }}" class="button button-secondary">View All Articles</a>
     </div>
 </section>
 </div>

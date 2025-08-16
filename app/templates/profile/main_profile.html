@@ -76,9 +76,16 @@
             <div class="detail-item">
                 <div class="detail-label">Account Type</div>
                 <div class="detail-value">
-                    <span class="role-badge {{ 'admin' if current_user.is_admin else 'user' }}">
+                    <!-- <span class="role-badge {{ 'admin' if current_user.is_admin else 'user' }}">
                         {{ 'Administrator' if current_user.is_admin else 'Student' }}
-                    </span>
+                    </span> -->
+                    {% if current_user.is_admin %}
+                        <span class="role-badge admin">Administrator</span>
+                    {% elif current_user.is_competition_participant %}
+                        <span class="role-badge summer-user">🏆 Summer Competition Participant</span>
+                    {% else %}
+                        <span class="role-badge user">Student</span>
+                    {% endif %}
                 </div>
             </div>
             {% if current_user.school %}

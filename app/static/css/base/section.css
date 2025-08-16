@@ -1,0 +1,26 @@
+.page-section {
+    margin-top: 2rem;
+}
+
+.page-section section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.page-section section:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.page-section h2 {
+    margin-bottom: 1.5rem;
+    color: #7e3641;
+    border-bottom: 3px solid #7e3641;
+    padding-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
