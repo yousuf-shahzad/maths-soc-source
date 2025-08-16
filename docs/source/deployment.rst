@@ -101,6 +101,9 @@ Create a ``.env`` file in the project root:
     DB_PASSWORD=your_secure_password
     DB_HOST=localhost
     DB_NAME=mathsoc_db
+    
+    # Optional logging to stdout (useful for containerized platforms)
+    LOG_TO_STDOUT=true
 
 5. Initialize Database:
 
