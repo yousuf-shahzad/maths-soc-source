@@ -196,6 +196,22 @@ def admin_index():
     return render_template("admin/index.html", title="Admin Dashboard", stats=stats)
 
 
+@bp.route("/admin/math-engine-tester")
+@login_required
+@admin_required
+def math_engine_tester():
+    """
+    Math engine testing interface for administrators.
+    
+    Provides a web interface to test mathematical expression equivalence
+    and normalization functionality.
+    
+    Returns:
+        Rendered math engine tester template
+    """
+    return render_template("admin/math_engine_tester.html", title="Math Engine Tester")
+
+
 # ============================================================================
 # Article Management Routes
 # ============================================================================

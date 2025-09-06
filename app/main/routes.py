@@ -278,8 +278,7 @@ def create_submission(
         challenge_id=challenge_id,
         answer_box_id=answer_box.id,
         answer=submitted_answer,
-        is_correct=submitted_answer.lower().strip()
-        == answer_box.correct_answer.lower().strip(),
+        is_correct=answer_box.check_answer(submitted_answer),
     )
 
     db.session.add(submission)
@@ -672,7 +671,7 @@ def handle_summer_challenge_submission(challenge: SummerChallenge, forms: Dict) 
         return redirect(url_for("main.summer_challenge", challenge_id=challenge.id))
 
     # Check if answer is correct
-    is_correct = form.answer.data.lower().strip() == answer_box.correct_answer.lower().strip()
+    is_correct = answer_box.check_answer(form.answer.data)
     
     # Calculate points awarded
     points_awarded = 0

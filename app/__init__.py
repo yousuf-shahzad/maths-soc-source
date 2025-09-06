@@ -79,8 +79,10 @@ def register_blueprints(app):
     from app.main import bp as main_bp
     from app.profile import bp as profile_bp
     from app.admin import bp as admin_bp
+    from app.math_api import math_api
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(profile_bp, url_prefix="/profile")
     app.register_blueprint(admin_bp)
+    app.register_blueprint(math_api)
