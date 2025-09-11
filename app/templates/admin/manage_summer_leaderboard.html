@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-    <h1>Manage Summer Leaderboard</h1>
+    <h1>Manage Autumn Leaderboard</h1>
     
     <!-- Quick Stats Overview -->
     <div class="leaderboard-overview">
@@ -296,7 +296,7 @@
                 </a>
                 <a href="{{ url_for('admin.manage_summer_challenges') }}" class="action-card">
                     <h3>Manage Challenges</h3>
-                    <p>Edit summer challenges</p>
+                    <p>Edit autumn challenges</p>
                 </a>
                 <form method="POST" action="{{ url_for('admin.reset_summer_leaderboard') }}" style="display:inline;">
                     <button type="submit" class="action-card action-danger"

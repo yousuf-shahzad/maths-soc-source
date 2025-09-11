@@ -99,9 +99,9 @@
                                     </div>
                                 </form>
                             {% elif current_user.is_authenticated %}
-                                <p class="alert alert-warning">Only Summer Competition participants can submit answers.</p>
+                                <p class="alert alert-warning">Only Autumn Competition participants can submit answers.</p>
                             {% else %}
-                                <p class="alert alert-warning">You need to <a href="{{ url_for('auth.summer_login') }}">log in</a> as a Summer Competition participant to submit answers.</p>
+                                <p class="alert alert-warning">You need to <a href="{{ url_for('auth.summer_login') }}">log in</a> as a Autumn Competition participant to submit answers.</p>
                             {% endif %}
                         </div>
                     {% elif not has_correct %}

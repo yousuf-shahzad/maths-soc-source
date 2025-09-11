@@ -11,20 +11,25 @@
     <!-- Page Header -->
     <div class="page-header">
         {% if current_user.is_authenticated and current_user.is_competition_participant %}
-            <h1>🏆 Summer Competition Challenges</h1>
-            <p class="page-subtitle">Exclusive challenges for Summer Mathematics Competition 2025 participants</p>
+            <h1>🏆 Autumn Competition Challenges</h1>
+            <p class="page-subtitle">Exclusive challenges for Autumn Mathematics Competition 2025 participants</p>
         {% else %}
             <h1>Mathematical Challenges</h1>
             <p class="page-subtitle">Test your mathematical skills with our collection of challenging problems and puzzles</p>
         {% endif %}
     </div>
 
-    <!-- Summer Competition Challenges (only for summer participants) -->
-    {% if current_user.is_authenticated and current_user.is_competition_participant and summer_challenges %}
+    <!-- Summer Competition Challenges (only for summer participants and admin) -->
+    {% if current_user.is_authenticated and (current_user.is_competition_participant or current_user.is_admin) and summer_challenges %}
     <div class="summer-challenges-section">
         <div class="section-header">
-            <h2>🏆 Your Competition Challenges ({{ current_user.key_stage.upper() }})</h2>
-            <p>Challenges specifically designed for your key stage in the Summer Mathematics Competition</p>
+            {% if current_user.is_admin %}
+            <h2>🏆 Your Competition Challenge Management</h2>
+            <p>Manage and oversee competition challenges for all key stages</p>
+            {% else %}
+            <h2>🏆 Your Competition Challenges</h2>
+            {% endif %}
+            <p>Challenges specifically designed for your key stage in the Autumn Mathematics Competition</p>
         </div>
         
         <div class="challenges-grid summer-grid">
@@ -43,7 +48,7 @@
                         </span>
                     </div>
                     <div class="challenge-badge">
-                        <span class="summer-badge">🏆 Summer Challenge</span>
+                        <span class="summer-badge">🏆 Autumn Challenge</span>
                     </div>
                     {% if summer.is_locked %}
                     <div class="challenge-badge locked">
@@ -92,7 +97,7 @@
             {% else %}
             <div class="no-challenges">
                 <div class="no-content-icon">🏆</div>
-                <h3>No Summer Challenges Available</h3>
+                <h3>No Autumn Challenges Available</h3>
                 <p>Check back soon for new competition challenges for {{ current_user.key_stage.upper() }} students!</p>
             </div>
             {% endfor %}
@@ -202,8 +207,8 @@
                         <span class="role-badge admin">Administrator</span>
                         <p>Full access to manage challenges and content.</p>
                     {% elif current_user.is_competition_participant %}
-                        <span class="role-badge summer-user">🏆 Summer Competition Participant</span>
-                        <p>Access to summer challenges.</p>
+                        <span class="role-badge summer-user">🏆 Autumn Competition Participant</span>
+                        <p>Access to autumn challenges.</p>
                     {% else %}
                         <span class="role-badge user">Student</span>
                         <p>Access to weekly challenges.</p>
@@ -281,10 +286,10 @@
                 <span>📋</span> Manage Challenges
             </a>
             <a href="{{ url_for('admin.create_summer_challenge') }}" class="button">
-                <span>🏆</span> Create Summer Challenge
+                <span>🏆</span> Create Autumn Challenge
             </a>
             <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button button-secondary">
-                <span>📋</span> Manage Summer Challenges
+                <span>📋</span> Manage Autumn Challenges
             </a>
         </div>
     </div>

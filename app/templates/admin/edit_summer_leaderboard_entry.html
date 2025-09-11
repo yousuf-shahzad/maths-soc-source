@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container">
-    <h1>Edit Summer Leaderboard Entry</h1>
+    <h1>Edit Autumn Leaderboard Entry</h1>
     
     <h2>Current Entry: {{ entry.user.full_name }} ({{ entry.school.name }})</h2>
     
@@ -37,7 +37,7 @@
     </form>
     
     <a href="{{ url_for('admin.manage_summer_leaderboard') }}" class="button button-secondary">
-        Back to Summer Leaderboard Management
+        Back to Autumn Leaderboard Management
     </a>
 </div>
 {% endblock %}

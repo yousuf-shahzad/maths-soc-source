@@ -254,7 +254,7 @@ def logout():
 # Summer Competition Registration 
 # ====================
 
-@bp.route("/summer_register", methods=["GET", "POST"])
+@bp.route("/autumn_register", methods=["GET", "POST"])
 def summer_register():
     """
     Handle user registration process for the summer competition.
@@ -313,7 +313,7 @@ def summer_register():
         return redirect(url_for("auth.summer_login"))
     return render_template("auth/summer_register.html", title="Register", form=form)
 
-@bp.route("/summer_login", methods=["GET", "POST"])
+@bp.route("/autumn_login", methods=["GET", "POST"])
 def summer_login():
     """
     Handle user login process.

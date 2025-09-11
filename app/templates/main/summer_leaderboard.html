@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Summer Competition 2025 Leaderboard{% endblock %}
+{% block title %}Autumn Competition 2025 Leaderboard{% endblock %}
 
 {% block content %}
 <div class="container">
     <!-- Leaderboard Header -->
     <div class="summer-hero">
-        <h1>🏆 Summer Competition 2025 Leaderboard</h1>
+        <h1>🏆 Autumn Competition 2025 Leaderboard</h1>
         <p>See how you rank against competitors from across the region!</p>
     </div>
 
     <div class="alert alert-info" style="margin-bottom: 1rem;">
-        <strong>Note:</strong> This leaderboard is for the <b>Summer Competition 2025</b> only.<br>
+        <strong>Note:</strong> This leaderboard is for the <b>Autumn Competition 2025</b> only.<br>
         Looking for the regular UCGS weekly challenges leaderboard? 
         <a href="{{ url_for('main.leaderboard') }}" style="color: #007bff; font-weight: bold;">Click here</a>
     </div>
@@ -314,7 +314,7 @@
 
     <!-- Call to Action -->
     <div class="cta-section">
-        <h2>Ready to Join the Summer Competition?</h2>
+        <h2>Ready to Join the Autumn Competition?</h2>
         <p>Start solving challenges and climb the leaderboard today!</p>
         <div class="cta-buttons">
             {% if current_user.is_anonymous %}

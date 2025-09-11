@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Math Engine Tester{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('admin.admin_index') }}">🔧 Admin Panel</a>
+        <span class="breadcrumb-separator">›</span>
+        <span>Math Engine Tester</span>
+    </div>
+    
+    <div class="page-header">
+        <h1>Mathematical Expression Engine Tester</h1>
+        <p class="page-description">Test mathematical expression equivalence and normalization</p>
+    </div>
+
+    <div class="challenges-grid">
+        <!-- Expression Equivalence Test -->
+        <div class="challenge-card">
+            <div class="challenge-type-badge">
+                <div class="challenge-badge">
+                    <span class="summer-badge">Equivalence Test</span>
+                </div>
+            </div>
+            <h3>Expression Equivalence Test</h3>
+            <p class="challenge-description">Compare two mathematical expressions to see if they are equivalent</p>
+            
+            <form id="equivalence-form" class="math-test-form">
+                <div class="form-group">
+                    <label for="expr1" class="form-label">First Expression:</label>
+                    <div class="math-input-container">
+                        <math-field 
+                            id="expr1"
+                            class="form-control math-input"
+                            style="font-size: 1.5rem; padding: 1rem;">2*x + 3</math-field>
+                    </div>
+                    <small class="form-text text-muted">
+                        Supports standard notation and LaTeX (e.g., \frac{a}{b}, x^{2})
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="expr2" class="form-label">Second Expression:</label>
+                    <div class="math-input-container">
+                        <math-field 
+                            id="expr2"
+                            class="form-control math-input"
+                            style="font-size: 1.5rem; padding: 1rem;">3 + 2*x</math-field>
+                    </div>
+                </div>
+                <button type="submit" class="button">Test Equivalence</button>
+            </form>
+            
+            <div id="equivalence-result" class="test-result" style="display: none;">
+                <div class="alert" id="equivalence-alert">
+                    <h5 id="equivalence-status"></h5>
+                    <div class="result-section">
+                        <p><strong>Expression 1 Normalized:</strong></p>
+                        <math-field readonly class="readonly-math" id="expr1-normalized"></math-field>
+                    </div>
+                    <div class="result-section">
+                        <p><strong>Expression 2 Normalized:</strong></p>
+                        <math-field readonly class="readonly-math" id="expr2-normalized"></math-field>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expression Normalization Test -->
+        <div class="challenge-card">
+            <div class="challenge-type-badge">
+                <div class="challenge-badge">
+                        <span class="summer-badge">Normalization Test</span>
+                </div>
+            </div>
+            <h3>Expression Normalization Test</h3>
+            <p class="challenge-description">Test how the engine normalizes expressions for storage</p>
+            
+            <form id="normalization-form" class="math-test-form">
+                <div class="form-group">
+                    <label for="normalize-expr" class="form-label">Expression to Normalize:</label>
+                    <div class="math-input-container">
+                        <math-field 
+                            id="normalize-expr"
+                            class="form-control math-input"
+                            style="font-size: 1.5rem; padding: 1rem;">2x + 3</math-field>
+                    </div>
+                    <small class="form-text text-muted">
+                        See how expressions are processed for database storage
+                    </small>
+                </div>
+                <button type="submit" class="button button-secondary">Normalize</button>
+            </form>
+            
+            <div id="normalization-result" class="test-result" style="display: none;">
+                <div class="alert alert-info">
+                    <h5>Normalization Result</h5>
+                    <div class="result-section">
+                        <p><strong>Original:</strong></p>
+                        <math-field readonly class="readonly-math" id="original-expr"></math-field>
+                    </div>
+                    <div class="result-section">
+                        <p><strong>Normalized:</strong></p>
+                        <math-field readonly class="readonly-math" id="normalized-expr"></math-field>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Example Test Cases -->
+    <div class="challenge-card full-width">
+        <h3>Example Test Cases</h3>
+        <p class="challenge-description">Try these example expressions to test different features:</p>
+        
+        <div class="examples-grid">
+            <div class="examples-section">
+                <h4>Basic Equivalence</h4>
+                <div class="example-buttons">
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('2*x + 3', '3 + 2*x')">2*x + 3 vs 3 + 2*x</button>
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('x^2 + 2*x + 1', '(x + 1)^2')">x² + 2x + 1 vs (x + 1)²</button>
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('a + b', 'b + a')">a + b vs b + a</button>
+                </div>
+            </div>
+            
+            <div class="examples-section">
+                <h4>LaTeX Support</h4>
+                <div class="example-buttons">
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('c\\\\left(a+b\\\\right)', 'c*(a+b)')">LaTeX parentheses</button>
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('\\\\frac{a}{b}', 'a/b')">LaTeX fractions</button>
+                    <button class="button button-secondary small" onclick="setEquivalenceTest('x^{2}', 'x^2')">LaTeX powers</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script defer src="//unpkg.com/mathlive"></script>
+<script>
+// Handle equivalence testing
+document.getElementById('equivalence-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const expr1 = document.getElementById('expr1').value;
+    const expr2 = document.getElementById('expr2').value;
+    
+    fetch('/api/math/test-equivalence', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            expr1: expr1,
+            expr2: expr2
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultDiv = document.getElementById('equivalence-result');
+        const alertDiv = document.getElementById('equivalence-alert');
+        const statusEl = document.getElementById('equivalence-status');
+        
+        if (data.error) {
+            alertDiv.className = 'alert alert-error';
+            statusEl.textContent = 'Error: ' + data.error;
+            document.getElementById('expr1-normalized').value = '';
+            document.getElementById('expr2-normalized').value = '';
+        } else {
+            if (data.equivalent) {
+                alertDiv.className = 'alert alert-success';
+                statusEl.textContent = '✓ Expressions are mathematically equivalent';
+            } else {
+                alertDiv.className = 'alert alert-warning';
+                statusEl.textContent = '✗ Expressions are NOT equivalent';
+            }
+            document.getElementById('expr1-normalized').value = data.expr1_normalized;
+            document.getElementById('expr2-normalized').value = data.expr2_normalized;
+        }
+        
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const resultDiv = document.getElementById('equivalence-result');
+        const alertDiv = document.getElementById('equivalence-alert');
+        alertDiv.className = 'alert alert-error';
+        document.getElementById('equivalence-status').textContent = 'Network error occurred';
+        resultDiv.style.display = 'block';
+    });
+});
+
+// Handle normalization testing
+document.getElementById('normalization-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const expression = document.getElementById('normalize-expr').value;
+    
+    fetch('/api/math/normalize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            expression: expression
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            document.getElementById('original-expr').value = data.original;
+            document.getElementById('normalized-expr').value = data.normalized;
+            document.getElementById('normalization-result').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    });
+});
+
+// Helper function to set equivalence test values
+function setEquivalenceTest(expr1, expr2) {
+    document.getElementById('expr1').value = expr1;
+    document.getElementById('expr2').value = expr2;
+}
+</script>
+
+<style>
+/* Math Engine Tester Specific Styles */
+.page-description {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* Math input styling */
+.math-input-container {
+    margin: 0.75rem 0;
+}
+
+.math-input {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.875rem;
+    width: 100%;
+    font-size: 1.2rem !important;
+    transition: all 0.3s ease;
+}
+
+.math-input:focus {
+    border-color: #962835;
+    box-shadow: 0 0 0 3px rgba(150, 40, 53, 0.1);
+}
+
+.readonly-math {
+    font-size: 1.1rem !important;
+    padding: 0.75rem !important;
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    color: #495057 !important;
+}
+
+/* Test form styling */
+.math-test-form {
+    background: transparent;
+    padding: 0;
+    margin: 1.5rem 0;
+    box-shadow: none;
+    border: none;
+}
+
+.test-result {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.result-section {
+    margin: 1rem 0;
+}
+
+.result-section p {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Full width card for examples */
+.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Examples grid */
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.examples-section h4 {
+    color: #962835;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.example-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.button.small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    min-height: auto;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+/* Form text styling */
+.form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .challenges-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .examples-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .example-buttons {
+        gap: 0.75rem;
+    }
+    
+    .button.small {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    .math-input {
+        font-size: 1rem !important;
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-description {
+        font-size: 1rem;
+    }
+    
+    .math-input {
+        font-size: 0.95rem !important;
+    }
+}
+</style>
+{% endblock %}

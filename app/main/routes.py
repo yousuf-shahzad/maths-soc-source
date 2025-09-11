@@ -163,7 +163,7 @@ def about():
     return render_template("main/about.html", title="About")
 
 
-@bp.route("/summer_about")
+@bp.route("/autumn_about")
 def summer_about():
     """
     Render the summer competition about page.
@@ -201,9 +201,21 @@ def challenges():
         if current_user.is_authenticated:
             # Check if user is a summer competition participant
             is_summer_participant = getattr(current_user, "is_competition_participant", False)
-            
-            if is_summer_participant:
-                # Summer competition users only see summer challenges
+            is_admin = getattr(current_user, "is_admin", False)
+
+            if is_admin:
+                # Admin users see ALL challenges (both regular and summer), including unreleased ones
+                # This allows admins to preview and manage all content
+                challenges_pagination = Challenge.query.order_by(
+                    Challenge.date_posted.desc()
+                ).paginate(page=page, per_page=6, error_out=False)
+                
+                # Admins also see all summer challenges from all key stages
+                summer_challenges = SummerChallenge.query.order_by(
+                    SummerChallenge.date_posted.desc()
+                ).all()
+            elif is_summer_participant:
+                # Summer competition users only see summer challenges for their key stage
                 summer_challenges = SummerChallenge.query.filter_by(
                     key_stage=current_user.key_stage
                 ).order_by(SummerChallenge.date_posted.desc()).all()
@@ -213,7 +225,7 @@ def challenges():
                     page=page, per_page=6, error_out=False
                 )
             else:
-                # Regular users only see regular challenges
+                # Regular users only see released regular challenges
                 challenges_pagination = Challenge.query.filter(
                     Challenge.release_at <= now
                 ).order_by(Challenge.date_posted.desc()).paginate(
@@ -278,8 +290,7 @@ def create_submission(
         challenge_id=challenge_id,
         answer_box_id=answer_box.id,
         answer=submitted_answer,
-        is_correct=submitted_answer.lower().strip()
-        == answer_box.correct_answer.lower().strip(),
+        is_correct=answer_box.check_answer(submitted_answer),
     )
 
     db.session.add(submission)
@@ -476,8 +487,9 @@ def challenge(challenge_id: int):
         flash("Please log in to access challenges.", "error")
         return redirect(url_for('auth.login'))
     
-    # Block summer competition participants from accessing regular challenges
-    if getattr(current_user, "is_competition_participant", False):
+    # Block summer competition participants from accessing regular challenges (except admins)
+    if (getattr(current_user, "is_competition_participant", False) and 
+        not getattr(current_user, "is_admin", False)):
         flash("Summer competition participants can only access competition challenges.", "error")
         return redirect(url_for('main.challenges'))
     
@@ -527,7 +539,7 @@ def challenge(challenge_id: int):
         all_correct=all_correct,
     )
 
-@bp.route("/summer_challenge/<int:challenge_id>", methods=["GET", "POST"])
+@bp.route("/autumn_challenge/<int:challenge_id>", methods=["GET", "POST"])
 def summer_challenge(challenge_id: int):
     """
     Display a specific summer challenge and handle answer submissions.
@@ -540,26 +552,32 @@ def summer_challenge(challenge_id: int):
         flash("Please log in to access summer challenges.", "error")
         return redirect(url_for('auth.login'))
     
-    # Block regular users from accessing summer challenges
-    if not getattr(current_user, "is_competition_participant", False):
+    # Block regular users from accessing summer challenges (except admins)
+    if (not getattr(current_user, "is_competition_participant", False) and 
+        not getattr(current_user, "is_admin", False)):
         flash("Only summer competition participants can access these challenges.", "error")
         return redirect(url_for('main.challenges'))
     
-    # Check if user's key stage matches the challenge
-    if current_user.key_stage != challenge.key_stage:
+    # Check if user's key stage matches the challenge (except for admins)
+    if (not getattr(current_user, "is_admin", False) and 
+        hasattr(current_user, 'key_stage') and 
+        current_user.key_stage != challenge.key_stage):
         flash(f"This summer challenge is for {challenge.key_stage} students only. You are registered for {current_user.key_stage}.", "error")
         return redirect(url_for("main.challenges"))
     
     forms = {}
     submissions = {}
 
-    # Only allow answer submission if user is a summer participant, challenge is not locked, and user's key stage matches
+    # Only allow answer submission if user is a summer participant or admin, challenge is not locked, and user's key stage matches (admins can submit regardless of key stage)
     can_submit = (
         current_user.is_authenticated
-        and getattr(current_user, "is_competition_participant", False)
-        and current_user.school_id is not None
+        and (
+            getattr(current_user, "is_admin", False) or  # Admins can always submit
+            (getattr(current_user, "is_competition_participant", False)
+             and current_user.school_id is not None
+             and current_user.key_stage == challenge.key_stage)
+        )
         and not challenge.is_locked
-        and current_user.key_stage == challenge.key_stage
     )
 
     if current_user.is_authenticated:
@@ -672,7 +690,7 @@ def handle_summer_challenge_submission(challenge: SummerChallenge, forms: Dict) 
         return redirect(url_for("main.summer_challenge", challenge_id=challenge.id))
 
     # Check if answer is correct
-    is_correct = form.answer.data.lower().strip() == answer_box.correct_answer.lower().strip()
+    is_correct = answer_box.check_answer(form.answer.data)
     
     # Calculate points awarded
     points_awarded = 0
@@ -1010,7 +1028,7 @@ def leaderboard():
         stats=stats
     )
 
-@bp.route("/summer_leaderboard")
+@bp.route("/autumn_leaderboard")
 def summer_leaderboard():
     """
     Display summer competition leaderboards separated by key stages.
@@ -1149,7 +1167,7 @@ def summer_leaderboard():
     
     return render_template(
         "main/summer_leaderboard.html",
-        title="Summer Competition 2025 Leaderboard",
+        title="Autumn Competition 2025 Leaderboard",
         ks3_leaders=ks3_leaders,
         ks4_leaders=ks4_leaders,
         ks5_leaders=ks5_leaders,

@@ -116,8 +116,29 @@ class ChallengeAnswerBox(db.Model):
         db.Index('ix_challenge_answer_box_challenge_order', 'challenge_id', 'order'),
     )
     
+    def check_answer(self, submitted_answer: str) -> bool:
+        """
+        Check if the submitted answer is correct.
+        
+        Uses mathematical expression comparison for mathematical answer boxes,
+        falls back to simple string comparison for non-mathematical answers.
+        
+        Args:
+            submitted_answer (str): The user's submitted answer
+            
+        Returns:
+            bool: True if the answer is correct, False otherwise
+        """
+        try:
+            from app.utils import compare_mathematical_expressions
+            return compare_mathematical_expressions(submitted_answer, self.correct_answer)
+        except Exception:
+            # Simple string comparison for non-mathematical answers
+            return submitted_answer.lower().strip() == self.correct_answer.lower().strip()
+    
     def __repr__(self):
         return f'<ChallengeAnswerBox {self.box_label} for Challenge {self.challenge_id}>'
+
 
 
 class AnswerSubmission(db.Model):
@@ -300,6 +321,26 @@ class SummerChallengeAnswerBox(db.Model):
     __table_args__ = (
         db.Index('ix_summer_answer_box_challenge_order', 'challenge_id', 'order'),
     )
+    
+    def check_answer(self, submitted_answer: str) -> bool:
+        """
+        Check if the submitted answer is correct.
+        
+        Uses mathematical expression comparison for mathematical answer boxes,
+        falls back to simple string comparison for non-mathematical answers.
+        
+        Args:
+            submitted_answer (str): The user's submitted answer
+            
+        Returns:
+            bool: True if the answer is correct, False otherwise
+        """
+        try:
+            from app.utils import compare_mathematical_expressions
+            return compare_mathematical_expressions(submitted_answer, self.correct_answer)
+        except Exception:
+            # Simple string comparison for non-mathematical answers
+            return submitted_answer.lower().strip() == self.correct_answer.lower().strip()
     
     def __repr__(self):
         return f'<SummerChallengeAnswerBox {self.box_label} for Challenge {self.challenge_id}>'
