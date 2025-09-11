@@ -4,6 +4,8 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_ckeditor import CKEditor
 from app.database import db
+from flask import render_template
+from flask_talisman import Talisman
 
 # Import configuration
 from config import get_config
@@ -39,7 +41,30 @@ def create_app(config_name="development"):
     # Register blueprints
     register_blueprints(app)
 
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500) 
+    def internal_error(error):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+    
+    Talisman(app, 
+        force_https=True,
+        strict_transport_security=True,
+        content_security_policy={
+            'default-src': "'self'",
+            'script-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://polyfill.io",
+            'style-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+            'font-src': "'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+            'img-src': "'self' data:",
+            'connect-src': "'self' https://cdnjs.cloudflare.com"
+        })
+    
     return app
+
+
 
 
 def configure_logging(app):
