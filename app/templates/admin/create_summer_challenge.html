@@ -3,13 +3,13 @@
 {% block content %}
     <div class="container">
         <div class="page-header">
-            <h1>Create New Summer Challenge</h1>
+            <h1>Create New Autumn Challenge</h1>
         </div>
         
         <div class="breadcrumb">
-            <a href="{{ url_for('admin.manage_summer_challenges') }}">Manage Summer Challenges</a>
+            <a href="{{ url_for('admin.manage_summer_challenges') }}">Manage Autumn Challenges</a>
             <span class="breadcrumb-separator">›</span>
-            <span>Create Summer Challenge</span>
+            <span>Create Autumn Challenge</span>
         </div>
 
         <form method="POST" enctype="multipart/form-data" class="form-group">
@@ -102,7 +102,7 @@
             
             <div>
                 {{ form.submit(class="button") }}
-                <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button">Back to Manage Summer Challenges</a>
+                <a href="{{ url_for('admin.manage_summer_challenges') }}" class="button">Back to Manage Autumn Challenges</a>
             </div>
         </form>
     </div>

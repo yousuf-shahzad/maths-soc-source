@@ -2,7 +2,7 @@
  * Summer Competition Navigation
  *****************************************/
 .summer-competition-link {
-    background: linear-gradient(135deg, #f7971e, #ffd200) !important;
+    background: linear-gradient(135deg, #d35400, #ff7f2a 60%, #ffb74d) !important;
     color: white !important;
     font-weight: bold !important;
     border-radius: 20px !important;
@@ -21,7 +21,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 127, 42, 0.3), transparent);
     transition: left 0.5s;
 }
 
@@ -30,18 +30,18 @@
 }
 
 .summer-competition-link:hover {
-    background: linear-gradient(135deg, #f57f17, #ffc300) !important;
+    background: linear-gradient(135deg, #b34700, #ffb74d 80%, #ffe0b2) !important;
     transform: translateY(-3px) !important;
-    box-shadow: 0 6px 20px rgba(247, 151, 30, 0.4) !important;
+    box-shadow: 0 6px 20px rgba(211, 84, 0, 0.4) !important;
     text-decoration: none !important;
 }
 
 @keyframes summer-glow {
     from {
-        box-shadow: 0 0 8px rgba(247, 151, 30, 0.5);
+        box-shadow: 0 0 8px rgba(211, 84, 0, 0.5);
     }
     to {
-        box-shadow: 0 0 20px rgba(247, 151, 30, 0.8), 0 0 30px rgba(255, 210, 0, 0.3);
+        box-shadow: 0 0 20px rgba(255, 127, 42, 0.8), 0 0 30px rgba(255, 183, 77, 0.3);
     }
 }
 
