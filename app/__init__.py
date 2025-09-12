@@ -138,6 +138,9 @@ def create_app(config_name="development"):
         content_security_policy=csp,
     )
     
+    # If behind a proxy (e.g. in production), ensure correct handling of headers
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+    
     return app
 
 
