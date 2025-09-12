@@ -8,6 +8,8 @@ from flask import render_template
 from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Import configuration
 from config import get_config
@@ -16,6 +18,12 @@ from config import get_config
 login_manager = LoginManager()
 migrate = Migrate()
 ckeditor = CKEditor()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    strategy="fixed-window",
+    headers_enabled=True,
+)
 
 
 def create_app(config_name="development"):
@@ -39,6 +47,12 @@ def create_app(config_name="development"):
 
     # Initialize extensions
     initialize_extensions(app)
+
+    # Rate limiting
+    # Use in-memory storage by default; can be swapped via env RATELIMIT_STORAGE_URI
+    app.config.setdefault('RATELIMIT_STORAGE_URI', 'memory://')
+    app.config.setdefault('RATELIMIT_ENABLED', True)
+    limiter.init_app(app)
 
     # Register blueprints
     register_blueprints(app)
