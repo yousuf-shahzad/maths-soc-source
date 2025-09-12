@@ -21,6 +21,9 @@ class Config:
     # File upload configuration
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'app', 'static', 'uploads')
 
+    # CSP options
+    CSP_ALLOW_UNSAFE_EVAL = False
+
     @classmethod
     def is_production(cls):
         """
@@ -64,6 +67,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = Config.get_database_uri()
     CKEDITOR_SERVE_LOCAL = True
     CKEDITOR_HEIGHT = 400
+    CSP_ALLOW_UNSAFE_EVAL = True
 
 
 class TestingConfig(Config):
@@ -71,6 +75,7 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    CSP_ALLOW_UNSAFE_EVAL = True
 
 
 class ProductionConfig(Config):

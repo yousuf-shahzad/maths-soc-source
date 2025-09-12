@@ -6,6 +6,8 @@ from flask_ckeditor import CKEditor
 from app.database import db
 from flask import render_template
 from flask_talisman import Talisman
+from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy import text
 
 # Import configuration
 from config import get_config
@@ -41,6 +43,20 @@ def create_app(config_name="development"):
     # Register blueprints
     register_blueprints(app)
 
+    # Health and readiness endpoints (no auth, no DB by default)
+    @app.route('/healthz')
+    def healthz():
+        return {"status": "ok"}, 200
+
+    @app.route('/readyz')
+    def readyz():
+        # Lightweight DB check; won't raise if DB temporarily down
+        try:
+            db.session.execute(text('SELECT 1'))
+            return {"status": "ready"}, 200
+        except Exception:
+            return {"status": "degraded"}, 503
+
     @app.errorhandler(404)
     def not_found_error(error):
         return render_template('errors/404.html'), 404
@@ -50,17 +66,77 @@ def create_app(config_name="development"):
         db.session.rollback()
         return render_template('errors/500.html'), 500
     
-    Talisman(app, 
-        force_https=True,
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        return render_template('errors/403.html'), 403
+
+    # Content Security Policy (CSP)
+    # Note: CKEditor 4 and some math libraries may require 'unsafe-eval'.
+    # In production consider serving assets locally and removing 'unsafe-eval' if possible.
+    is_dev_like = bool(app.config.get('DEBUG') or app.config.get('TESTING'))
+    allow_unsafe_eval = bool(app.config.get('CSP_ALLOW_UNSAFE_EVAL', False) or is_dev_like)
+
+    script_src_common = [
+        "'self'",
+        "'unsafe-inline'",
+        # Third-party CDNs used by the app/UI
+        "https://cdn.jsdelivr.net",
+        "https://cdnjs.cloudflare.com",
+        "https://polyfill.io",
+        "https://unpkg.com",
+        "https://cdn.ckeditor.com",
+        # Some pages may include analytics from Cloudflare (safe to keep blocked if unused)
+        "https://static.cloudflareinsights.com",
+    ]
+
+    # CKEditor 4 and some math libs (e.g. MathLive) use eval/new Function
+    if allow_unsafe_eval:
+        script_src_common.append("'unsafe-eval'")
+    else:
+        # If you must allow it in prod due to CKEditor 4, uncomment next line
+        # script_src_common.append("'unsafe-eval'")
+        pass
+
+    csp = {
+        'default-src': ["'self'"],
+        'base-uri': ["'self'"],
+        'object-src': ["'none'"],
+        # Be explicit for element/attr directives
+        'script-src': script_src_common,
+        'script-src-elem': script_src_common,
+        'script-src-attr': ["'self'", "'unsafe-inline'"],
+        'style-src': [
+            "'self'", "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://fonts.googleapis.com",
+            "https://unpkg.com",
+        ],
+        'font-src': [
+            "'self'",
+            "https://fonts.gstatic.com",
+            "https://cdnjs.cloudflare.com",
+            "https://unpkg.com",
+            "data:",
+        ],
+        'img-src': ["'self'", "data:", "blob:"],
+        'connect-src': [
+            "'self'",
+            "https://cdnjs.cloudflare.com",
+            "https://cdn.jsdelivr.net",
+            "https://unpkg.com",
+        ],
+        'frame-ancestors': ["'self'"],
+        'worker-src': ["'self'", "blob:"],
+        'media-src': ["'self'", "data:", "blob:"],
+    }
+
+    Talisman(
+        app,
+        force_https=not (app.config.get('DEBUG') or app.config.get('TESTING')),
         strict_transport_security=True,
-        content_security_policy={
-            'default-src': "'self'",
-            'script-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://polyfill.io",
-            'style-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
-            'font-src': "'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-            'img-src': "'self' data:",
-            'connect-src': "'self' https://cdnjs.cloudflare.com"
-        })
+        content_security_policy=csp,
+    )
     
     return app
 
