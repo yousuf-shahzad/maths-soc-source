@@ -99,8 +99,8 @@ def create_app(config_name="development"):
         "https://polyfill.io",
         "https://unpkg.com",
         "https://cdn.ckeditor.com",
-        # Some pages may include analytics from Cloudflare (safe to keep blocked if unused)
-        "https://static.cloudflareinsights.com",
+        # Remove Cloudflare Insights if not needed or causing CORS issues
+        # "https://static.cloudflareinsights.com",
     ]
 
     # CKEditor 4 and some math libs (e.g. MathLive) use eval/new Function
@@ -125,20 +125,24 @@ def create_app(config_name="development"):
             "https://cdnjs.cloudflare.com",
             "https://fonts.googleapis.com",
             "https://unpkg.com",
+            "https://cdn.ckeditor.com",
         ],
         'font-src': [
             "'self'",
             "https://fonts.gstatic.com",
             "https://cdnjs.cloudflare.com",
             "https://unpkg.com",
+            "https://cdn.ckeditor.com",
             "data:",
         ],
-        'img-src': ["'self'", "data:", "blob:"],
+        'img-src': ["'self'", "data:", "blob:", "https://cdn.ckeditor.com"],
         'connect-src': [
             "'self'",
             "https://cdnjs.cloudflare.com",
             "https://cdn.jsdelivr.net",
             "https://unpkg.com",
+            "https://cke4.ckeditor.com",
+            "https://cdn.ckeditor.com",
         ],
         'frame-ancestors': ["'self'"],
         'worker-src': ["'self'", "blob:"],
