@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Manage Users - Autumn Competition 2025{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <!-- Admin Header -->
@@ -342,16 +347,43 @@ async function performBulkAction(action) {
     }
     
     try {
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        
+        // Add CSRF token if available
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken;
+        }
+        
         const response = await fetch('/admin/users/bulk-action', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({
                 action: action,
                 user_ids: Array.from(selectedUsers)
             })
         });
+        
+        // Log response details for debugging
+        console.log('Response status:', response.status);
+        console.log('Response statusText:', response.statusText);
+        
+        if (!response.ok) {
+            // Try to get error details from response
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorText = await response.text();
+                console.log('Error response body:', errorText);
+                errorMessage += '\n' + errorText;
+            } catch (e) {
+                console.log('Could not parse error response');
+            }
+            throw new Error(errorMessage);
+        }
         
         const result = await response.json();
         
@@ -362,6 +394,7 @@ async function performBulkAction(action) {
             alert('Error: ' + result.error);
         }
     } catch (error) {
+        console.error('Full error details:', error);
         alert('Network error: ' + error.message);
     }
 }
