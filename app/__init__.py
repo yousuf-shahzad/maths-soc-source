@@ -111,6 +111,13 @@ def create_app(config_name="development"):
         # script_src_common.append("'unsafe-eval'")
         pass
 
+    # Get the current domain for API calls
+    server_name = app.config.get('SERVER_NAME')
+    if not server_name and not is_dev_like:
+        # In production, you might want to set this explicitly
+        # For now, we'll be permissive with 'self'
+        server_name = 'ucgsmaths.com'
+
     csp = {
         'default-src': ["'self'"],
         'base-uri': ["'self'"],
@@ -138,6 +145,7 @@ def create_app(config_name="development"):
         'img-src': ["'self'", "data:", "blob:", "https://cdn.ckeditor.com"],
         'connect-src': [
             "'self'",
+            # External CDNs and services
             "https://cdnjs.cloudflare.com",
             "https://cdn.jsdelivr.net",
             "https://unpkg.com",
@@ -148,6 +156,11 @@ def create_app(config_name="development"):
         'worker-src': ["'self'", "blob:"],
         'media-src': ["'self'", "data:", "blob:"],
     }
+
+    # Add your production domain to connect-src if specified
+    if server_name:
+        csp['connect-src'].append(f"https://{server_name}")
+        csp['connect-src'].append(f"http://{server_name}")  # For development
 
     Talisman(
         app,
