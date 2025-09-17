@@ -55,6 +55,7 @@ from flask import (
 from flask_login import login_required, current_user
 from flask_ckeditor import upload_success, upload_fail
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy import cast, String
 
 from app import db
 from app.admin import bp
@@ -805,13 +806,23 @@ def manage_users():
     
     # Apply search filter
     if search:
-        search_term = f"%{search.strip()}%"
+        search_clean = search.strip()
+        search_term = f"%{search_clean}%"
+        # Optimise: if purely digits, allow direct equality OR pattern match
+        id_filter = []
+        if search_clean.isdigit():
+            try:
+                id_val = int(search_clean)
+                id_filter.append(User.id == id_val)
+            except ValueError:
+                pass
+        id_filter.append(cast(User.id, String).like(search_term))
         query = query.filter(
             db.or_(
                 User.full_name.ilike(search_term),
                 User.email.ilike(search_term),
                 User.maths_class.ilike(search_term),
-                User.id.like(search_term)
+                db.or_(*id_filter)
             )
         )
     
@@ -888,38 +899,76 @@ def manage_users():
 @login_required
 @admin_required
 def users_search():
-    """AJAX endpoint for dynamic user search"""
-    query = request.args.get('q', '', type=str)
-    limit = request.args.get('limit', 10, type=int)
-    
-    if not query or len(query) < 2:
-        return jsonify({'users': []})
-    
-    search_term = f"%{query.strip()}%"
-    users = User.query.filter(
-        db.or_(
-            User.full_name.ilike(search_term),
-            User.email.ilike(search_term),
-            User.maths_class.ilike(search_term),
-            User.id.like(search_term)
-        )
-    ).limit(limit).all()
-    
-    user_data = []
-    for user in users:
-        user_data.append({
-            'id': user.id,
-            'full_name': user.full_name,
-            'email': user.email,
-            'maths_class': user.maths_class,
-            'key_stage': user.key_stage,
-            'year': user.year,
-            'is_admin': user.is_admin,
-            'is_competition_participant': user.is_competition_participant,
-            'date_joined': user.date_joined.strftime('%Y-%m-%d') if user.date_joined else None
-        })
-    
-    return jsonify({'users': user_data})
+    """AJAX endpoint for dynamic user search.
+    Safe for Postgres (casts integer ID), clamps limits, guards against abuse.
+    """
+    try:
+        query = request.args.get('q', '', type=str)
+        limit = request.args.get('limit', 10, type=int)
+        # Clamp limit to prevent large scans
+        if limit < 1:
+            limit = 1
+        limit = min(limit, 50)
+
+        # Allow single-character queries only if they are numeric (ID lookup); otherwise require length >=2
+        if not query:
+            return jsonify({'users': []})
+        trimmed = query.strip()
+        if len(trimmed) < 2 and not trimmed.isdigit():
+            return jsonify({'users': []})
+
+        # Replace original variable usage with trimmed to avoid re-strip calls
+        query = trimmed
+
+        search_clean = query
+        search_term = f"%{search_clean}%"
+
+        id_clauses = []
+        if search_clean.isdigit():
+            try:
+                id_clauses.append(User.id == int(search_clean))
+            except ValueError:
+                pass
+        id_clauses.append(cast(User.id, String).like(search_term))
+
+        users = User.query.filter(
+            db.or_(
+                User.full_name.ilike(search_term),
+                User.email.ilike(search_term),
+                User.maths_class.ilike(search_term),
+                db.or_(*id_clauses)
+            )
+        ).limit(limit).all()
+
+        user_data = []
+        for user in users:
+            # Some legacy user records or test fixtures may lack date_joined
+            date_joined_val = getattr(user, 'date_joined', None)
+            if date_joined_val is not None:
+                try:
+                    date_joined_str = date_joined_val.strftime('%Y-%m-%d')
+                except Exception:
+                    date_joined_str = None
+            else:
+                date_joined_str = None
+            user_data.append({
+                'id': user.id,
+                'full_name': user.full_name,
+                'email': user.email,
+                'maths_class': user.maths_class,
+                'key_stage': user.key_stage,
+                'year': user.year,
+                'is_admin': user.is_admin,
+                'is_competition_participant': user.is_competition_participant,
+                'date_joined': date_joined_str
+            })
+        return jsonify({'users': user_data})
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"User search DB error: {e}")
+        return jsonify({'error': 'Search failed'}), 500
+    except Exception as e:
+        current_app.logger.error(f"User search unexpected error: {e}")
+        return jsonify({'error': 'Unexpected error'}), 500
 
 @bp.route("/admin/users/bulk-action", methods=["POST"])
 @login_required
@@ -2110,37 +2159,56 @@ def calculate_summer_leaderboard_stats():
 @login_required
 @admin_required
 def summer_leaderboard_search():
-    """AJAX endpoint for dynamic summer leaderboard search"""
-    query = request.args.get('q', '', type=str)
-    limit = request.args.get('limit', 10, type=int)
-    
-    if not query or len(query) < 2:
-        return jsonify({'entries': []})
-    
-    search_term = f"%{query.strip()}%"
-    entries = db.session.query(
-        SummerLeaderboard,
-        User.full_name,
-        School.name.label('school_name')
-    ).join(User).join(School).filter(
-        db.or_(
-            User.full_name.ilike(search_term),
-            School.name.ilike(search_term),
-            User.id.like(search_term)
-        )
-    ).limit(limit).all()
-    
-    entry_data = []
-    for entry, user_name, school_name in entries:
-        entry_data.append({
-            'id': entry.id,
-            'user_name': user_name,
-            'school_name': school_name,
-            'score': entry.score,
-            'last_updated': entry.last_updated.strftime('%Y-%m-%d %H:%M') if entry.last_updated else None
-        })
-    
-    return jsonify({'entries': entry_data})
+    """AJAX endpoint for dynamic summer leaderboard search (safe casting & limits)"""
+    try:
+        query = request.args.get('q', '', type=str)
+        limit = request.args.get('limit', 10, type=int)
+        if limit < 1:
+            limit = 1
+        limit = min(limit, 50)
+
+        if not query or len(query.strip()) < 2:
+            return jsonify({'entries': []})
+
+        search_clean = query.strip()
+        search_term = f"%{search_clean}%"
+        id_clauses = []
+        if search_clean.isdigit():
+            try:
+                id_clauses.append(User.id == int(search_clean))
+            except ValueError:
+                pass
+        id_clauses.append(cast(User.id, String).like(search_term))
+
+        entries = db.session.query(
+            SummerLeaderboard,
+            User.full_name,
+            School.name.label('school_name')
+        ).join(User).join(School).filter(
+            db.or_(
+                User.full_name.ilike(search_term),
+                School.name.ilike(search_term),
+                db.or_(*id_clauses)
+            )
+        ).limit(limit).all()
+
+        entry_data = [
+            {
+                'id': entry.id,
+                'user_name': user_name,
+                'school_name': school_name,
+                'score': entry.score,
+                'last_updated': entry.last_updated.strftime('%Y-%m-%d %H:%M') if entry.last_updated else None
+            }
+            for entry, user_name, school_name in entries
+        ]
+        return jsonify({'entries': entry_data})
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Summer leaderboard search DB error: {e}")
+        return jsonify({'error': 'Search failed'}), 500
+    except Exception as e:
+        current_app.logger.error(f"Summer leaderboard search unexpected error: {e}")
+        return jsonify({'error': 'Unexpected error'}), 500
 
 
 @bp.route("/admin/summer_leaderboard/bulk-action", methods=["POST"])

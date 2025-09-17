@@ -36,6 +36,9 @@ from flask import render_template, flash, redirect, url_for
 from flask_login import login_user, logout_user, current_user
 from app import db
 from app import limiter
+from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
+from flask import current_app
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm, SummerRegistrationForm, SummerLoginForm
 from app.models import User, School
@@ -48,7 +51,8 @@ from config import Config
 
 
 @bp.route("/login", methods=["GET", "POST"])
-@limiter.limit("5 per minute; 20 per hour", methods=["POST"])  # per-IP
+# Use comma-separated string for multiple limits to avoid unhashable list in tests
+@limiter.limit("5 per minute;20 per hour", methods=["POST"])  # per-IP
 def login():
     """
     Handle user login process.
@@ -84,7 +88,7 @@ def login():
 
 
 @bp.route("/register", methods=["GET", "POST"])
-@limiter.limit("3 per minute; 10 per hour", methods=["POST"])  # per-IP
+@limiter.limit("3 per minute;10 per hour", methods=["POST"])  # per-IP
 def register():
     """
     Handle user registration process.
@@ -160,7 +164,7 @@ def register():
 
 if not Config.is_production():
     @bp.route("/register_admin", methods=["GET", "POST"])
-    @limiter.limit("2 per minute; 5 per hour", methods=["POST"])  # per-IP
+    @limiter.limit("2 per minute;5 per hour", methods=["POST"])  # per-IP
     def register_admin():
         """
         Handle admin user registration process.
@@ -259,7 +263,7 @@ def logout():
 # ====================
 
 @bp.route("/autumn_register", methods=["GET", "POST"])
-@limiter.limit("3 per minute; 10 per hour", methods=["POST"])  # per-IP
+@limiter.limit("3 per minute;10 per hour", methods=["POST"])  # per-IP
 def summer_register():
     """
     Handle user registration process for the summer competition.
@@ -319,7 +323,7 @@ def summer_register():
     return render_template("auth/summer_register.html", title="Register", form=form)
 
 @bp.route("/autumn_login", methods=["GET", "POST"])
-@limiter.limit("5 per minute; 20 per hour", methods=["POST"])  # per-IP
+@limiter.limit("5 per minute;20 per hour", methods=["POST"])  # per-IP
 def summer_login():
     """
     Handle user login process.
