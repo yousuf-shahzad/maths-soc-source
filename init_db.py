@@ -72,6 +72,7 @@ def init_admin_user():
         maths_class="A-Level",
         school_id=1,  # UCGS
         is_admin=True,
+        email='admin@uptoncourtgrammar.org.uk',
         is_competition_participant=False
     )
     admin.set_password("admin123")

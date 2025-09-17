@@ -2,6 +2,9 @@ import pytest
 from app import create_app
 from app.database import db
 from app.models import User
+from app.safety import assert_not_production
+
+assert_not_production("pytest startup")
 
 @pytest.fixture(scope='module')
 def app():
@@ -26,6 +29,7 @@ def _db(app):
     Fixture to set up the database for testing
     """
     with app.app_context():
+        assert_not_production("pytest _db setup")
         db.create_all()
         yield db
         db.session.remove()
