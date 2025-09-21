@@ -657,7 +657,7 @@ def edit_challenge(challenge_id):
     )
 
 
-@bp.route("/static/uploads/<path:id>")
+@bp.route("/uploads/challenges/<int:id>")
 def uploaded_files(id):
     """
     Serves uploaded challenge files securely
@@ -695,7 +695,8 @@ def upload():
         filename = handle_file_upload(
             f, current_app.config["UPLOAD_FOLDER"], f.filename
         )
-        file_url = url_for("uploaded_files", filename=filename)
+        # Return a direct static URL for CKEditor assets
+        file_url = url_for("static", filename=f"uploads/{filename}")
         return upload_success(file_url, filename=filename)
     except IOError as e:
         current_app.logger.error(f"Upload error: {str(e)}")
