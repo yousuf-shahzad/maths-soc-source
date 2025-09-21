@@ -94,6 +94,10 @@
     background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
+.challenge-badge.unreleased {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
 .challenge-badge.unlocked {
     background: linear-gradient(135deg, #10b981, #059669);
 }

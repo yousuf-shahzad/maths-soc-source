@@ -15,15 +15,36 @@
             <h2>📅 Unreleased Challenges</h2>
             <div class="challenge-grid">
                 {% for challenge in unreleased_challenges %}
-                <div class="challenge-card unreleased-challenge">
-                    <div class="unreleased-badge">Unreleased</div>
+            <div class="challenge-card">
                 <h2>{{ challenge.title }}</h2>
-                <p>Posted: {{ challenge.date_posted.strftime('%Y-%m-%d') }}</p>
-                <p><strong>Release Date:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Not set' }}</p>
-                {% if challenge.lock_after_hours %}
-                <p><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours }} hours</p>
+                <div class="challenge-meta">
+                    <span class="challenge-date"><strong>Posted:</strong> {{ challenge.date_posted.strftime('%Y-%m-%d') }}</span><br>
+                    <span class="challenge-released"><strong>Release On:</strong> {{ challenge.release_at.strftime('%Y-%m-%d %H:%M') if challenge.release_at else 'Immediate' }}</span><br>
+                    <span class="challenge-lock"><strong>Auto-lock after:</strong> {{ challenge.lock_after_hours if challenge.lock_after_hours else 'No Limit' }} </span>
+                </div>
+
+                <div class="challenge-badge unreleased">
+                    <span class="status-icon">🔒</span>
+                    <span class="badge-text">Unreleased</span>
+                </div>
+
+                                <!-- Lock Status Display -->
+                {% if challenge.is_manually_locked or challenge.lock_after_hours %}
+                    <div class="challenge-badge locked">
+                        <span class="status-icon">🔒</span>
+                        {% if challenge.lock_after_hours %}
+                            <span>Time Expired</span>
+                        {% else %}
+                            <span>Manually Locked On Release</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="challenge-badge unlocked">
+                        <span class="status-icon">🔓</span>
+                        <span>Will Open On Release</span>
+                    </div>
                 {% endif %}
-                
+
                 {% if challenge.file_url %}
                 <div class="image-preview">
                     <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" alt="{{ challenge.title }}" class="challenge-image">
@@ -31,16 +52,27 @@
                 {% endif %}
                 
                 <div>
-                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
-                       class="action-button edit-button">
-                        <span class="button-icon">✏️</span>
-                        <span class="button-text">Edit</span>
+                    <a href="{{ url_for('main.challenge', challenge_id=challenge.id) }}" 
+                       class="action-btn view-btn">
+                        <span class="button-icon">👁️</span>
                     </a>
-                    <button class="action-button button-danger" 
+                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" 
+                       class="action-btn edit-btn">
+                        <span class="button-icon">✏️</span>
+                    </a>
+                    
+                    <form class="form-btn" method="POST" action="{{ url_for('admin.toggle_challenge_lock', challenge_id=challenge.id) }}">
+                        <button type="submit" class="action-btn reset-btn" 
+                                data-action="{{ 'unlock' if challenge.is_manually_locked else 'lock' }}"
+                                onclick="return confirmToggleLock(this);">
+                            <span class="button-icon">{{ '🔓' if challenge.is_manually_locked else '🔒' }}</span>
+                        </button>
+                    </form>
+
+                    <button class="action-btn delete-btn" 
                             data-challenge-id="{{ challenge.id }}"
                             onclick="confirmDelete(this)">
                         <span class="button-icon">🗑️</span>
-                        <span class="button-text">Delete</span>
                     </button>
                 </div>
             </div>
