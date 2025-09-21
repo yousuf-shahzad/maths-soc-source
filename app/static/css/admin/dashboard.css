@@ -51,3 +51,12 @@
     box-shadow: 0 8px 20px rgba(150, 40, 53, 0.4);
 }
 
+img.challenge-image {
+    max-width: 100%;
+    display: block;
+    margin: 1rem auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    height: 100%;
+}

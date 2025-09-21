@@ -640,6 +640,7 @@ def edit_challenge(challenge_id):
         form.key_stage.data = challenge.key_stage
         form.release_at.data = challenge.release_at
         form.lock_after_hours.data = challenge.lock_after_hours
+        form.image.data = challenge.file_url
         
         # Add current answer boxes
         form.answer_boxes.entries = []

@@ -49,11 +49,11 @@
                 {% endfor %}
                 
                 <div id="currentImageContainer" class="pdf-preview">
-                    {% if form.file_url %}
-                        <img src="{{ url_for('static', filename=form.file_url) }}" 
+                    {% if form.image %}
+                        <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}" 
                              alt="Current image"
                              class="responsive-image" />
-                        <h3>Current image: {{ form.file_url.split('/')[-1] }}</h3>
+                        <h3>Current image: {{ form.image.data }}</h3>
                     {% else %}
                         <h3>No image currently uploaded.</h3>
                     {% endif %}
