@@ -29,13 +29,13 @@
                 </div>
 
                                 <!-- Lock Status Display -->
-                {% if challenge.is_manually_locked or challenge.lock_after_hours %}
+                {% if challenge.is_locked %}
                     <div class="challenge-badge locked">
                         <span class="status-icon">🔒</span>
-                        {% if challenge.lock_after_hours %}
-                            <span>Time Expired</span>
-                        {% else %}
+                        {% if challenge.is_manually_locked %}
                             <span>Manually Locked On Release</span>
+                        {% else %}
+                            <span>Time Expired</span>
                         {% endif %}
                     </div>
                 {% else %}
@@ -94,13 +94,13 @@
                 </div>
                 
                 <!-- Lock Status Display -->
-                {% if challenge.is_manually_locked or challenge.lock_after_hours %}
+                {% if challenge.is_locked %}
                     <div class="challenge-badge locked">
                         <span class="status-icon">🔒</span>
-                        {% if challenge.lock_after_hours %}
-                            <span>Time Expired</span>
-                        {% else %}
+                        {% if challenge.is_manually_locked %}
                             <span>Manually Locked</span>
+                        {% else %}
+                            <span>Time Expired</span>
                         {% endif %}
                     </div>
                 {% else %}
