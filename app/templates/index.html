@@ -97,7 +97,9 @@
             <p class="challenge-content">{{ challenge.content[:150] | safe  }}...</p>
             {% if challenge.file_url %}
             <div class="image-preview">
-                <img src="{{ challenge.file_url }}" alt="Challenge image" class="challenge-image">
+                <img src="{{ url_for('admin.uploaded_files', id=challenge.id) }}"
+                     alt="Challenge Image"
+                     class="challenge-image">
             </div>
             {% endif %}
             <div>
