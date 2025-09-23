@@ -92,7 +92,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for entry in ks3_entries + ks4_entries + ks5_entries %}
+                            {% for entry in ks3_entries %}
                             <tr class="user-row" data-user-id="{{ entry.user.id }}">
                                 <td class="select-col">
                                     <input type="checkbox" class="user-checkbox" value="{{ entry.user.id }}"
