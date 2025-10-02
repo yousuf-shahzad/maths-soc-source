@@ -89,3 +89,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Local SQLite DB files
+*.db
