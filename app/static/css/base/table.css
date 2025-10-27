@@ -189,13 +189,6 @@ table tr:nth-child(even) {
     .users-table .user-joined {
         display: none;
     }
-    
-    .users-table th:nth-child(3),
-    .users-table td:nth-child(3),
-    .users-table th:nth-child(9),
-    .users-table td:nth-child(9) {
-        display: none;
-    }
 }
 
 .user-info {
