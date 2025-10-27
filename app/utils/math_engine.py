@@ -75,11 +75,9 @@ def _ensure_sympy_expr(obj) -> sp.Expr:
     """
     if isinstance(obj, sp.Expr):
         return obj
-    try:
-        return sp.sympify(obj)
-    except Exception:
-        # Last ditch: return a Symbol with the string, but this shouldn't happen normally
-        return sp.Symbol(str(obj))
+    # If latex2sympy returned something that's not already a SymPy Expr,
+    # we cannot safely convert it without risking code execution
+    raise ValueError(f"Cannot safely convert non-SymPy object to expression: {type(obj)}")
 
 
 class ExpressionNormalizer:
@@ -191,6 +189,35 @@ class ExpressionNormalizer:
     # Parsing
     # -----------------------
 
+    def _validate_input_safe(self, expression_str: str) -> None:
+        """
+        Validate that the input string doesn't contain dangerous Python constructs.
+        Raises ValueError if dangerous patterns are detected.
+        """
+        dangerous_patterns = [
+            r'\bexec\s*\(',
+            r'\beval\s*\(',
+            r'\b__import__\s*\(',
+            r'\bcompile\s*\(',
+            r'\bglobals\s*\(',
+            r'\blocals\s*\(',
+            r'\bgetattr\s*\(',
+            r'\bsetattr\s*\(',
+            r'\bdelattr\s*\(',
+            r'\bopen\s*\(',
+            r'\bfile\s*\(',
+            r'\binput\s*\(',
+            r'\b__\w+__',
+            r'import\s+',
+            r'from\s+\w+\s+import',
+            r'lambda\s+',
+        ]
+        
+        s = expression_str.lower()
+        for pattern in dangerous_patterns:
+            if re.search(pattern, s, re.IGNORECASE):
+                raise ValueError(f"Potentially dangerous pattern detected in input: {pattern}")
+    
     def _parse_to_sympy(self, expression_str: str) -> sp.Expr | Relational:
         """
         Parse a string into a SymPy expression with latex2sympy as the primary parser.
@@ -198,18 +225,21 @@ class ExpressionNormalizer:
         Returns either Expr or Relational (Eq/Lt/Le/Gt/Ge).
         """
         s = expression_str.strip()
+        
+        # validate we arent cooked
+        self._validate_input_safe(s)
 
-        # First, try latex2sympy if available
+        # try latex2sympy
         if LATEX2SYMPY_AVAILABLE:
             try:
-                # latex2sympy can handle pure LaTeX and many math forms
+                # pure latex inshallah
                 expr = latex2sympy(s)
                 expr = _ensure_sympy_expr(expr)
                 return expr
             except Exception as e:
                 logger.debug(f"_parse_to_sympy: latex2sympy failed: {e}")
 
-        # If it's likely LaTeX but latex2sympy failed, attempt a quick LaTeX cleanup, retry once
+        # give it a shot if latex2sympy aint working
         if LATEX2SYMPY_AVAILABLE and _is_latex_expression(s):
             try:
                 cleaned = self._minimal_latex_cleanup(s)
@@ -219,20 +249,21 @@ class ExpressionNormalizer:
             except Exception as e:
                 logger.debug(f"_parse_to_sympy: latex2sympy retry failed: {e}")
 
-        # Fallback to SymPy parse_expr for ASCII math
+        # sympy can work with ascii
         try:
-            # Support equations like "x^2 = 4"
             if "=" in s and "==" not in s:
                 left, right = s.split("=", 1)
                 left_expr = parse_expr(
                     left,
                     local_dict=self.local_dict,
                     transformations=self.transformations,
+                    evaluate=False,
                 )
                 right_expr = parse_expr(
                     right,
                     local_dict=self.local_dict,
                     transformations=self.transformations,
+                    evaluate=False,
                 )
                 return sp.Eq(left_expr, right_expr)
 
@@ -240,15 +271,13 @@ class ExpressionNormalizer:
                 s,
                 local_dict=self.local_dict,
                 transformations=self.transformations,
+                evaluate=False,
             )
             return expr
         except Exception as e:
-            # Last ditch: sympify
+            # sympify does arbitrary code execution
             logger.debug(f"_parse_to_sympy: parse_expr failed: {e}")
-            try:
-                return sp.sympify(s)
-            except Exception:
-                raise
+            raise ValueError(f"Unable to parse expression safely: {s[:100]}")
 
     def _minimal_latex_cleanup(self, s: str) -> str:
         """
@@ -299,7 +328,11 @@ class ExpressionNormalizer:
         Order matters: we try to get stable, simplified, and factored/collected forms.
         """
         try:
-            e = sp.sympify(expr)
+            # expr should already be a SymPy object
+            # Only sympify if it's not already a SymPy expression
+            if not isinstance(expr, sp.Expr):
+                raise ValueError(f"Expected SymPy Expr, got {type(expr)}")
+            e = expr
 
             # Basic algebraic simplifications
             e = sp.simplify(e)
