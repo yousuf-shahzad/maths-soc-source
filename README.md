@@ -1,4 +1,6 @@
-# Maths Society Web Platform
+# Maths Society Web Platform (Legacy)
+
+## Important to note this site is no longer in production
 
 ## Overview
 
